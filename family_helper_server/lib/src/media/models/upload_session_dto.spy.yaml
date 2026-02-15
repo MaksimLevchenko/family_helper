@@ -1,0 +1,6 @@
+class: UploadSessionDto
+fields:
+  mediaId: int
+  objectKey: String
+  uploadUrl: String
+  expiresAt: DateTime

@@ -1,0 +1,8 @@
+class: FamilyRealtimeEvent
+fields:
+  familyId: int
+  feature: String
+  entityType: String
+  entityId: int
+  eventType: String
+  changedAt: DateTime

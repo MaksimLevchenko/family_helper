@@ -1,0 +1,4 @@
+class: OperationResult
+fields:
+  success: bool
+  message: String

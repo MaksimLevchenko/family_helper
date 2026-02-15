@@ -1,0 +1,9 @@
+class: PrivacyExportJobDto
+fields:
+  id: int
+  profileId: int
+  status: String
+  signedUrl: String?
+  expiresAt: DateTime?
+  createdAt: DateTime
+  completedAt: DateTime?

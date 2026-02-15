@@ -1,0 +1,15 @@
+class: CalendarEventDto
+fields:
+  id: int
+  familyId: int
+  title: String
+  description: String?
+  timezone: String
+  startsAt: DateTime
+  endsAt: DateTime
+  rrule: String?
+  colorKey: String?
+  category: String?
+  createdByProfileId: int
+  updatedAt: DateTime
+  version: int

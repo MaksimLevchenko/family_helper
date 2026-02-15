@@ -1,0 +1,10 @@
+class: ProfileDto
+fields:
+  id: int
+  authUserId: String
+  displayName: String
+  timezone: String
+  avatarMediaId: int?
+  analyticsOptIn: bool
+  createdAt: DateTime
+  updatedAt: DateTime

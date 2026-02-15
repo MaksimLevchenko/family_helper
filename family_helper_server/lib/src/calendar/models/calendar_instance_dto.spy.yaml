@@ -1,0 +1,7 @@
+class: CalendarInstanceDto
+fields:
+  eventId: int
+  occurrenceStart: DateTime
+  occurrenceEnd: DateTime
+  title: String
+  cancelled: bool

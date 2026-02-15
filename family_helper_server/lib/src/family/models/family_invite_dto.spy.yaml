@@ -1,0 +1,11 @@
+class: FamilyInviteDto
+fields:
+  id: int
+  familyId: int
+  inviteType: String
+  email: String?
+  inviteCode: String
+  token: String
+  expiresAt: DateTime
+  acceptedAt: DateTime?
+  createdAt: DateTime

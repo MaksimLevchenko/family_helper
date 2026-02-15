@@ -1,0 +1,9 @@
+class: FamilyMemberDto
+fields:
+  id: int
+  familyId: int
+  profileId: int
+  displayName: String
+  role: String
+  status: String
+  createdAt: DateTime

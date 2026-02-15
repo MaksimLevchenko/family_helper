@@ -1,0 +1,4 @@
+class: PagedRequest
+fields:
+  limit: int
+  offset: int

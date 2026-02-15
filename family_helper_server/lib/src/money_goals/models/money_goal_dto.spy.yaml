@@ -1,0 +1,13 @@
+class: MoneyGoalDto
+fields:
+  id: int
+  familyId: int
+  title: String
+  description: String?
+  targetAmountCents: int
+  currentAmountCents: int
+  currency: String
+  deadlineAt: DateTime?
+  reachedAt: DateTime?
+  updatedAt: DateTime
+  version: int

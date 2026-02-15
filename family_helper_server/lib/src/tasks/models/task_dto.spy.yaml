@@ -1,0 +1,16 @@
+class: TaskDto
+fields:
+  id: int
+  familyId: int
+  title: String
+  description: String?
+  isPersonal: bool
+  priority: String
+  status: String
+  dueAt: DateTime?
+  recurrenceMode: String?
+  recurrenceRrule: String?
+  assigneeProfileId: int?
+  completedAt: DateTime?
+  updatedAt: DateTime
+  version: int

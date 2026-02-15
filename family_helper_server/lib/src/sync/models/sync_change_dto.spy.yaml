@@ -1,0 +1,12 @@
+class: SyncChangeDto
+fields:
+  id: int
+  familyId: int?
+  feature: String
+  entityType: String
+  entityId: int
+  operation: String
+  changedAt: DateTime
+  tombstone: bool
+  version: int
+  payloadJson: String

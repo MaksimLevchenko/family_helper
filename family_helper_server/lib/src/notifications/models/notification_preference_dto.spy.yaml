@@ -1,0 +1,9 @@
+class: NotificationPreferenceDto
+fields:
+  id: int
+  profileId: int
+  notificationType: String
+  enabled: bool
+  quietHoursStart: String?
+  quietHoursEnd: String?
+  updatedAt: DateTime

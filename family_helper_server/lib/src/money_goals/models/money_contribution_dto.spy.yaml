@@ -1,0 +1,10 @@
+class: MoneyContributionDto
+fields:
+  id: int
+  goalId: int
+  profileId: int
+  amountCents: int
+  currency: String
+  note: String?
+  createdAt: DateTime
+  revokedAt: DateTime?

@@ -1,0 +1,8 @@
+class: FamilyDto
+fields:
+  id: int
+  title: String
+  ownerProfileId: int
+  memberLimit: int
+  createdAt: DateTime
+  updatedAt: DateTime

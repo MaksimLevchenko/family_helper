@@ -1,0 +1,8 @@
+class: AccountDeletionStatusDto
+fields:
+  id: int
+  profileId: int
+  status: String
+  scheduledHardDeleteAt: DateTime
+  createdAt: DateTime
+  cancelledAt: DateTime?

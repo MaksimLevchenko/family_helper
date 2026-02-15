@@ -1,0 +1,4 @@
+class: ApiErrorDto
+fields:
+  code: String
+  message: String

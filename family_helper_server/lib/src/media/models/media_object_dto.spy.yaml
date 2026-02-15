@@ -1,0 +1,13 @@
+class: MediaObjectDto
+fields:
+  id: int
+  familyId: int?
+  uploadedByProfileId: int
+  objectKey: String
+  bucket: String
+  mimeType: String
+  sizeBytes: int
+  status: String
+  thumbnailKey: String?
+  createdAt: DateTime
+  deletedAt: DateTime?

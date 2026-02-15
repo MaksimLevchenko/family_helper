@@ -1,0 +1,3 @@
+class: AccountDeletionPayload
+fields:
+  runReason: String?

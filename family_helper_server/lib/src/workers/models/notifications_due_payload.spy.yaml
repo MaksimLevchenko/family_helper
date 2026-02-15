@@ -1,0 +1,3 @@
+class: NotificationsDuePayload
+fields:
+  runReason: String?

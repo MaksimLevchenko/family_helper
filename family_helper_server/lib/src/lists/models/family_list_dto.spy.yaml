@@ -1,0 +1,9 @@
+class: FamilyListDto
+fields:
+  id: int
+  familyId: int
+  title: String
+  listType: String
+  createdByProfileId: int
+  updatedAt: DateTime
+  version: int

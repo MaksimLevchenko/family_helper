@@ -1,0 +1,6 @@
+class: SyncChangesResponse
+fields:
+  since: DateTime
+  nextSince: DateTime
+  hasMore: bool
+  changes: List<SyncChangeDto>

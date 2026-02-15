@@ -1,0 +1,161 @@
+/* AUTOMATICALLY GENERATED CODE DO NOT MODIFY */
+/*   To generate run: "serverpod generate"    */
+
+// ignore_for_file: implementation_imports
+// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: public_member_api_docs
+// ignore_for_file: type_literal_in_constant_pattern
+// ignore_for_file: use_super_parameters
+// ignore_for_file: invalid_use_of_internal_member
+
+// ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:serverpod/serverpod.dart' as _i1;
+
+abstract class PrivacyExportJobDto
+    implements _i1.SerializableModel, _i1.ProtocolSerialization {
+  PrivacyExportJobDto._({
+    required this.id,
+    required this.profileId,
+    required this.status,
+    this.signedUrl,
+    this.expiresAt,
+    required this.createdAt,
+    this.completedAt,
+  });
+
+  factory PrivacyExportJobDto({
+    required int id,
+    required int profileId,
+    required String status,
+    String? signedUrl,
+    DateTime? expiresAt,
+    required DateTime createdAt,
+    DateTime? completedAt,
+  }) = _PrivacyExportJobDtoImpl;
+
+  factory PrivacyExportJobDto.fromJson(Map<String, dynamic> jsonSerialization) {
+    return PrivacyExportJobDto(
+      id: jsonSerialization['id'] as int,
+      profileId: jsonSerialization['profileId'] as int,
+      status: jsonSerialization['status'] as String,
+      signedUrl: jsonSerialization['signedUrl'] as String?,
+      expiresAt: jsonSerialization['expiresAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['expiresAt']),
+      createdAt: _i1.DateTimeJsonExtension.fromJson(
+        jsonSerialization['createdAt'],
+      ),
+      completedAt: jsonSerialization['completedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['completedAt'],
+            ),
+    );
+  }
+
+  int id;
+
+  int profileId;
+
+  String status;
+
+  String? signedUrl;
+
+  DateTime? expiresAt;
+
+  DateTime createdAt;
+
+  DateTime? completedAt;
+
+  /// Returns a shallow copy of this [PrivacyExportJobDto]
+  /// with some or all fields replaced by the given arguments.
+  @_i1.useResult
+  PrivacyExportJobDto copyWith({
+    int? id,
+    int? profileId,
+    String? status,
+    String? signedUrl,
+    DateTime? expiresAt,
+    DateTime? createdAt,
+    DateTime? completedAt,
+  });
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      '__className__': 'PrivacyExportJobDto',
+      'id': id,
+      'profileId': profileId,
+      'status': status,
+      if (signedUrl != null) 'signedUrl': signedUrl,
+      if (expiresAt != null) 'expiresAt': expiresAt?.toJson(),
+      'createdAt': createdAt.toJson(),
+      if (completedAt != null) 'completedAt': completedAt?.toJson(),
+    };
+  }
+
+  @override
+  Map<String, dynamic> toJsonForProtocol() {
+    return {
+      '__className__': 'PrivacyExportJobDto',
+      'id': id,
+      'profileId': profileId,
+      'status': status,
+      if (signedUrl != null) 'signedUrl': signedUrl,
+      if (expiresAt != null) 'expiresAt': expiresAt?.toJson(),
+      'createdAt': createdAt.toJson(),
+      if (completedAt != null) 'completedAt': completedAt?.toJson(),
+    };
+  }
+
+  @override
+  String toString() {
+    return _i1.SerializationManager.encode(this);
+  }
+}
+
+class _Undefined {}
+
+class _PrivacyExportJobDtoImpl extends PrivacyExportJobDto {
+  _PrivacyExportJobDtoImpl({
+    required int id,
+    required int profileId,
+    required String status,
+    String? signedUrl,
+    DateTime? expiresAt,
+    required DateTime createdAt,
+    DateTime? completedAt,
+  }) : super._(
+         id: id,
+         profileId: profileId,
+         status: status,
+         signedUrl: signedUrl,
+         expiresAt: expiresAt,
+         createdAt: createdAt,
+         completedAt: completedAt,
+       );
+
+  /// Returns a shallow copy of this [PrivacyExportJobDto]
+  /// with some or all fields replaced by the given arguments.
+  @_i1.useResult
+  @override
+  PrivacyExportJobDto copyWith({
+    int? id,
+    int? profileId,
+    String? status,
+    Object? signedUrl = _Undefined,
+    Object? expiresAt = _Undefined,
+    DateTime? createdAt,
+    Object? completedAt = _Undefined,
+  }) {
+    return PrivacyExportJobDto(
+      id: id ?? this.id,
+      profileId: profileId ?? this.profileId,
+      status: status ?? this.status,
+      signedUrl: signedUrl is String? ? signedUrl : this.signedUrl,
+      expiresAt: expiresAt is DateTime? ? expiresAt : this.expiresAt,
+      createdAt: createdAt ?? this.createdAt,
+      completedAt: completedAt is DateTime? ? completedAt : this.completedAt,
+    );
+  }
+}

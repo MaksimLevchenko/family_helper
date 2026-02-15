@@ -1,0 +1,60 @@
+emailIdp:
+  - login:
+  - startRegistration:
+  - verifyRegistrationCode:
+  - finishRegistration:
+  - startPasswordReset:
+  - verifyPasswordResetCode:
+  - finishPasswordReset:
+jwtRefresh:
+  - refreshAccessToken:
+profile:
+  - me:
+  - update:
+calendar:
+  - upsertEvent:
+  - upsertOverride:
+  - listInstances:
+family:
+  - createFamily:
+  - listMembers:
+  - createInvite:
+  - acceptInvite:
+  - transferOwnership:
+  - leaveFamily:
+greeting:
+  - hello:
+lists:
+  - upsertList:
+  - addItem:
+  - toggleBought:
+  - reorderItems:
+  - listItems:
+media:
+  - createUploadSession:
+  - completeUpload:
+  - signedGetUrl:
+  - softDelete:
+moneyGoals:
+  - upsertGoal:
+  - addContribution:
+  - listGoals:
+notifications:
+  - registerPushToken:
+  - upsertPreference:
+  - scheduleReminder:
+  - processDueReminders:
+privacy:
+  - requestExport:
+  - requestAccountDeletion:
+  - cancelAccountDeletion:
+  - processExportJobs:
+  - processHardDeletion:
+realtime:
+  - watchFamilyEvents:
+sync:
+  - changes:
+tasks:
+  - upsertTask:
+  - listTasks:
+  - completeTask:

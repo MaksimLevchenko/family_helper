@@ -1,0 +1,12 @@
+class: ReminderDto
+fields:
+  id: int
+  familyId: int
+  entityType: String
+  entityId: int
+  profileId: int
+  remindAt: DateTime
+  status: String
+  payloadJson: String
+  firedAt: DateTime?
+  createdAt: DateTime

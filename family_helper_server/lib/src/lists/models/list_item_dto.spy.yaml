@@ -1,0 +1,16 @@
+class: ListItemDto
+fields:
+  id: int
+  listId: int
+  title: String
+  qty: double
+  unit: String?
+  note: String?
+  priceCents: int?
+  category: String?
+  positionIndex: int
+  isBought: bool
+  boughtByProfileId: int?
+  boughtAt: DateTime?
+  updatedAt: DateTime
+  version: int
