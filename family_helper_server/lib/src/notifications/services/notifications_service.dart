@@ -235,6 +235,42 @@ class NotificationsService {
     });
   }
 
+  Future<List<ReminderDto>> listReminders(
+    Session session, {
+    int? familyId,
+    String? status,
+    int limit = 100,
+  }) async {
+    final profileId = await authContext.ensureProfileId(session);
+    final normalizedLimit = limit <= 0 ? 1 : (limit > 500 ? 500 : limit);
+    if (familyId != null) {
+      await rbac.ensureFamilyRole(
+        session,
+        familyId: familyId,
+        minRole: 'member',
+      );
+    }
+
+    final rows = await ReminderRow.db.find(
+      session,
+      where: (t) {
+        var predicate = t.profileId.equals(profileId);
+        if (familyId != null) {
+          predicate = predicate & t.familyId.equals(familyId);
+        }
+        if (status != null && status.trim().isNotEmpty) {
+          predicate = predicate & t.status.equals(status.trim());
+        }
+        return predicate;
+      },
+      orderBy: (t) => t.remindAt,
+      orderDescending: true,
+      limit: normalizedLimit,
+    );
+
+    return rows.map(_mapReminder).toList();
+  }
+
   Future<int> processDueReminders(Session session) async {
     final firedAt = clock.nowUtc();
     final firedReminders = await session.db.transaction((transaction) async {

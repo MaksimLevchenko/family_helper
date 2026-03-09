@@ -78,6 +78,20 @@ class MediaRepository {
     return _apiClient.client.media.signedGetUrl(mediaId: mediaId);
   }
 
+  Future<List<MediaObjectDto>> listMedia({int? familyId, int limit = 100}) {
+    return _apiClient.client.media.listMedia(familyId: familyId, limit: limit);
+  }
+
+  Future<OperationResult> softDelete({
+    required String clientOperationId,
+    required int mediaId,
+  }) {
+    return _apiClient.client.media.softDelete(
+      clientOperationId: clientOperationId,
+      mediaId: mediaId,
+    );
+  }
+
   Future<List<int>> _readUploadBytes(XFile selected) async {
     // image_cropper is unstable on web for blob/file paths; use original bytes.
     if (kIsWeb) {

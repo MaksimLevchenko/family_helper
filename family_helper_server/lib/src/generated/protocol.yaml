@@ -34,6 +34,7 @@ media:
   - createUploadSession:
   - completeUpload:
   - signedGetUrl:
+  - listMedia:
   - softDelete:
 moneyGoals:
   - upsertGoal:
@@ -43,11 +44,13 @@ notifications:
   - registerPushToken:
   - upsertPreference:
   - scheduleReminder:
+  - listReminders:
   - processDueReminders:
 privacy:
   - requestExport:
   - requestAccountDeletion:
   - cancelAccountDeletion:
+  - getStatus:
   - processExportJobs:
   - processHardDeletion:
 realtime:

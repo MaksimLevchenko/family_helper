@@ -21,8 +21,18 @@ class OfflineQueueManager {
   Future<void> replay(
     Future<void> Function(OfflineOperation operation) processor,
   ) async {
+    return replayWhere(processor);
+  }
+
+  Future<void> replayWhere(
+    Future<void> Function(OfflineOperation operation) processor, {
+    bool Function(OfflineOperation operation)? canProcess,
+  }) async {
     final pending = await _queue.listPending();
     for (final operation in pending) {
+      if (canProcess != null && !canProcess(operation)) {
+        continue;
+      }
       if (operation.attempt >= maxAttempts) {
         await _queue.markProcessed(operation.id);
         continue;

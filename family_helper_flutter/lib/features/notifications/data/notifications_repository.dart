@@ -53,4 +53,15 @@ class NotificationsRepository {
     );
   }
 
+  Future<List<ReminderDto>> listReminders({
+    int? familyId,
+    String? status,
+    int limit = 100,
+  }) {
+    return _apiClient.client.notifications.listReminders(
+      familyId: familyId,
+      status: status,
+      limit: limit,
+    );
+  }
 }

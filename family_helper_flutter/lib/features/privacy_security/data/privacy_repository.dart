@@ -7,7 +7,13 @@ class PrivacyRepository {
 
   final AppApiClient _apiClient;
 
-  Future<PrivacyExportJobDto> requestExport({required String clientOperationId}) {
+  Future<PrivacyStatusDto> getStatus() {
+    return _apiClient.client.privacy.getStatus();
+  }
+
+  Future<PrivacyExportJobDto> requestExport({
+    required String clientOperationId,
+  }) {
     return _apiClient.client.privacy.requestExport(
       clientOperationId: clientOperationId,
     );

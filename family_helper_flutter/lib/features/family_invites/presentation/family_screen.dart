@@ -16,12 +16,14 @@ class _FamilyScreenState extends State<FamilyScreen> {
   final _familyTitleController = TextEditingController();
   final _inviteEmailController = TextEditingController();
   final _inviteCodeController = TextEditingController();
+  final _newOwnerProfileIdController = TextEditingController();
 
   @override
   void dispose() {
     _familyTitleController.dispose();
     _inviteEmailController.dispose();
     _inviteCodeController.dispose();
+    _newOwnerProfileIdController.dispose();
     super.dispose();
   }
 
@@ -127,6 +129,42 @@ class _FamilyScreenState extends State<FamilyScreen> {
                   }
                   await context.read<FamilyMembersCubit>().acceptInvite(code);
                 },
+              ),
+              const SizedBox(height: 12),
+              AppTextField(
+                controller: _newOwnerProfileIdController,
+                label: 'Transfer ownership to profile id',
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 12),
+              AppButton(
+                label: 'Transfer ownership',
+                onPressed: familyId == null
+                    ? null
+                    : () async {
+                        final profileId = int.tryParse(
+                          _newOwnerProfileIdController.text.trim(),
+                        );
+                        if (profileId == null) {
+                          return;
+                        }
+                        await context
+                            .read<FamilyMembersCubit>()
+                            .transferOwnership(
+                              newOwnerProfileId: profileId,
+                            );
+                      },
+                variant: AppButtonVariant.secondary,
+              ),
+              const SizedBox(height: 12),
+              AppButton(
+                label: 'Leave family',
+                onPressed: familyId == null
+                    ? null
+                    : () async {
+                        await context.read<FamilyMembersCubit>().leaveFamily();
+                      },
+                variant: AppButtonVariant.danger,
               ),
               const SizedBox(height: 24),
               if (state.members.isEmpty)

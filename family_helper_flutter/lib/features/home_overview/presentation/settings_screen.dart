@@ -37,8 +37,8 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => context.go(AppRoutes.family),
           ),
           AppTile(
-            title: 'Local reminders',
-            subtitle: 'Session-only debug panel until push flow is wired',
+            title: 'Notifications',
+            subtitle: 'Push token registration and family reminders',
             onTap: () => context.go(AppRoutes.localReminders),
           ),
           AppTile(
@@ -47,7 +47,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           AppTile(
             title: 'Privacy & Security',
-            subtitle: 'Session-only status until read API is added',
+            subtitle: 'Persistent export/deletion status',
             onTap: () => context.go(AppRoutes.privacy),
           ),
           const SizedBox(height: 8),

@@ -19,6 +19,15 @@ Create `config/passwords.yaml` from `config/passwords.yaml.example`, then set en
   - `minioPublicBaseUrl`
   - `minioUseSsl`
   - `minioSignUrlTtl`
+- SMTP settings for email verification / password reset (optional in `development` / `test`):
+  - `smtpHost`
+  - `smtpPort`
+  - `smtpUsername`
+  - `smtpPassword`
+  - `smtpFromEmail`
+  - `smtpFromName`
+  - `smtpUseSsl`
+  - `smtpAllowInsecure`
 - Optional for test runs:
   - `MINIO_FORCE_REAL_IN_TEST=true` to disable mock storage fallback in `test` mode
 
@@ -127,6 +136,8 @@ dart test
 ## Realtime
 Family invalidation events are published to `family:<familyId>` using:
 - `session.messages.postMessage(..., global: false)`
+- `feature` keys are a public contract and use canonical `snake_case` values
+  (example: `money_goals`).
 
 ## Sync
 `sync.changes(since, familyId, limit)` returns changes/tombstones from `change_feed`.

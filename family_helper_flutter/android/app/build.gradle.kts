@@ -5,6 +5,15 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val releaseKeystorePath = providers.gradleProperty("ANDROID_KEYSTORE_PATH")
+    .orElse(providers.environmentVariable("ANDROID_KEYSTORE_PATH"))
+val releaseKeystorePassword = providers.gradleProperty("ANDROID_KEYSTORE_PASSWORD")
+    .orElse(providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD"))
+val releaseKeyAlias = providers.gradleProperty("ANDROID_KEY_ALIAS")
+    .orElse(providers.environmentVariable("ANDROID_KEY_ALIAS"))
+val releaseKeyPassword = providers.gradleProperty("ANDROID_KEY_PASSWORD")
+    .orElse(providers.environmentVariable("ANDROID_KEY_PASSWORD"))
+
 android {
     namespace = "com.example.family_helper_flutter"
     compileSdk = flutter.compileSdkVersion
@@ -20,21 +29,40 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.family_helper_flutter"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        applicationId = "com.familyhelper.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            val storeFilePath = releaseKeystorePath.orNull
+            val storePasswordValue = releaseKeystorePassword.orNull
+            val keyAliasValue = releaseKeyAlias.orNull
+            val keyPasswordValue = releaseKeyPassword.orNull
+            if (
+                storeFilePath.isNullOrBlank() ||
+                storePasswordValue.isNullOrBlank() ||
+                keyAliasValue.isNullOrBlank() ||
+                keyPasswordValue.isNullOrBlank()
+            ) {
+                throw GradleException(
+                    "Release signing is not configured. Set ANDROID_KEYSTORE_PATH, " +
+                        "ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD.",
+                )
+            }
+            storeFile = file(storeFilePath)
+            storePassword = storePasswordValue
+            keyAlias = keyAliasValue
+            keyPassword = keyPasswordValue
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }

@@ -13,29 +13,36 @@ class MediaScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Media & Avatars')),
       body: BlocBuilder<MediaCubit, MediaState>(
         builder: (context, state) {
-          if (state.isLoading && state.lastSignedUrl == null) {
+          if (state.isLoading &&
+              state.items.isEmpty &&
+              state.lastSignedUrl == null) {
             return const LoadingState();
           }
 
-          if (state.error != null && state.lastSignedUrl == null) {
+          if (state.error != null &&
+              state.items.isEmpty &&
+              state.lastSignedUrl == null) {
             return ErrorState(
               message: state.error!,
-              onRetry: () => context.read<MediaCubit>().uploadImage(),
+              onRetry: () => context.read<MediaCubit>().reload(),
             );
           }
 
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const AppBanner(
-                text:
-                    'This screen keeps only the current session state. Uploaded media history is not hydrated here yet.',
-              ),
-              const SizedBox(height: 12),
               if (state.error != null) ...[
                 AppBanner(text: state.error!, isError: true),
                 const SizedBox(height: 12),
               ],
+              AppButton(
+                label: 'Reload media',
+                variant: AppButtonVariant.secondary,
+                onPressed: () async {
+                  await context.read<MediaCubit>().reload();
+                },
+              ),
+              const SizedBox(height: 12),
               AppButton(
                 label: 'Pick, crop and upload image',
                 isLoading: state.isLoading,
@@ -45,14 +52,31 @@ class MediaScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               if (state.lastSignedUrl == null)
-                const EmptyState(
-                  title: 'No uploaded image',
-                  message: 'Upload an image to receive signed GET URL.',
-                )
+                const SizedBox.shrink()
               else
                 AppTile(
                   title: 'Last media id: ${state.lastMediaId}',
                   subtitle: state.lastSignedUrl,
+                ),
+              const SizedBox(height: 12),
+              if (state.items.isEmpty)
+                const EmptyState(
+                  title: 'No media objects',
+                  message: 'Upload an image to populate media history.',
+                )
+              else
+                ...state.items.map(
+                  (item) => AppTile(
+                    title: 'Media #${item.id}',
+                    subtitle:
+                        'status=${item.status}, mime=${item.mimeType}, size=${item.sizeBytes}, key=${item.objectKey}',
+                    trailing: IconButton(
+                      onPressed: () async {
+                        await context.read<MediaCubit>().softDelete(item.id);
+                      },
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                  ),
                 ),
             ],
           );

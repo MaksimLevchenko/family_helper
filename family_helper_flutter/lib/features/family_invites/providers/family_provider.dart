@@ -5,6 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../core/logging/app_error_logger.dart';
+import '../../../core/offline/offline_error_classifier.dart';
+import '../../../core/offline/offline_operation.dart';
+import '../../../core/offline/offline_queue_manager.dart';
 import '../../../core/utils/operation_id.dart';
 import '../data/family_repository.dart';
 
@@ -88,8 +91,10 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
   FamilyMembersCubit({
     required FamilyRepository repository,
     required FamilySelectionCubit familySelectionCubit,
+    required OfflineQueueManager offlineQueueManager,
   }) : _repository = repository,
        _familySelectionCubit = familySelectionCubit,
+       _offlineQueueManager = offlineQueueManager,
        super(FamilyMembersState.initial()) {
     _familySub = _familySelectionCubit.stream.listen((familyId) {
       unawaited(_handleFamilyChanged(familyId));
@@ -98,13 +103,18 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
 
   final FamilyRepository _repository;
   final FamilySelectionCubit _familySelectionCubit;
+  final OfflineQueueManager _offlineQueueManager;
   StreamSubscription<int?>? _familySub;
+  static const _offlineFeature = 'family';
+  static const _actionTransferOwnership = 'transfer_ownership';
+  static const _actionLeaveFamily = 'leave_family';
 
   Future<void> _handleFamilyChanged(int? familyId) async {
     reset();
     if (familyId == null) {
       return;
     }
+    await _replayQueuedOperations();
     await loadMembers();
   }
 
@@ -135,6 +145,7 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
     );
 
     try {
+      await _replayQueuedOperations();
       final members = await _repository.listMembers(familyId: familyId);
       emit(
         state.copyWith(
@@ -254,6 +265,135 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
       );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
+  }
+
+  Future<void> transferOwnership({required int newOwnerProfileId}) async {
+    final familyId = _familySelectionCubit.state;
+    if (familyId == null) {
+      emit(state.copyWith(error: 'Family is not selected'));
+      return;
+    }
+
+    emit(state.copyWith(isLoading: true, clearError: true));
+    final clientOperationId = OperationId.next();
+    try {
+      await _repository.transferOwnership(
+        familyId: familyId,
+        clientOperationId: clientOperationId,
+        newOwnerProfileId: newOwnerProfileId,
+      );
+      await loadMembers();
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'family.transferOwnership',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'newOwnerProfileId': newOwnerProfileId,
+        },
+      );
+      if (isOfflineRecoverableError(error)) {
+        await _offlineQueueManager.enqueue(
+          OfflineOperation(
+            id: OperationId.next(),
+            feature: _offlineFeature,
+            action: _actionTransferOwnership,
+            payload: {
+              'familyId': familyId,
+              'clientOperationId': clientOperationId,
+              'newOwnerProfileId': newOwnerProfileId,
+            },
+            createdAt: DateTime.now().toUtc(),
+            attempt: 0,
+          ),
+        );
+        emit(
+          state.copyWith(
+            isLoading: false,
+            error: 'Network unavailable. Transfer request queued.',
+          ),
+        );
+        return;
+      }
+      emit(state.copyWith(isLoading: false, error: '$error'));
+    }
+  }
+
+  Future<void> leaveFamily() async {
+    final familyId = _familySelectionCubit.state;
+    if (familyId == null) {
+      emit(state.copyWith(error: 'Family is not selected'));
+      return;
+    }
+
+    emit(state.copyWith(isLoading: true, clearError: true));
+    final clientOperationId = OperationId.next();
+    try {
+      await _repository.leaveFamily(
+        familyId: familyId,
+        clientOperationId: clientOperationId,
+      );
+      await _familySelectionCubit.clear();
+      emit(FamilyMembersState.initial(familyId: null));
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'family.leaveFamily',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
+      if (isOfflineRecoverableError(error)) {
+        await _offlineQueueManager.enqueue(
+          OfflineOperation(
+            id: OperationId.next(),
+            feature: _offlineFeature,
+            action: _actionLeaveFamily,
+            payload: {
+              'familyId': familyId,
+              'clientOperationId': clientOperationId,
+            },
+            createdAt: DateTime.now().toUtc(),
+            attempt: 0,
+          ),
+        );
+        await _familySelectionCubit.clear();
+        emit(
+          FamilyMembersState.initial(
+            familyId: null,
+          ).copyWith(
+            error: 'Network unavailable. Leave request queued.',
+          ),
+        );
+        return;
+      }
+      emit(state.copyWith(isLoading: false, error: '$error'));
+    }
+  }
+
+  Future<void> _replayQueuedOperations() {
+    return _offlineQueueManager.replayWhere(
+      (operation) async {
+        switch (operation.action) {
+          case _actionTransferOwnership:
+            await _repository.transferOwnership(
+              familyId: operation.payload['familyId'] as int,
+              clientOperationId:
+                  operation.payload['clientOperationId'] as String,
+              newOwnerProfileId: operation.payload['newOwnerProfileId'] as int,
+            );
+            return;
+          case _actionLeaveFamily:
+            await _repository.leaveFamily(
+              familyId: operation.payload['familyId'] as int,
+              clientOperationId:
+                  operation.payload['clientOperationId'] as String,
+            );
+            return;
+        }
+      },
+      canProcess: (operation) => operation.feature == _offlineFeature,
+    );
   }
 
   @override

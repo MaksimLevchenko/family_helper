@@ -1052,6 +1052,30 @@ class Endpoints extends _i1.EndpointDispatch {
                 mediaId: params['mediaId'],
               ),
         ),
+        'listMedia': _i1.MethodConnector(
+          name: 'listMedia',
+          params: {
+            'familyId': _i1.ParameterDescription(
+              name: 'familyId',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['media'] as _i9.MediaEndpoint).listMedia(
+                session,
+                familyId: params['familyId'],
+                limit: params['limit'],
+              ),
+        ),
         'softDelete': _i1.MethodConnector(
           name: 'softDelete',
           params: {
@@ -1343,6 +1367,38 @@ class Endpoints extends _i1.EndpointDispatch {
                         payloadJson: params['payloadJson'],
                       ),
         ),
+        'listReminders': _i1.MethodConnector(
+          name: 'listReminders',
+          params: {
+            'familyId': _i1.ParameterDescription(
+              name: 'familyId',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
+            'status': _i1.ParameterDescription(
+              name: 'status',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['notifications'] as _i11.NotificationsEndpoint)
+                      .listReminders(
+                        session,
+                        familyId: params['familyId'],
+                        status: params['status'],
+                        limit: params['limit'],
+                      ),
+        ),
         'processDueReminders': _i1.MethodConnector(
           name: 'processDueReminders',
           params: {},
@@ -1407,6 +1463,16 @@ class Endpoints extends _i1.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async => (endpoints['privacy'] as _i12.PrivacyEndpoint)
                   .cancelAccountDeletion(session),
+        ),
+        'getStatus': _i1.MethodConnector(
+          name: 'getStatus',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['privacy'] as _i12.PrivacyEndpoint)
+                  .getStatus(session),
         ),
         'processExportJobs': _i1.MethodConnector(
           name: 'processExportJobs',

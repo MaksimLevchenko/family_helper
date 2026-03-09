@@ -47,6 +47,14 @@ class MediaEndpoint extends Endpoint {
     return service.signedGetUrl(session, mediaId: mediaId);
   }
 
+  Future<List<MediaObjectDto>> listMedia(
+    Session session, {
+    int? familyId,
+    int limit = 100,
+  }) {
+    return service.listMedia(session, familyId: familyId, limit: limit);
+  }
+
   Future<OperationResult> softDelete(
     Session session, {
     required String clientOperationId,

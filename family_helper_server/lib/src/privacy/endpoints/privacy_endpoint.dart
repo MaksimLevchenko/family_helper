@@ -5,7 +5,8 @@ import '../../generated/protocol.dart';
 import '../services/privacy_service.dart';
 
 class PrivacyEndpoint extends Endpoint {
-  PrivacyEndpoint({PrivacyService? service}) : service = service ?? PrivacyService();
+  PrivacyEndpoint({PrivacyService? service})
+    : service = service ?? PrivacyService();
 
   final PrivacyService service;
 
@@ -31,6 +32,10 @@ class PrivacyEndpoint extends Endpoint {
 
   Future<AccountDeletionStatusDto> cancelAccountDeletion(Session session) {
     return service.cancelAccountDeletion(session);
+  }
+
+  Future<PrivacyStatusDto> getStatus(Session session) {
+    return service.getStatus(session);
   }
 
   Future<int> processExportJobs(Session session) {

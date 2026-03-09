@@ -1,0 +1,4 @@
+class: PrivacyStatusDto
+fields:
+  lastExportJob: PrivacyExportJobDto?
+  accountDeletion: AccountDeletionStatusDto?

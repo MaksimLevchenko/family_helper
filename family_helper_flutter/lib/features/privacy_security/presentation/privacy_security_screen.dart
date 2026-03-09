@@ -4,8 +4,21 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../providers/privacy_provider.dart';
 
-class PrivacySecurityScreen extends StatelessWidget {
+class PrivacySecurityScreen extends StatefulWidget {
   const PrivacySecurityScreen({super.key});
+
+  @override
+  State<PrivacySecurityScreen> createState() => _PrivacySecurityScreenState();
+}
+
+class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PrivacyCubit>().reloadStatus();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,22 +37,25 @@ class PrivacySecurityScreen extends StatelessWidget {
               state.accountDeletion == null) {
             return ErrorState(
               message: state.error!,
-              onRetry: () {},
+              onRetry: () => context.read<PrivacyCubit>().reloadStatus(),
             );
           }
 
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const AppBanner(
-                text:
-                    'This screen shows only the current session result. Persistent privacy status requires additional read API on the backend.',
-              ),
-              const SizedBox(height: 12),
               if (state.error != null) ...[
                 AppBanner(text: state.error!, isError: true),
                 const SizedBox(height: 12),
               ],
+              AppButton(
+                label: 'Reload status',
+                variant: AppButtonVariant.secondary,
+                onPressed: () async {
+                  await context.read<PrivacyCubit>().reloadStatus();
+                },
+              ),
+              const SizedBox(height: 12),
               AppButton(
                 label: 'Request data export',
                 isLoading: state.isLoading,
@@ -68,7 +84,7 @@ class PrivacySecurityScreen extends StatelessWidget {
                 AppTile(
                   title: 'Export job #${state.lastExportJob!.id}',
                   subtitle:
-                      'Status: ${state.lastExportJob!.status}, URL: ${state.lastExportJob!.signedUrl ?? '-'}',
+                      'Status: ${state.lastExportJob!.status}, URL: ${state.lastExportJob!.signedUrl ?? '-'}, created: ${state.lastExportJob!.createdAt.toLocal()}',
                 ),
               if (state.accountDeletion != null)
                 AppTile(

@@ -17,27 +17,37 @@ class MediaCleanupCall extends FutureCall<MediaCleanupPayload> {
 
   @override
   Future<void> invoke(Session session, MediaCleanupPayload? object) async {
-    final threshold = clock.nowUtc().subtract(const Duration(days: 7));
-    final expired = await MediaObjectRow.db.find(
-      session,
-      where: (t) => t.deletedAt.notEquals(null) & (t.deletedAt < threshold),
-    );
-    final storageClient = storage.forSession(session);
-    for (final row in expired) {
-      try {
-        await storageClient.deleteObject(row.objectKey);
-      } catch (_) {
-        // Ignore missing objects and continue cleaning database state.
-      }
-    }
-    if (expired.isNotEmpty) {
-      await MediaObjectRow.db.deleteWhere(
+    try {
+      final threshold = clock.nowUtc().subtract(const Duration(days: 7));
+      final expired = await MediaObjectRow.db.find(
         session,
         where: (t) => t.deletedAt.notEquals(null) & (t.deletedAt < threshold),
       );
+      final storageClient = storage.forSession(session);
+      for (final row in expired) {
+        try {
+          await storageClient.deleteObject(row.objectKey);
+        } catch (_) {
+          // Ignore missing objects and continue cleaning database state.
+        }
+      }
+      if (expired.isNotEmpty) {
+        await MediaObjectRow.db.deleteWhere(
+          session,
+          where: (t) => t.deletedAt.notEquals(null) & (t.deletedAt < threshold),
+        );
+      }
+    } catch (error, stackTrace) {
+      session.log(
+        'media_cleanup worker failed; payload=${object?.toJson()}',
+        level: LogLevel.error,
+        exception: error,
+        stackTrace: stackTrace,
+      );
+    } finally {
+      await FutureCallRegistry.scheduleMediaCleanup(
+        session.server.serverpod,
+      );
     }
-    await FutureCallRegistry.scheduleMediaCleanup(
-      session.server.serverpod,
-    );
   }
 }

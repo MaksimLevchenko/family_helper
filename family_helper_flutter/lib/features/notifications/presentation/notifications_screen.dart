@@ -15,40 +15,62 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   DateTime? _remindAt;
   final _entityIdController = TextEditingController(text: '1');
+  final _pushTokenController = TextEditingController();
 
   @override
   void dispose() {
     _entityIdController.dispose();
+    _pushTokenController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Local Reminders')),
+      appBar: AppBar(title: const Text('Notifications')),
       body: BlocBuilder<NotificationsCubit, NotificationsState>(
         builder: (context, state) {
+          final pushToken = state.lastRegisteredPushToken;
+          if (pushToken != null && _pushTokenController.text != pushToken) {
+            _pushTokenController.text = pushToken;
+          }
+
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const AppBanner(
-                text:
-                    'This is a session-only debug panel for local reminders. Push token registration is not wired in this client yet.',
-              ),
-              const SizedBox(height: 12),
               if (state.error != null) ...[
                 AppBanner(text: state.error!, isError: true),
                 const SizedBox(height: 12),
               ],
               AppButton(
                 label: state.localNotificationsEnabled
-                    ? 'Local reminders are enabled'
-                    : 'Allow local reminders',
+                    ? 'Local notifications are enabled'
+                    : 'Enable local notifications',
                 isLoading: state.isLoading,
                 onPressed: () async {
                   await context
                       .read<NotificationsCubit>()
                       .initializeLocalReminders();
+                },
+              ),
+              const SizedBox(height: 12),
+              AppTextField(
+                controller: _pushTokenController,
+                label: 'Push token',
+                hint: 'Auto-generated on initialization',
+              ),
+              const SizedBox(height: 12),
+              AppButton(
+                label: 'Register push token',
+                variant: AppButtonVariant.secondary,
+                onPressed: () async {
+                  final token = _pushTokenController.text.trim();
+                  if (token.isEmpty) {
+                    return;
+                  }
+                  await context.read<NotificationsCubit>().registerPushToken(
+                    token: token,
+                  );
                 },
               ),
               const SizedBox(height: 12),
@@ -76,6 +98,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
               const SizedBox(height: 12),
               AppButton(
+                label: 'Reload reminders',
+                variant: AppButtonVariant.secondary,
+                onPressed: () async {
+                  await context.read<NotificationsCubit>().reloadReminders();
+                },
+              ),
+              const SizedBox(height: 12),
+              AppButton(
                 label: 'Schedule reminder',
                 onPressed: () async {
                   final remindAt = _remindAt;
@@ -97,7 +127,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               if (state.reminders.isEmpty)
                 const EmptyState(
                   title: 'No reminders',
-                  message: 'Schedule a reminder to test local and server flow.',
+                  message: 'No active reminders for the selected family.',
                 )
               else
                 ...state.reminders.map(

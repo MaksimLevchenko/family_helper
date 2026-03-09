@@ -62,6 +62,20 @@ class NotificationsEndpoint extends Endpoint {
     );
   }
 
+  Future<List<ReminderDto>> listReminders(
+    Session session, {
+    int? familyId,
+    String? status,
+    int limit = 100,
+  }) {
+    return service.listReminders(
+      session,
+      familyId: familyId,
+      status: status,
+      limit: limit,
+    );
+  }
+
   Future<int> processDueReminders(Session session) {
     throw AccessDeniedException(
       message: 'This method is internal and is not available to clients.',

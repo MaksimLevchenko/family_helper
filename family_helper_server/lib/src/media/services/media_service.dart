@@ -54,10 +54,18 @@ class MediaService {
       }
 
       if (mimeType.trim().isEmpty) {
-        throw ArgumentError.value(mimeType, 'mimeType', 'MIME type is required.');
+        throw ArgumentError.value(
+          mimeType,
+          'mimeType',
+          'MIME type is required.',
+        );
       }
       if (sizeBytes <= 0) {
-        throw ArgumentError.value(sizeBytes, 'sizeBytes', 'Size must be positive.');
+        throw ArgumentError.value(
+          sizeBytes,
+          'sizeBytes',
+          'Size must be positive.',
+        );
       }
 
       final isFresh = await idempotency.tryBegin(
@@ -205,6 +213,46 @@ class MediaService {
     });
   }
 
+  Future<List<MediaObjectDto>> listMedia(
+    Session session, {
+    int? familyId,
+    int limit = 100,
+  }) async {
+    final normalizedLimit = limit <= 0 ? 1 : (limit > 500 ? 500 : limit);
+    if (familyId != null) {
+      await rbac.ensureFamilyRole(
+        session,
+        familyId: familyId,
+        minRole: 'member',
+      );
+      final rows = await MediaObjectRow.db.find(
+        session,
+        where: (t) =>
+            t.familyId.equals(familyId) &
+            t.deletedAt.equals(null) &
+            t.status.notEquals('deleted'),
+        orderBy: (t) => t.id,
+        orderDescending: true,
+        limit: normalizedLimit,
+      );
+      return rows.map(_mapMedia).toList();
+    }
+
+    final profileId = await authContext.ensureProfileId(session);
+    final rows = await MediaObjectRow.db.find(
+      session,
+      where: (t) =>
+          t.familyId.equals(null) &
+          t.uploadedByProfileId.equals(profileId) &
+          t.deletedAt.equals(null) &
+          t.status.notEquals('deleted'),
+      orderBy: (t) => t.id,
+      orderDescending: true,
+      limit: normalizedLimit,
+    );
+    return rows.map(_mapMedia).toList();
+  }
+
   Future<String> signedGetUrl(
     Session session, {
     required int mediaId,
@@ -216,7 +264,9 @@ class MediaService {
       requireOwnerForPersonal: true,
     ))!;
     if (row.status != 'ready') {
-      throw AccessDeniedException(message: 'Media is not available for download.');
+      throw AccessDeniedException(
+        message: 'Media is not available for download.',
+      );
     }
 
     return storage.presignedGetUrl(row.objectKey);

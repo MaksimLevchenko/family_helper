@@ -52,13 +52,15 @@ import 'package:family_helper_client/src/protocol/privacy/models/privacy_export_
     as _i21;
 import 'package:family_helper_client/src/protocol/privacy/models/account_deletion_status_dto.dart'
     as _i22;
-import 'package:family_helper_client/src/protocol/realtime/models/family_realtime_event.dart'
+import 'package:family_helper_client/src/protocol/privacy/models/privacy_status_dto.dart'
     as _i23;
-import 'package:family_helper_client/src/protocol/sync/models/sync_changes_response.dart'
+import 'package:family_helper_client/src/protocol/realtime/models/family_realtime_event.dart'
     as _i24;
-import 'package:family_helper_client/src/protocol/tasks/models/task_dto.dart'
+import 'package:family_helper_client/src/protocol/sync/models/sync_changes_response.dart'
     as _i25;
-import 'protocol.dart' as _i26;
+import 'package:family_helper_client/src/protocol/tasks/models/task_dto.dart'
+    as _i26;
+import 'protocol.dart' as _i27;
 
 /// {@category Endpoint}
 class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
@@ -613,6 +615,18 @@ class EndpointMedia extends _i2.EndpointRef {
         {'mediaId': mediaId},
       );
 
+  _i3.Future<List<_i16.MediaObjectDto>> listMedia({
+    int? familyId,
+    required int limit,
+  }) => caller.callServerEndpoint<List<_i16.MediaObjectDto>>(
+    'media',
+    'listMedia',
+    {
+      'familyId': familyId,
+      'limit': limit,
+    },
+  );
+
   _i3.Future<_i7.OperationResult> softDelete({
     required String clientOperationId,
     required int mediaId,
@@ -744,6 +758,20 @@ class EndpointNotifications extends _i2.EndpointRef {
     },
   );
 
+  _i3.Future<List<_i20.ReminderDto>> listReminders({
+    int? familyId,
+    String? status,
+    required int limit,
+  }) => caller.callServerEndpoint<List<_i20.ReminderDto>>(
+    'notifications',
+    'listReminders',
+    {
+      'familyId': familyId,
+      'status': status,
+      'limit': limit,
+    },
+  );
+
   _i3.Future<int> processDueReminders() => caller.callServerEndpoint<int>(
     'notifications',
     'processDueReminders',
@@ -781,6 +809,13 @@ class EndpointPrivacy extends _i2.EndpointRef {
         {},
       );
 
+  _i3.Future<_i23.PrivacyStatusDto> getStatus() =>
+      caller.callServerEndpoint<_i23.PrivacyStatusDto>(
+        'privacy',
+        'getStatus',
+        {},
+      );
+
   _i3.Future<int> processExportJobs() => caller.callServerEndpoint<int>(
     'privacy',
     'processExportJobs',
@@ -801,12 +836,12 @@ class EndpointRealtime extends _i2.EndpointRef {
   @override
   String get name => 'realtime';
 
-  _i3.Stream<_i23.FamilyRealtimeEvent> watchFamilyEvents({
+  _i3.Stream<_i24.FamilyRealtimeEvent> watchFamilyEvents({
     required int familyId,
   }) =>
       caller.callStreamingServerEndpoint<
-        _i3.Stream<_i23.FamilyRealtimeEvent>,
-        _i23.FamilyRealtimeEvent
+        _i3.Stream<_i24.FamilyRealtimeEvent>,
+        _i24.FamilyRealtimeEvent
       >(
         'realtime',
         'watchFamilyEvents',
@@ -822,12 +857,12 @@ class EndpointSync extends _i2.EndpointRef {
   @override
   String get name => 'sync';
 
-  _i3.Future<_i24.SyncChangesResponse> changes({
+  _i3.Future<_i25.SyncChangesResponse> changes({
     required DateTime since,
     int? familyId,
     required int limit,
     required int lastSeenChangeId,
-  }) => caller.callServerEndpoint<_i24.SyncChangesResponse>(
+  }) => caller.callServerEndpoint<_i25.SyncChangesResponse>(
     'sync',
     'changes',
     {
@@ -846,7 +881,7 @@ class EndpointTasks extends _i2.EndpointRef {
   @override
   String get name => 'tasks';
 
-  _i3.Future<_i25.TaskDto> upsertTask({
+  _i3.Future<_i26.TaskDto> upsertTask({
     required String clientOperationId,
     int? taskId,
     required int familyId,
@@ -858,7 +893,7 @@ class EndpointTasks extends _i2.EndpointRef {
     String? recurrenceMode,
     String? recurrenceRrule,
     int? assigneeProfileId,
-  }) => caller.callServerEndpoint<_i25.TaskDto>(
+  }) => caller.callServerEndpoint<_i26.TaskDto>(
     'tasks',
     'upsertTask',
     {
@@ -876,18 +911,18 @@ class EndpointTasks extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<List<_i25.TaskDto>> listTasks({required int familyId}) =>
-      caller.callServerEndpoint<List<_i25.TaskDto>>(
+  _i3.Future<List<_i26.TaskDto>> listTasks({required int familyId}) =>
+      caller.callServerEndpoint<List<_i26.TaskDto>>(
         'tasks',
         'listTasks',
         {'familyId': familyId},
       );
 
-  _i3.Future<_i25.TaskDto> completeTask({
+  _i3.Future<_i26.TaskDto> completeTask({
     required String clientOperationId,
     required int familyId,
     required int taskId,
-  }) => caller.callServerEndpoint<_i25.TaskDto>(
+  }) => caller.callServerEndpoint<_i26.TaskDto>(
     'tasks',
     'completeTask',
     {
@@ -929,7 +964,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i26.Protocol(),
+         _i27.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

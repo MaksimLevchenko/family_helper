@@ -159,6 +159,27 @@ class PrivacyService {
     });
   }
 
+  Future<PrivacyStatusDto> getStatus(Session session) async {
+    final profileId = await authContext.ensureProfileId(session);
+    final latestExport = await PrivacyExportJobRow.db.findFirstRow(
+      session,
+      where: (t) => t.profileId.equals(profileId),
+      orderBy: (t) => t.id,
+      orderDescending: true,
+    );
+    final deletion = await AccountDeletionRequestRow.db.findFirstRow(
+      session,
+      where: (t) => t.profileId.equals(profileId),
+      orderBy: (t) => t.id,
+      orderDescending: true,
+    );
+
+    return PrivacyStatusDto(
+      lastExportJob: latestExport == null ? null : _mapExport(latestExport),
+      accountDeletion: deletion == null ? null : _mapDeletion(deletion),
+    );
+  }
+
   Future<int> processExportJobs(Session session) async {
     final pending = await session.db.transaction((transaction) async {
       final result = await session.db.unsafeQuery(
@@ -327,7 +348,8 @@ class PrivacyService {
         final mediaObjects = await MediaObjectRow.db.find(
           session,
           where: (t) =>
-              t.uploadedByProfileId.equals(profileId) & t.deletedAt.equals(null),
+              t.uploadedByProfileId.equals(profileId) &
+              t.deletedAt.equals(null),
           transaction: transaction,
         );
         for (final mo in mediaObjects) {

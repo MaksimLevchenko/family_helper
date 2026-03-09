@@ -1,4 +1,5 @@
 import 'package:serverpod/serverpod.dart';
+
 import '../clock/clock_service.dart';
 import '../../generated/protocol.dart';
 
@@ -25,9 +26,9 @@ class IdempotencyService {
     Transaction? transaction,
   }) async {
     try {
-      await IdempotencyKeyRow.db.insertRow(
+      await insertIdempotencyKey(
         session,
-        IdempotencyKeyRow(
+        row: IdempotencyKeyRow(
           actorAuthUserId: actorAuthUserId,
           action: action,
           clientOperationId: clientOperationId,
@@ -38,16 +39,24 @@ class IdempotencyService {
         transaction: transaction,
       );
       return true;
-    } on DatabaseInsertRowException {
-      return false;
     } on DatabaseQueryException catch (error) {
       if (error.code == '23505') {
         return false;
       }
       rethrow;
-    } catch (_) {
-      return false;
     }
+  }
+
+  Future<void> insertIdempotencyKey(
+    Session session, {
+    required IdempotencyKeyRow row,
+    Transaction? transaction,
+  }) {
+    return IdempotencyKeyRow.db.insertRow(
+      session,
+      row,
+      transaction: transaction,
+    );
   }
 
   Future<IdempotencyResourceBinding?> getBinding(

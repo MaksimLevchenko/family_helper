@@ -4,6 +4,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
+import 'src/auth/email_code_dispatcher.dart';
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
 import 'src/workers/future_call_registry.dart';
@@ -89,9 +90,11 @@ void _sendRegistrationCode(
   required String verificationCode,
   required Transaction? transaction,
 }) {
-  if (session.server.serverpod.runMode == 'test') {
-    session.log('[EmailIdp] Registration requested for $email');
-  }
+  EmailCodeDispatcher.instance.sendRegistrationCode(
+    session,
+    email: email,
+    verificationCode: verificationCode,
+  );
 }
 
 void _sendPasswordResetCode(
@@ -101,7 +104,9 @@ void _sendPasswordResetCode(
   required String verificationCode,
   required Transaction? transaction,
 }) {
-  if (session.server.serverpod.runMode == 'test') {
-    session.log('[EmailIdp] Password reset requested for $email');
-  }
+  EmailCodeDispatcher.instance.sendPasswordResetCode(
+    session,
+    email: email,
+    verificationCode: verificationCode,
+  );
 }

@@ -44,4 +44,26 @@ class FamilyRepository {
       tokenOrCode: tokenOrCode,
     );
   }
+
+  Future<OperationResult> transferOwnership({
+    required int familyId,
+    required String clientOperationId,
+    required int newOwnerProfileId,
+  }) {
+    return _apiClient.client.family.transferOwnership(
+      familyId: familyId,
+      clientOperationId: clientOperationId,
+      newOwnerProfileId: newOwnerProfileId,
+    );
+  }
+
+  Future<OperationResult> leaveFamily({
+    required int familyId,
+    required String clientOperationId,
+  }) {
+    return _apiClient.client.family.leaveFamily(
+      familyId: familyId,
+      clientOperationId: clientOperationId,
+    );
+  }
 }

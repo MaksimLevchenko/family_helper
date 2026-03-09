@@ -52,12 +52,14 @@ import 'package:family_helper_server/src/generated/privacy/models/privacy_export
     as _i21;
 import 'package:family_helper_server/src/generated/privacy/models/account_deletion_status_dto.dart'
     as _i22;
-import 'package:family_helper_server/src/generated/realtime/models/family_realtime_event.dart'
+import 'package:family_helper_server/src/generated/privacy/models/privacy_status_dto.dart'
     as _i23;
-import 'package:family_helper_server/src/generated/sync/models/sync_changes_response.dart'
+import 'package:family_helper_server/src/generated/realtime/models/family_realtime_event.dart'
     as _i24;
-import 'package:family_helper_server/src/generated/tasks/models/task_dto.dart'
+import 'package:family_helper_server/src/generated/sync/models/sync_changes_response.dart'
     as _i25;
+import 'package:family_helper_server/src/generated/tasks/models/task_dto.dart'
+    as _i26;
 import 'package:family_helper_server/src/generated/protocol.dart';
 import 'package:family_helper_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -1378,6 +1380,41 @@ class _MediaEndpoint {
     });
   }
 
+  _i3.Future<List<_i16.MediaObjectDto>> listMedia(
+    _i1.TestSessionBuilder sessionBuilder, {
+    int? familyId,
+    required int limit,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'media',
+            method: 'listMedia',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'media',
+          methodName: 'listMedia',
+          parameters: _i1.testObjectToJson({
+            'familyId': familyId,
+            'limit': limit,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<List<_i16.MediaObjectDto>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _i3.Future<_i7.OperationResult> softDelete(
     _i1.TestSessionBuilder sessionBuilder, {
     required String clientOperationId,
@@ -1677,6 +1714,43 @@ class _NotificationsEndpoint {
     });
   }
 
+  _i3.Future<List<_i20.ReminderDto>> listReminders(
+    _i1.TestSessionBuilder sessionBuilder, {
+    int? familyId,
+    String? status,
+    required int limit,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'notifications',
+            method: 'listReminders',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'notifications',
+          methodName: 'listReminders',
+          parameters: _i1.testObjectToJson({
+            'familyId': familyId,
+            'status': status,
+            'limit': limit,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<List<_i20.ReminderDto>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _i3.Future<int> processDueReminders(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
@@ -1814,6 +1888,36 @@ class _PrivacyEndpoint {
     });
   }
 
+  _i3.Future<_i23.PrivacyStatusDto> getStatus(
+    _i1.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'privacy',
+            method: 'getStatus',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'privacy',
+          methodName: 'getStatus',
+          parameters: _i1.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i23.PrivacyStatusDto>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _i3.Future<int> processExportJobs(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
@@ -1885,12 +1989,12 @@ class _RealtimeEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Stream<_i23.FamilyRealtimeEvent> watchFamilyEvents(
+  _i3.Stream<_i24.FamilyRealtimeEvent> watchFamilyEvents(
     _i1.TestSessionBuilder sessionBuilder, {
     required int familyId,
   }) {
     var _localTestStreamManager =
-        _i1.TestStreamManager<_i23.FamilyRealtimeEvent>();
+        _i1.TestStreamManager<_i24.FamilyRealtimeEvent>();
     _i1.callStreamFunctionAndHandleExceptions(
       () async {
         var _localUniqueSession =
@@ -1929,7 +2033,7 @@ class _SyncEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i24.SyncChangesResponse> changes(
+  _i3.Future<_i25.SyncChangesResponse> changes(
     _i1.TestSessionBuilder sessionBuilder, {
     required DateTime since,
     int? familyId,
@@ -1960,7 +2064,7 @@ class _SyncEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i24.SyncChangesResponse>);
+                as _i3.Future<_i25.SyncChangesResponse>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1979,7 +2083,7 @@ class _TasksEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i25.TaskDto> upsertTask(
+  _i3.Future<_i26.TaskDto> upsertTask(
     _i1.TestSessionBuilder sessionBuilder, {
     required String clientOperationId,
     int? taskId,
@@ -2024,7 +2128,7 @@ class _TasksEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i25.TaskDto>);
+                as _i3.Future<_i26.TaskDto>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2032,7 +2136,7 @@ class _TasksEndpoint {
     });
   }
 
-  _i3.Future<List<_i25.TaskDto>> listTasks(
+  _i3.Future<List<_i26.TaskDto>> listTasks(
     _i1.TestSessionBuilder sessionBuilder, {
     required int familyId,
   }) async {
@@ -2055,7 +2159,7 @@ class _TasksEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i25.TaskDto>>);
+                as _i3.Future<List<_i26.TaskDto>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2063,7 +2167,7 @@ class _TasksEndpoint {
     });
   }
 
-  _i3.Future<_i25.TaskDto> completeTask(
+  _i3.Future<_i26.TaskDto> completeTask(
     _i1.TestSessionBuilder sessionBuilder, {
     required String clientOperationId,
     required int familyId,
@@ -2092,7 +2196,7 @@ class _TasksEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i25.TaskDto>);
+                as _i3.Future<_i26.TaskDto>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

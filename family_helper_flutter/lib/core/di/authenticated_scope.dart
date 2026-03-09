@@ -10,6 +10,7 @@ import '../../features/money_goals/providers/money_goals_provider.dart';
 import '../../features/notifications/providers/notifications_provider.dart';
 import '../../features/privacy_security/providers/privacy_provider.dart';
 import '../../features/tasks/providers/tasks_provider.dart';
+import '../realtime/realtime_feature_flags.dart';
 import '../auth/auth_session.dart';
 import '../realtime/realtime_provider.dart';
 import '../sync/sync_controller.dart';
@@ -46,6 +47,7 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
     _familyMembersCubit = FamilyMembersCubit(
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,
+      offlineQueueManager: getIt(),
     );
     _calendarCubit = CalendarCubit(
       repository: getIt(),
@@ -68,12 +70,17 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,
       localNotificationService: getIt(),
+      offlineQueueManager: getIt(),
     );
     _mediaCubit = MediaCubit(
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,
+      offlineQueueManager: getIt(),
     );
-    _privacyCubit = PrivacyCubit(repository: getIt());
+    _privacyCubit = PrivacyCubit(
+      repository: getIt(),
+      offlineQueueManager: getIt(),
+    );
     _profileBloc = ProfileBloc(repository: getIt());
     _realtimeCubit = RealtimeCubit(
       manager: getIt(),
@@ -90,11 +97,11 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
         if (features.contains('lists')) {
           reloads.add(_listsCubit.reload());
         }
-        if (features.contains('moneyGoals')) {
+        if (features.any(isMoneyGoalsFeature)) {
           reloads.add(_moneyGoalsCubit.reload());
         }
         if (features.contains('notifications')) {
-          reloads.add(_notificationsCubit.reloadDebugState());
+          reloads.add(_notificationsCubit.reloadReminders());
         }
         if (reloads.isEmpty) {
           return;
