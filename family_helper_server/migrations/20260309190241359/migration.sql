@@ -6,6 +6,31 @@ BEGIN;
 ALTER TABLE "idempotency_key" ADD COLUMN "resourceType" text;
 ALTER TABLE "idempotency_key" ADD COLUMN "resourceId" bigint;
 
+-- Resolve historical duplicate authUserId rows deterministically so the
+-- unique index can be created without dropping profile records.
+WITH "ranked_profiles" AS (
+    SELECT
+        "id",
+        "authUserId",
+        ROW_NUMBER() OVER (
+            PARTITION BY "authUserId"
+            ORDER BY
+                CASE WHEN "deletedAt" IS NULL THEN 0 ELSE 1 END,
+                "updatedAt" DESC,
+                "id" DESC
+        ) AS "rn"
+    FROM "app_profile"
+),
+"duplicates" AS (
+    SELECT "id", "authUserId"
+    FROM "ranked_profiles"
+    WHERE "rn" > 1
+)
+UPDATE "app_profile" AS p
+SET "authUserId" = d."authUserId" || '#dup#' || p."id"::text
+FROM "duplicates" AS d
+WHERE p."id" = d."id";
+
 DO $$
 BEGIN
     IF EXISTS (
@@ -79,46 +104,6 @@ BEGIN
     END IF;
 END $$;
 
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM "family_member"
-        WHERE "deletedAt" IS NULL
-        GROUP BY "familyId", "profileId"
-        HAVING COUNT(*) > 1
-    ) THEN
-        RAISE EXCEPTION 'Cannot create unique index on active family_member(familyId, profileId): duplicate rows exist.';
-    END IF;
-END $$;
-
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM "task"
-        WHERE "sourceTaskId" IS NOT NULL
-          AND "deletedAt" IS NULL
-        GROUP BY "sourceTaskId", "dueAt"
-        HAVING COUNT(*) > 1
-    ) THEN
-        RAISE EXCEPTION 'Cannot create unique index on active task(sourceTaskId, dueAt): duplicate rows exist.';
-    END IF;
-END $$;
-
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM "calendar_event_override"
-        WHERE "deletedAt" IS NULL
-        GROUP BY "eventId", "occurrenceStart"
-        HAVING COUNT(*) > 1
-    ) THEN
-        RAISE EXCEPTION 'Cannot create unique index on active calendar_event_override(eventId, occurrenceStart): duplicate rows exist.';
-    END IF;
-END $$;
-
 CREATE UNIQUE INDEX IF NOT EXISTS "app_profile_auth_user_id_idx"
     ON "app_profile" USING btree ("authUserId");
 CREATE UNIQUE INDEX IF NOT EXISTS "account_deletion_request_profile_id_idx"
@@ -131,15 +116,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS "notification_preference_profile_type_idx"
     ON "notification_preference" USING btree ("profileId", "notificationType");
 CREATE UNIQUE INDEX IF NOT EXISTS "push_token_profile_token_idx"
     ON "push_token" USING btree ("profileId", "token");
-CREATE UNIQUE INDEX IF NOT EXISTS "family_member_active_family_profile_idx"
-    ON "family_member" USING btree ("familyId", "profileId")
-    WHERE "deletedAt" IS NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS "task_active_source_due_idx"
-    ON "task" USING btree ("sourceTaskId", "dueAt")
-    WHERE "sourceTaskId" IS NOT NULL AND "deletedAt" IS NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS "calendar_event_override_active_occurrence_idx"
-    ON "calendar_event_override" USING btree ("eventId", "occurrenceStart")
-    WHERE "deletedAt" IS NULL;
 
 --
 -- MIGRATION VERSION FOR family_helper

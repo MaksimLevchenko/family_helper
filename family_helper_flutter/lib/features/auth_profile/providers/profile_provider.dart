@@ -22,12 +22,14 @@ class ProfileUpdateRequested extends ProfileEvent {
     this.displayName,
     this.timezone,
     this.avatarMediaId,
+    this.clearAvatarMedia = false,
     this.analyticsOptIn,
   });
 
   final String? displayName;
   final String? timezone;
   final int? avatarMediaId;
+  final bool clearAvatarMedia;
   final bool? analyticsOptIn;
 }
 
@@ -102,6 +104,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         displayName: event.displayName,
         timezone: event.timezone,
         avatarMediaId: event.avatarMediaId,
+        clearAvatarMedia: event.clearAvatarMedia,
         analyticsOptIn: event.analyticsOptIn,
       );
       emit(

@@ -10,6 +10,7 @@ abstract class ProfileRepositoryContract {
     String? displayName,
     String? timezone,
     int? avatarMediaId,
+    bool clearAvatarMedia = false,
     bool? analyticsOptIn,
   });
 }
@@ -30,6 +31,7 @@ class ProfileRepository implements ProfileRepositoryContract {
     String? displayName,
     String? timezone,
     int? avatarMediaId,
+    bool clearAvatarMedia = false,
     bool? analyticsOptIn,
   }) {
     return _apiClient.client.profile.update(
@@ -37,6 +39,7 @@ class ProfileRepository implements ProfileRepositoryContract {
       displayName: displayName,
       timezone: timezone,
       avatarMediaId: avatarMediaId,
+      clearAvatarMedia: clearAvatarMedia,
       analyticsOptIn: analyticsOptIn,
     );
   }

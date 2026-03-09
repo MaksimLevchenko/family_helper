@@ -19,6 +19,8 @@ Create `config/passwords.yaml` from `config/passwords.yaml.example`, then set en
   - `minioPublicBaseUrl`
   - `minioUseSsl`
   - `minioSignUrlTtl`
+- Optional for test runs:
+  - `MINIO_FORCE_REAL_IN_TEST=true` to disable mock storage fallback in `test` mode
 
 Recommended local values:
 
@@ -71,6 +73,23 @@ Apply on startup:
 
 ```bash
 dart bin/main.dart --apply-migrations
+```
+
+Migration policy for this repo: use only Serverpod CLI flow.
+
+```bash
+# 1) Regenerate protocol/endpoints/tables after model changes
+serverpod generate
+
+# 2) Create migration (or repair migration when needed)
+serverpod create-migration
+# or
+serverpod create-repair-migration
+
+# 3) Apply migrations through Serverpod runtime
+dart bin/main.dart --apply-migrations
+# or
+dart bin/main.dart --apply-repair-migration
 ```
 
 ## Run Server

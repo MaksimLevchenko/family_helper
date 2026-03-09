@@ -11,6 +11,7 @@ class MinioStorageService {
   static const _passwordKeyPublicBaseUrl = 'minioPublicBaseUrl';
   static const _passwordKeyUseSsl = 'minioUseSsl';
   static const _passwordKeySignUrlTtl = 'minioSignUrlTtl';
+  static const _passwordKeyForceRealInTest = 'minioForceRealInTest';
 
   MinioStorageService({
     String? endpoint,
@@ -20,6 +21,7 @@ class MinioStorageService {
     String? publicBaseUrl,
     int? signUrlTtlSeconds,
     bool? useSsl,
+    bool? useMockStorage,
   }) : _endpoint =
            endpoint ??
            (Platform.environment['MINIO_ENDPOINT'] ?? 'localhost:9000'),
@@ -43,7 +45,8 @@ class MinioStorageService {
        _useSsl =
            useSsl ??
            ((Platform.environment['MINIO_USE_SSL'] ?? 'false').toLowerCase() ==
-               'true');
+               'true'),
+       _useMockStorage = useMockStorage ?? false;
 
   final String _endpoint;
   final String _bucket;
@@ -52,6 +55,7 @@ class MinioStorageService {
   final String? _publicBaseUrl;
   final int _signUrlTtlSeconds;
   final bool _useSsl;
+  final bool _useMockStorage;
 
   String get bucket => _bucket;
 
@@ -59,6 +63,14 @@ class MinioStorageService {
     final passwords = session.passwords;
     final useSsl = passwords[_passwordKeyUseSsl];
     final ttlRaw = passwords[_passwordKeySignUrlTtl];
+    final forceRealInTest =
+        _isTruthy(
+          Platform.environment['MINIO_FORCE_REAL_IN_TEST'],
+        ) ||
+        _isTruthy(passwords[_passwordKeyForceRealInTest]);
+    final useMockStorage =
+        session.server.serverpod.runMode == ServerpodRunMode.test &&
+        !forceRealInTest;
     return MinioStorageService(
       endpoint: passwords[_passwordKeyEndpoint] ?? _endpoint,
       bucket: passwords[_passwordKeyBucket] ?? _bucket,
@@ -69,10 +81,14 @@ class MinioStorageService {
           ? int.tryParse(ttlRaw)
           : _signUrlTtlSeconds,
       useSsl: useSsl != null ? useSsl.toLowerCase() == 'true' : _useSsl,
+      useMockStorage: useMockStorage,
     );
   }
 
   Future<String> presignedPutUrl(String objectKey) async {
+    if (_useMockStorage) {
+      return _mockPresignedUrl(objectKey, method: 'PUT');
+    }
     return _client().presignedPutObject(
       _bucket,
       objectKey,
@@ -81,6 +97,9 @@ class MinioStorageService {
   }
 
   Future<String> presignedGetUrl(String objectKey) async {
+    if (_useMockStorage) {
+      return _mockPresignedUrl(objectKey, method: 'GET');
+    }
     return _client().presignedGetObject(
       _bucket,
       objectKey,
@@ -89,6 +108,9 @@ class MinioStorageService {
   }
 
   Future<void> deleteObject(String objectKey) {
+    if (_useMockStorage) {
+      return Future<void>.value();
+    }
     return _client().removeObject(_bucket, objectKey);
   }
 
@@ -97,6 +119,9 @@ class MinioStorageService {
     Uint8List bytes, {
     String? contentType,
   }) {
+    if (_useMockStorage) {
+      return Future<void>.value();
+    }
     final metadata = <String, String>{};
     if (contentType != null && contentType.trim().isNotEmpty) {
       metadata['Content-Type'] = contentType;
@@ -108,6 +133,67 @@ class MinioStorageService {
       size: bytes.length,
       metadata: metadata,
     );
+  }
+
+  String _mockPresignedUrl(String objectKey, {required String method}) {
+    final endpointConfig = _resolveEndpointConfig();
+    final nowUtc = DateTime.now().toUtc();
+    final dateStamp = _formatDate(nowUtc);
+    final amzDate = '${dateStamp}T${_formatTime(nowUtc)}Z';
+    final signature = _mockSignature(
+      '$method|$_bucket|$objectKey|$_accessKey|$_signSecret|$amzDate',
+    );
+
+    return Uri(
+      scheme: endpointConfig.useSsl ? 'https' : 'http',
+      host: endpointConfig.host,
+      port: endpointConfig.port,
+      pathSegments: [
+        _bucket,
+        ...objectKey.split('/').where((segment) => segment.isNotEmpty),
+      ],
+      queryParameters: {
+        'x-amz-algorithm': 'AWS4-HMAC-SHA256',
+        'x-amz-credential': '$_accessKey/$dateStamp/us-east-1/s3/aws4_request',
+        'x-amz-date': amzDate,
+        'x-amz-expires': '$_signUrlTtlSeconds',
+        'x-amz-signedheaders': 'host',
+        'x-amz-signature': signature,
+      },
+    ).toString();
+  }
+
+  String _mockSignature(String input) {
+    var state = 0x811C9DC5;
+    for (final unit in input.codeUnits) {
+      state ^= unit;
+      state = (state * 0x01000193) & 0xFFFFFFFF;
+    }
+
+    final buffer = StringBuffer();
+    var value = state;
+    for (var i = 0; i < 8; i++) {
+      value = ((value * 1103515245) + 12345) & 0xFFFFFFFF;
+      buffer.write(value.toRadixString(16).padLeft(8, '0'));
+    }
+    return buffer.toString();
+  }
+
+  String _formatDate(DateTime value) {
+    return '${value.year.toString().padLeft(4, '0')}'
+        '${value.month.toString().padLeft(2, '0')}'
+        '${value.day.toString().padLeft(2, '0')}';
+  }
+
+  String _formatTime(DateTime value) {
+    return '${value.hour.toString().padLeft(2, '0')}'
+        '${value.minute.toString().padLeft(2, '0')}'
+        '${value.second.toString().padLeft(2, '0')}';
+  }
+
+  bool _isTruthy(String? value) {
+    if (value == null) return false;
+    return value.trim().toLowerCase() == 'true';
   }
 
   Minio _client() {

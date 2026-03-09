@@ -18,12 +18,15 @@ class FakeProfileRepository implements ProfileRepositoryContract {
     String? displayName,
     String? timezone,
     int? avatarMediaId,
+    bool clearAvatarMedia = false,
     bool? analyticsOptIn,
   }) async {
     _profile = _profile.copyWith(
       displayName: displayName ?? _profile.displayName,
       timezone: timezone ?? _profile.timezone,
-      avatarMediaId: avatarMediaId ?? _profile.avatarMediaId,
+      avatarMediaId: clearAvatarMedia
+          ? null
+          : (avatarMediaId ?? _profile.avatarMediaId),
       analyticsOptIn: analyticsOptIn ?? _profile.analyticsOptIn,
     );
     return _profile;
@@ -38,6 +41,7 @@ void main() {
         authUserId: '00000000-0000-4000-8000-000000000001',
         displayName: 'Initial',
         timezone: 'UTC',
+        avatarMediaId: 42,
         analyticsOptIn: false,
         createdAt: DateTime.utc(2026, 1, 1),
         updatedAt: DateTime.utc(2026, 1, 1),
@@ -61,6 +65,11 @@ void main() {
 
     expect(bloc.state.profile?.displayName, 'Updated');
     expect(bloc.state.profile?.analyticsOptIn, true);
+
+    bloc.add(const ProfileUpdateRequested(clearAvatarMedia: true));
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    expect(bloc.state.profile?.avatarMediaId, isNull);
 
     bloc.add(const ProfileResetRequested());
     await Future<void>.delayed(const Duration(milliseconds: 10));

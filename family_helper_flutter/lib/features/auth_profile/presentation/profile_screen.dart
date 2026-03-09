@@ -133,6 +133,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
                 },
               ),
+              if (profile.avatarMediaId != null) ...[
+                const SizedBox(height: 12),
+                AppButton(
+                  label: 'Remove avatar',
+                  variant: AppButtonVariant.danger,
+                  isLoading: state.isLoading,
+                  onPressed: () {
+                    context.read<ProfileBloc>().add(
+                      const ProfileUpdateRequested(clearAvatarMedia: true),
+                    );
+                  },
+                ),
+              ],
             ],
           );
         },

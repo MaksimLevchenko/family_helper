@@ -39,6 +39,7 @@ flutter run
   - `MINIO_PUBLIC_BASE_URL` (optional)
   - `MINIO_USE_SSL` (optional, default `false`)
   - `SIGN_URL_TTL` (optional, default `900`)
+  - `MINIO_FORCE_REAL_IN_TEST` (optional, default `false`; forces real MinIO in test mode)
 
 ### Client
 - Optional `SERVER_URL` via `--dart-define`
@@ -80,3 +81,7 @@ cp .env.example .env
 ## Docs
 - Server setup: `family_helper_server/README.server.md`
 - Client setup: `family_helper_flutter/README.client.md`
+
+## Migration Policy
+- Apply and repair DB schema only through Serverpod CLI/runtime (`serverpod generate`, `serverpod create-migration` / `create-repair-migration`, `--apply-migrations` / `--apply-repair-migration`).
+- Do not hand-edit SQL migration files.
