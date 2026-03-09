@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/config/app_defaults.dart';
 import '../../../core/logging/app_error_logger.dart';
 import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
@@ -48,14 +49,26 @@ class ListsCubit extends Cubit<ListsState> {
   }) : _repository = repository,
        _familySelectionCubit = familySelectionCubit,
        super(ListsState.initial()) {
-    _familySub = _familySelectionCubit.stream.listen((_) {
-      emit(const ListsState(isLoading: false, items: []));
+    _familySub = _familySelectionCubit.stream.listen((familyId) {
+      unawaited(_handleFamilyChanged(familyId));
     });
   }
 
   final ListsRepository _repository;
   final FamilySelectionCubit _familySelectionCubit;
   StreamSubscription<int?>? _familySub;
+
+  Future<void> _handleFamilyChanged(int? familyId) async {
+    reset();
+    if (familyId == null || state.currentListId == null) {
+      return;
+    }
+    await reload();
+  }
+
+  void reset() {
+    emit(ListsState.initial());
+  }
 
   void setCurrentList(int listId) {
     emit(state.copyWith(currentListId: listId, clearError: true));
@@ -98,7 +111,10 @@ class ListsCubit extends Cubit<ListsState> {
     }
   }
 
-  Future<void> createList(String title, {String listType = 'shopping'}) async {
+  Future<void> createList(
+    String title, {
+    String listType = AppDefaults.defaultListType,
+  }) async {
     final familyId = _familySelectionCubit.state;
     if (familyId == null) {
       emit(state.copyWith(error: 'Family is not selected'));

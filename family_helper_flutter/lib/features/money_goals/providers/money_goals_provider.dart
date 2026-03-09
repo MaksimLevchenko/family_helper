@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/config/app_defaults.dart';
 import '../../../core/logging/app_error_logger.dart';
 import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
@@ -48,16 +49,26 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
   }) : _repository = repository,
        _familySelectionCubit = familySelectionCubit,
        super(MoneyGoalsState.initial()) {
-    _familySub = _familySelectionCubit.stream.listen((_) {
-      emit(const MoneyGoalsState(isLoading: false, goals: []));
-      unawaited(reload());
+    _familySub = _familySelectionCubit.stream.listen((familyId) {
+      unawaited(_handleFamilyChanged(familyId));
     });
-    unawaited(reload());
   }
 
   final MoneyGoalsRepository _repository;
   final FamilySelectionCubit _familySelectionCubit;
   StreamSubscription<int?>? _familySub;
+
+  Future<void> _handleFamilyChanged(int? familyId) async {
+    reset();
+    if (familyId == null) {
+      return;
+    }
+    await reload();
+  }
+
+  void reset() {
+    emit(MoneyGoalsState.initial());
+  }
 
   void setCurrentGoal(int goalId) {
     emit(state.copyWith(currentGoalId: goalId, clearError: true));
@@ -95,7 +106,7 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
   Future<void> createGoal({
     required String title,
     required int targetAmountCents,
-    String currency = 'RUB',
+    String currency = AppDefaults.defaultCurrency,
   }) async {
     final familyId = _familySelectionCubit.state;
     if (familyId == null) {
@@ -136,7 +147,7 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
 
   Future<void> addContribution({
     required int amountCents,
-    String currency = 'RUB',
+    String currency = AppDefaults.defaultCurrency,
     String? note,
   }) async {
     final familyId = _familySelectionCubit.state;

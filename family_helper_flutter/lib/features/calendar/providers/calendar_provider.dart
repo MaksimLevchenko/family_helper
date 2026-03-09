@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/auth/auth_session.dart';
+import '../../../core/config/app_defaults.dart';
 import '../../../core/logging/app_error_logger.dart';
 import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
@@ -41,18 +43,32 @@ class CalendarCubit extends Cubit<CalendarState> {
   CalendarCubit({
     required CalendarRepository repository,
     required FamilySelectionCubit familySelectionCubit,
+    required AuthCubit authCubit,
   }) : _repository = repository,
        _familySelectionCubit = familySelectionCubit,
+       _authCubit = authCubit,
        super(CalendarState.initial()) {
-    _familySub = _familySelectionCubit.stream.listen((_) {
-      unawaited(reload());
+    _familySub = _familySelectionCubit.stream.listen((familyId) {
+      unawaited(_handleFamilyChanged(familyId));
     });
-    unawaited(reload());
   }
 
   final CalendarRepository _repository;
   final FamilySelectionCubit _familySelectionCubit;
+  final AuthCubit _authCubit;
   StreamSubscription<int?>? _familySub;
+
+  Future<void> _handleFamilyChanged(int? familyId) async {
+    reset();
+    if (familyId == null) {
+      return;
+    }
+    await reload();
+  }
+
+  void reset() {
+    emit(CalendarState.initial());
+  }
 
   Future<void> reload() async {
     final familyId = _familySelectionCubit.state;
@@ -66,8 +82,10 @@ class CalendarCubit extends Cubit<CalendarState> {
     try {
       final instances = await _repository.listInstances(
         familyId: familyId,
-        rangeStart: DateTime.now().toUtc().subtract(const Duration(days: 7)),
-        rangeEnd: DateTime.now().toUtc().add(const Duration(days: 30)),
+        rangeStart: DateTime.now().toUtc().subtract(
+          AppDefaults.calendarLookBehind,
+        ),
+        rangeEnd: DateTime.now().toUtc().add(AppDefaults.calendarLookAhead),
       );
       emit(
         state.copyWith(
@@ -101,13 +119,15 @@ class CalendarCubit extends Cubit<CalendarState> {
 
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
+      final timezone =
+          _authCubit.state.profile?.timezone ?? AppDefaults.defaultTimezone;
       await _repository.upsertEvent(
         clientOperationId: OperationId.next(),
         familyId: familyId,
         title: title,
         startsAt: startsAt,
         endsAt: endsAt,
-        timezone: 'UTC',
+        timezone: timezone,
         rrule: rrule,
       );
       await reload();

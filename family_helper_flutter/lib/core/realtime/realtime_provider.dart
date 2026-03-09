@@ -1,17 +1,15 @@
 import 'dart:async';
 
-import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../config/app_defaults.dart';
 import '../../features/family_invites/providers/family_provider.dart';
 import '../logging/app_error_logger.dart';
-import '../sync/sync_controller.dart';
 import 'realtime_subscription_manager.dart';
 
 typedef RealtimeInvalidationCallback =
-    Future<void> Function(
-      FamilyRealtimeEvent event,
-    );
+    Future<void> Function(Set<String> features);
+typedef RealtimeSyncCallback = Future<void> Function(int familyId);
 
 class RealtimeState {
   const RealtimeState({
@@ -44,22 +42,29 @@ class RealtimeState {
 
 class RealtimeCubit extends Cubit<RealtimeState> {
   RealtimeCubit({
-    required RealtimeSubscriptionManager manager,
+    required RealtimeSubscriptionDriver manager,
     required FamilySelectionCubit familySelectionCubit,
-    required SyncCubit syncCubit,
+    required RealtimeSyncCallback syncFamily,
     required RealtimeInvalidationCallback onInvalidation,
+    Duration debounce = AppDefaults.realtimeDebounce,
   }) : _manager = manager,
        _familySelectionCubit = familySelectionCubit,
-       _syncCubit = syncCubit,
+       _syncFamily = syncFamily,
        _onInvalidation = onInvalidation,
+       _debounce = debounce,
        super(RealtimeState.initial());
 
-  final RealtimeSubscriptionManager _manager;
+  final RealtimeSubscriptionDriver _manager;
   final FamilySelectionCubit _familySelectionCubit;
-  final SyncCubit _syncCubit;
+  final RealtimeSyncCallback _syncFamily;
   final RealtimeInvalidationCallback _onInvalidation;
+  final Duration _debounce;
 
   StreamSubscription<int?>? _familySubscription;
+  Timer? _flushTimer;
+  final Set<String> _pendingFeatures = <String>{};
+  bool _flushInProgress = false;
+  int? _pendingFamilyId;
 
   Future<void> start() async {
     if (state.started) {
@@ -86,8 +91,12 @@ class RealtimeCubit extends Cubit<RealtimeState> {
       await _manager.subscribeToFamily(
         familyId,
         onEvent: (event) async {
-          await _syncCubit.sync(familyId: event.familyId);
-          await _onInvalidation(event);
+          _pendingFamilyId = event.familyId;
+          _pendingFeatures.add(event.feature);
+          _flushTimer?.cancel();
+          _flushTimer = Timer(_debounce, () {
+            unawaited(_flushPending());
+          });
         },
       );
       emit(state.copyWith(familyId: familyId, clearError: true));
@@ -104,8 +113,32 @@ class RealtimeCubit extends Cubit<RealtimeState> {
 
   @override
   Future<void> close() async {
+    _flushTimer?.cancel();
     await _familySubscription?.cancel();
     await _manager.dispose();
     return super.close();
+  }
+
+  Future<void> _flushPending() async {
+    if (_flushInProgress) {
+      return;
+    }
+
+    final familyId = _pendingFamilyId;
+    if (familyId == null || _pendingFeatures.isEmpty) {
+      return;
+    }
+
+    _flushInProgress = true;
+    try {
+      while (_pendingFeatures.isNotEmpty) {
+        final features = Set<String>.from(_pendingFeatures);
+        _pendingFeatures.clear();
+        await _syncFamily(familyId);
+        await _onInvalidation(features);
+      }
+    } finally {
+      _flushInProgress = false;
+    }
   }
 }

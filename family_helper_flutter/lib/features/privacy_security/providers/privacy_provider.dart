@@ -41,6 +41,10 @@ class PrivacyCubit extends Cubit<PrivacyState> {
 
   final PrivacyRepository _repository;
 
+  void reset() {
+    emit(const PrivacyState());
+  }
+
   Future<void> requestExport() async {
     emit(state.copyWith(isLoading: true, clearError: true));
     try {

@@ -50,8 +50,29 @@ class SyncCubit extends Cubit<SyncState> {
   SyncCubit(this._apiClient) : super(SyncState.initial());
 
   final AppApiClient _apiClient;
+  Future<SyncChangesResponse>? _inFlight;
 
   Future<SyncChangesResponse> sync({int? familyId, int limit = 200}) async {
+    final existing = _inFlight;
+    if (existing != null) {
+      return existing;
+    }
+
+    final future = _performSync(familyId: familyId, limit: limit);
+    _inFlight = future;
+    try {
+      return await future;
+    } finally {
+      if (identical(_inFlight, future)) {
+        _inFlight = null;
+      }
+    }
+  }
+
+  Future<SyncChangesResponse> _performSync({
+    int? familyId,
+    int limit = 200,
+  }) async {
     emit(state.copyWith(isSyncing: true, clearError: true));
 
     try {

@@ -18,14 +18,6 @@ class _TasksScreenState extends State<TasksScreen> {
   DateTime? _dueAt;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<TasksCubit>().reload();
-    });
-  }
-
-  @override
   void dispose() {
     _titleController.dispose();
     super.dispose();
@@ -69,7 +61,8 @@ class _TasksScreenState extends State<TasksScreen> {
               ),
               SwitchListTile(
                 value: _recurringOnComplete,
-                onChanged: (value) => setState(() => _recurringOnComplete = value),
+                onChanged: (value) =>
+                    setState(() => _recurringOnComplete = value),
                 title: const Text('Generate next on complete'),
               ),
               AppButton(

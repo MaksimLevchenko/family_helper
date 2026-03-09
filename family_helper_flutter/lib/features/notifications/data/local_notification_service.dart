@@ -8,18 +8,55 @@ class LocalNotificationService {
   final FlutterLocalNotificationsPlugin _plugin;
   bool _initialized = false;
 
-  Future<void> initialize() async {
+  Future<bool> initializeAndRequestPermissions() async {
     if (_initialized) {
-      return;
+      return await _requestPermissions();
     }
 
     tz_data.initializeTimeZones();
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
     );
-    const settings = InitializationSettings(android: androidSettings);
+    const darwinSettings = DarwinInitializationSettings();
+    const settings = InitializationSettings(
+      android: androidSettings,
+      iOS: darwinSettings,
+      macOS: darwinSettings,
+    );
     await _plugin.initialize(settings);
     _initialized = true;
+    return await _requestPermissions();
+  }
+
+  Future<bool> _requestPermissions() async {
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    final androidGranted = await androidPlugin
+        ?.requestNotificationsPermission();
+
+    final iosPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
+    final iosGranted = await iosPlugin?.requestPermissions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    final macPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          MacOSFlutterLocalNotificationsPlugin
+        >();
+    final macGranted = await macPlugin?.requestPermissions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    return androidGranted ?? iosGranted ?? macGranted ?? true;
   }
 
   Future<void> scheduleReminder({
@@ -28,7 +65,7 @@ class LocalNotificationService {
     required String body,
     required DateTime scheduledAt,
   }) async {
-    await initialize();
+    await initializeAndRequestPermissions();
 
     final androidDetails = const AndroidNotificationDetails(
       'reminders',

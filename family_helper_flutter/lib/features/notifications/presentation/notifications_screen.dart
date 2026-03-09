@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/config/app_defaults.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../providers/notifications_provider.dart';
 
@@ -24,21 +25,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(title: const Text('Local Reminders')),
       body: BlocBuilder<NotificationsCubit, NotificationsState>(
         builder: (context, state) {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              const AppBanner(
+                text:
+                    'This is a session-only debug panel for local reminders. Push token registration is not wired in this client yet.',
+              ),
+              const SizedBox(height: 12),
               if (state.error != null) ...[
                 AppBanner(text: state.error!, isError: true),
                 const SizedBox(height: 12),
               ],
               AppButton(
-                label: 'Register push token',
+                label: state.localNotificationsEnabled
+                    ? 'Local reminders are enabled'
+                    : 'Allow local reminders',
                 isLoading: state.isLoading,
                 onPressed: () async {
-                  await context.read<NotificationsCubit>().initPush();
+                  await context
+                      .read<NotificationsCubit>()
+                      .initializeLocalReminders();
                 },
               ),
               const SizedBox(height: 12),
@@ -46,7 +56,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 label: 'Enable task notifications',
                 onPressed: () async {
                   await context.read<NotificationsCubit>().setPreference(
-                    notificationType: 'task',
+                    notificationType: AppDefaults.defaultNotificationType,
                     enabled: true,
                   );
                 },
@@ -69,12 +79,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 label: 'Schedule reminder',
                 onPressed: () async {
                   final remindAt = _remindAt;
-                  final entityId = int.tryParse(_entityIdController.text.trim());
+                  final entityId = int.tryParse(
+                    _entityIdController.text.trim(),
+                  );
                   if (remindAt == null || entityId == null) {
                     return;
                   }
                   await context.read<NotificationsCubit>().scheduleReminder(
-                    entityType: 'task',
+                    entityType: AppDefaults.defaultReminderEntityType,
                     entityId: entityId,
                     remindAt: remindAt,
                     payloadJson: '{"entityId":$entityId}',

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/config/app_defaults.dart';
 import '../../../core/logging/app_error_logger.dart';
 import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
@@ -44,15 +45,26 @@ class TasksCubit extends Cubit<TasksState> {
   }) : _repository = repository,
        _familySelectionCubit = familySelectionCubit,
        super(TasksState.initial()) {
-    _familySub = _familySelectionCubit.stream.listen((_) {
-      unawaited(reload());
+    _familySub = _familySelectionCubit.stream.listen((familyId) {
+      unawaited(_handleFamilyChanged(familyId));
     });
-    unawaited(reload());
   }
 
   final TasksRepository _repository;
   final FamilySelectionCubit _familySelectionCubit;
   StreamSubscription<int?>? _familySub;
+
+  Future<void> _handleFamilyChanged(int? familyId) async {
+    reset();
+    if (familyId == null) {
+      return;
+    }
+    await reload();
+  }
+
+  void reset() {
+    emit(TasksState.initial());
+  }
 
   Future<void> reload() async {
     final familyId = _familySelectionCubit.state;
@@ -103,10 +115,14 @@ class TasksCubit extends Cubit<TasksState> {
         familyId: familyId,
         title: title,
         isPersonal: isPersonal,
-        priority: 'normal',
+        priority: AppDefaults.defaultTaskPriority,
         dueAt: dueAt,
-        recurrenceMode: recurringOnComplete ? 'generateOnComplete' : null,
-        recurrenceRrule: recurringOnComplete ? 'FREQ=DAILY;INTERVAL=1' : null,
+        recurrenceMode: recurringOnComplete
+            ? AppDefaults.defaultTaskRecurrenceMode
+            : null,
+        recurrenceRrule: recurringOnComplete
+            ? AppDefaults.dailyRecurrenceRrule
+            : null,
       );
 
       await reload();

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/auth_error_mapper.dart';
 import '../../../core/auth/auth_session.dart';
+import '../../../core/routing/app_routes.dart';
 import '../../../core/logging/app_error_logger.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../ui_kit/ui_kit.dart';
@@ -109,7 +110,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   variant: AppButtonVariant.secondary,
                   onPressed: _isLoading
                       ? null
-                      : () => context.go('/register/email'),
+                      : () => context.go(AppRoutes.registerEmail),
                 ),
                 const SizedBox(height: 8),
                 AppButton(
@@ -118,7 +119,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   onPressed: _isLoading
                       ? null
                       : () async {
-                          await _runPasswordResetFlow(context);
+                          await _runPasswordResetFlow();
                         },
                 ),
               ],
@@ -129,7 +130,10 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  Future<void> _runPasswordResetFlow(BuildContext context) async {
+  Future<void> _runPasswordResetFlow() async {
+    final authCubit = context.read<AuthCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+
     final email = await _askValue(
       context,
       title: 'Reset password',
@@ -145,12 +149,12 @@ class _SignInScreenState extends State<SignInScreen> {
     });
 
     try {
-      final requestId = await context.read<AuthCubit>().startPasswordReset(
+      final requestId = await authCubit.startPasswordReset(
         email: email.trim(),
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Password reset request created: ${requestId.uuid}'),
         ),
@@ -165,6 +169,7 @@ class _SignInScreenState extends State<SignInScreen> {
         return;
       }
 
+      if (!mounted) return;
       final newPassword = await _askValue(
         context,
         title: 'Reset password',
@@ -175,14 +180,14 @@ class _SignInScreenState extends State<SignInScreen> {
         return;
       }
 
-      await context.read<AuthCubit>().finishPasswordReset(
+      await authCubit.finishPasswordReset(
         passwordResetRequestId: requestId,
         verificationCode: code.trim(),
         newPassword: newPassword,
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text('Password has been reset.')),
       );
     } catch (error, stackTrace) {
@@ -191,6 +196,7 @@ class _SignInScreenState extends State<SignInScreen> {
         error: error,
         stackTrace: stackTrace,
       );
+      if (!mounted) return;
       setState(() {
         _error = AuthErrorMapper.toMessage(error);
       });

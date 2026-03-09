@@ -18,14 +18,6 @@ class _FamilyScreenState extends State<FamilyScreen> {
   final _inviteCodeController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<FamilyMembersCubit>().loadMembers();
-    });
-  }
-
-  @override
   void dispose() {
     _familyTitleController.dispose();
     _inviteEmailController.dispose();
@@ -36,7 +28,9 @@ class _FamilyScreenState extends State<FamilyScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final familyId = context.select((FamilySelectionCubit cubit) => cubit.state);
+    final familyId = context.select(
+      (FamilySelectionCubit cubit) => cubit.state,
+    );
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -79,7 +73,9 @@ class _FamilyScreenState extends State<FamilyScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                familyId == null ? 'No selected family' : 'Current family id: $familyId',
+                familyId == null
+                    ? 'No selected family'
+                    : 'Current family id: $familyId',
                 style: TextStyle(color: colors.textSecondary),
               ),
               const SizedBox(height: 12),

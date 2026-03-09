@@ -31,6 +31,11 @@ class PrivacySecurityScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              const AppBanner(
+                text:
+                    'This screen shows only the current session result. Persistent privacy status requires additional read API on the backend.',
+              ),
+              const SizedBox(height: 12),
               if (state.error != null) ...[
                 AppBanner(text: state.error!, isError: true),
                 const SizedBox(height: 12),
@@ -74,7 +79,8 @@ class PrivacySecurityScreen extends StatelessWidget {
               if (state.lastExportJob == null && state.accountDeletion == null)
                 const EmptyState(
                   title: 'No privacy operations',
-                  message: 'Create export or deletion request from this screen.',
+                  message:
+                      'Create export or deletion request from this screen.',
                 ),
             ],
           );

@@ -1,33 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/realtime/realtime_provider.dart';
-import '../../calendar/presentation/calendar_screen.dart';
-import '../../lists/presentation/lists_screen.dart';
-import '../../money_goals/presentation/money_goals_screen.dart';
-import '../../tasks/presentation/tasks_screen.dart';
-import 'home_overview_screen.dart';
-import 'settings_screen.dart';
+import '../../../core/routing/app_routes.dart';
 
 class HomeShellScreen extends StatefulWidget {
-  const HomeShellScreen({super.key});
+  const HomeShellScreen({super.key, required this.child});
+
+  final Widget child;
 
   @override
   State<HomeShellScreen> createState() => _HomeShellScreenState();
 }
 
 class _HomeShellScreenState extends State<HomeShellScreen> {
-  int _index = 0;
-
-  final _screens = const [
-    HomeOverviewScreen(),
-    CalendarScreen(),
-    TasksScreen(),
-    ListsScreen(),
-    MoneyGoalsScreen(),
-    SettingsScreen(),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -38,14 +25,15 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
+    final selectedIndex = AppRoutes.bottomNavIndexFor(location);
+
     return Scaffold(
-      body: IndexedStack(index: _index, children: _screens),
+      body: widget.child,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
+        selectedIndex: selectedIndex,
         onDestinationSelected: (value) {
-          setState(() {
-            _index = value;
-          });
+          context.go(AppRoutes.locationForTabIndex(value));
         },
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
@@ -55,8 +43,14 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
           ),
           NavigationDestination(icon: Icon(Icons.checklist), label: 'Tasks'),
           NavigationDestination(icon: Icon(Icons.list_alt), label: 'Lists'),
-          NavigationDestination(icon: Icon(Icons.savings_outlined), label: 'Goals'),
-          NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Settings'),
+          NavigationDestination(
+            icon: Icon(Icons.savings_outlined),
+            label: 'Goals',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            label: 'Settings',
+          ),
         ],
       ),
     );

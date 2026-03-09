@@ -27,6 +27,11 @@ class MediaScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              const AppBanner(
+                text:
+                    'This screen keeps only the current session state. Uploaded media history is not hydrated here yet.',
+              ),
+              const SizedBox(height: 12),
               if (state.error != null) ...[
                 AppBanner(text: state.error!, isError: true),
                 const SizedBox(height: 12),

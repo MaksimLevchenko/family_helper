@@ -11,11 +11,18 @@ import '../data/family_repository.dart';
 const _familyIdStorageKey = 'current_family_id';
 
 class FamilySelectionCubit extends Cubit<int?> {
-  FamilySelectionCubit() : super(null) {
-    unawaited(_restore());
-  }
+  FamilySelectionCubit() : super(null);
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  bool _bootstrapped = false;
+
+  Future<void> bootstrap() async {
+    if (_bootstrapped) {
+      return;
+    }
+    _bootstrapped = true;
+    await _restore();
+  }
 
   Future<void> _restore() async {
     final value = await _storage.read(key: _familyIdStorageKey);
@@ -83,30 +90,26 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
     required FamilySelectionCubit familySelectionCubit,
   }) : _repository = repository,
        _familySelectionCubit = familySelectionCubit,
-       super(FamilyMembersState.initial(familyId: familySelectionCubit.state)) {
+       super(FamilyMembersState.initial()) {
     _familySub = _familySelectionCubit.stream.listen((familyId) {
-      unawaited(_onFamilyChanged(familyId));
+      unawaited(_handleFamilyChanged(familyId));
     });
-    unawaited(_onFamilyChanged(_familySelectionCubit.state));
   }
 
   final FamilyRepository _repository;
   final FamilySelectionCubit _familySelectionCubit;
   StreamSubscription<int?>? _familySub;
 
-  Future<void> _onFamilyChanged(int? familyId) async {
+  Future<void> _handleFamilyChanged(int? familyId) async {
+    reset();
     if (familyId == null) {
-      emit(
-        FamilyMembersState(
-          isLoading: false,
-          members: const [],
-          familyId: null,
-          lastInviteCode: state.lastInviteCode,
-        ),
-      );
       return;
     }
     await loadMembers();
+  }
+
+  void reset() {
+    emit(FamilyMembersState.initial(familyId: _familySelectionCubit.state));
   }
 
   Future<void> loadMembers() async {
@@ -204,6 +207,7 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
         state.copyWith(
           isLoading: false,
           lastInviteCode: invite.inviteCode,
+          familyId: familyId,
           clearError: true,
         ),
       );

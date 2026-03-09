@@ -13,6 +13,10 @@ class ProfileLoadRequested extends ProfileEvent {
   const ProfileLoadRequested();
 }
 
+class ProfileResetRequested extends ProfileEvent {
+  const ProfileResetRequested();
+}
+
 class ProfileUpdateRequested extends ProfileEvent {
   const ProfileUpdateRequested({
     this.displayName,
@@ -61,6 +65,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     : _repository = repository,
       super(ProfileState.initial()) {
     on<ProfileLoadRequested>(_onLoadRequested);
+    on<ProfileResetRequested>(_onResetRequested);
     on<ProfileUpdateRequested>(_onUpdateRequested);
   }
 
@@ -110,5 +115,12 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
+  }
+
+  void _onResetRequested(
+    ProfileResetRequested event,
+    Emitter<ProfileState> emit,
+  ) {
+    emit(ProfileState.initial());
   }
 }

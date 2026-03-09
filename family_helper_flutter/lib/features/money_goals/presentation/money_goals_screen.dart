@@ -17,14 +17,6 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
   final _contributionController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MoneyGoalsCubit>().reload();
-    });
-  }
-
-  @override
   void dispose() {
     _goalTitleController.dispose();
     _targetController.dispose();
@@ -56,9 +48,15 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
                 AppBanner(text: state.error!, isError: true),
                 const SizedBox(height: 12),
               ],
-              AppTextField(controller: _goalTitleController, label: 'Goal title'),
+              AppTextField(
+                controller: _goalTitleController,
+                label: 'Goal title',
+              ),
               const SizedBox(height: 12),
-              MoneyField(controller: _targetController, label: 'Target amount (cents)'),
+              MoneyField(
+                controller: _targetController,
+                label: 'Target amount (cents)',
+              ),
               const SizedBox(height: 12),
               AppButton(
                 label: 'Create goal',
@@ -83,11 +81,15 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
               AppButton(
                 label: 'Add contribution to selected goal',
                 onPressed: () async {
-                  final amount = int.tryParse(_contributionController.text.trim());
+                  final amount = int.tryParse(
+                    _contributionController.text.trim(),
+                  );
                   if (amount == null) {
                     return;
                   }
-                  await context.read<MoneyGoalsCubit>().addContribution(amountCents: amount);
+                  await context.read<MoneyGoalsCubit>().addContribution(
+                    amountCents: amount,
+                  );
                 },
               ),
               const SizedBox(height: 24),
@@ -102,7 +104,8 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
                     title: goal.title,
                     subtitle:
                         'Progress: ${goal.currentAmountCents}/${goal.targetAmountCents} ${goal.currency}',
-                    onTap: () => context.read<MoneyGoalsCubit>().setCurrentGoal(goal.id),
+                    onTap: () =>
+                        context.read<MoneyGoalsCubit>().setCurrentGoal(goal.id),
                   ),
                 ),
             ],

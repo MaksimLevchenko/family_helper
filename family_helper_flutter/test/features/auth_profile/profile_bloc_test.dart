@@ -62,6 +62,12 @@ void main() {
     expect(bloc.state.profile?.displayName, 'Updated');
     expect(bloc.state.profile?.analyticsOptIn, true);
 
+    bloc.add(const ProfileResetRequested());
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    expect(bloc.state.profile, isNull);
+    expect(bloc.state.isLoading, true);
+
     await bloc.close();
   });
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/config/app_defaults.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../providers/calendar_provider.dart';
 
@@ -16,14 +17,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime? _start;
   DateTime? _end;
   bool _isRecurringDaily = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CalendarCubit>().reload();
-    });
-  }
 
   @override
   void dispose() {
@@ -77,14 +70,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 label: 'Create event',
                 isLoading: state.isLoading,
                 onPressed: () async {
-                  if (_titleController.text.trim().isEmpty || _start == null || _end == null) {
+                  if (_titleController.text.trim().isEmpty ||
+                      _start == null ||
+                      _end == null) {
                     return;
                   }
                   await context.read<CalendarCubit>().createEvent(
                     title: _titleController.text.trim(),
                     startsAt: _start!,
                     endsAt: _end!,
-                    rrule: _isRecurringDaily ? 'FREQ=DAILY;INTERVAL=1' : null,
+                    rrule: _isRecurringDaily
+                        ? AppDefaults.dailyRecurrenceRrule
+                        : null,
                   );
                 },
               ),
@@ -105,7 +102,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       onPressed: instance.cancelled
                           ? null
                           : () async {
-                              await context.read<CalendarCubit>().cancelOccurrence(instance);
+                              await context
+                                  .read<CalendarCubit>()
+                                  .cancelOccurrence(instance);
                             },
                     ),
                   ),

@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/auth_session.dart';
+import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../ui_kit/ui_kit.dart';
-import '../../auth_profile/presentation/profile_screen.dart';
 import '../../auth_profile/providers/profile_provider.dart';
-import '../../family_invites/presentation/family_screen.dart';
+import '../../calendar/providers/calendar_provider.dart';
 import '../../family_invites/providers/family_provider.dart';
-import '../../media/presentation/media_screen.dart';
+import '../../lists/providers/lists_provider.dart';
 import '../../media/providers/media_provider.dart';
-import '../../notifications/presentation/notifications_screen.dart';
+import '../../money_goals/providers/money_goals_provider.dart';
 import '../../notifications/providers/notifications_provider.dart';
-import '../../privacy_security/presentation/privacy_security_screen.dart';
 import '../../privacy_security/providers/privacy_provider.dart';
+import '../../tasks/providers/tasks_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -29,65 +30,25 @@ class SettingsScreen extends StatelessWidget {
         children: [
           AppTile(
             title: 'Profile',
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => BlocProvider<ProfileBloc>.value(
-                  value: context.read<ProfileBloc>(),
-                  child: const ProfileScreen(),
-                ),
-              ),
-            ),
+            onTap: () => context.go(AppRoutes.profile),
           ),
           AppTile(
             title: 'Family & Invites',
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => MultiBlocProvider(
-                  providers: [
-                    BlocProvider<FamilySelectionCubit>.value(
-                      value: context.read<FamilySelectionCubit>(),
-                    ),
-                    BlocProvider<FamilyMembersCubit>.value(
-                      value: context.read<FamilyMembersCubit>(),
-                    ),
-                  ],
-                  child: const FamilyScreen(),
-                ),
-              ),
-            ),
+            onTap: () => context.go(AppRoutes.family),
           ),
           AppTile(
-            title: 'Notifications',
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => BlocProvider<NotificationsCubit>.value(
-                  value: context.read<NotificationsCubit>(),
-                  child: const NotificationsScreen(),
-                ),
-              ),
-            ),
+            title: 'Local reminders',
+            subtitle: 'Session-only debug panel until push flow is wired',
+            onTap: () => context.go(AppRoutes.localReminders),
           ),
           AppTile(
             title: 'Media & Avatars',
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => BlocProvider<MediaCubit>.value(
-                  value: context.read<MediaCubit>(),
-                  child: const MediaScreen(),
-                ),
-              ),
-            ),
+            onTap: () => context.go(AppRoutes.media),
           ),
           AppTile(
             title: 'Privacy & Security',
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => BlocProvider<PrivacyCubit>.value(
-                  value: context.read<PrivacyCubit>(),
-                  child: const PrivacySecurityScreen(),
-                ),
-              ),
-            ),
+            subtitle: 'Session-only status until read API is added',
+            onTap: () => context.go(AppRoutes.privacy),
           ),
           const SizedBox(height: 8),
           SwitchListTile(
@@ -105,6 +66,15 @@ class SettingsScreen extends StatelessWidget {
             variant: AppButtonVariant.danger,
             onPressed: () async {
               final familySelectionCubit = context.read<FamilySelectionCubit>();
+              context.read<NotificationsCubit>().reset();
+              context.read<MediaCubit>().reset();
+              context.read<PrivacyCubit>().reset();
+              context.read<ListsCubit>().reset();
+              context.read<MoneyGoalsCubit>().reset();
+              context.read<TasksCubit>().reset();
+              context.read<CalendarCubit>().reset();
+              context.read<FamilyMembersCubit>().reset();
+              context.read<ProfileBloc>().add(const ProfileResetRequested());
               final authCubit = context.read<AuthCubit>();
               await familySelectionCubit.clear();
               await authCubit.signOut();

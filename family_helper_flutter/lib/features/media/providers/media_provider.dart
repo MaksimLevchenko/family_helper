@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/logging/app_error_logger.dart';
@@ -39,10 +41,19 @@ class MediaCubit extends Cubit<MediaState> {
     required FamilySelectionCubit familySelectionCubit,
   }) : _repository = repository,
        _familySelectionCubit = familySelectionCubit,
-       super(const MediaState());
+       super(const MediaState()) {
+    _familySub = _familySelectionCubit.stream.listen((_) {
+      reset();
+    });
+  }
 
   final MediaRepository _repository;
   final FamilySelectionCubit _familySelectionCubit;
+  StreamSubscription<int?>? _familySub;
+
+  void reset() {
+    emit(const MediaState());
+  }
 
   Future<void> uploadImage() async {
     emit(state.copyWith(isLoading: true, clearError: true));
@@ -74,5 +85,11 @@ class MediaCubit extends Cubit<MediaState> {
       );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
+  }
+
+  @override
+  Future<void> close() async {
+    await _familySub?.cancel();
+    return super.close();
   }
 }

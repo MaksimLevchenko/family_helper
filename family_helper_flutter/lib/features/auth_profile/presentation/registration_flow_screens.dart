@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/auth/auth_error_mapper.dart';
 import '../../../core/auth/auth_session.dart';
 import '../../../core/logging/app_error_logger.dart';
+import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../ui_kit/ui_kit.dart';
 
@@ -50,7 +51,7 @@ class _RegistrationEmailStepScreenState
         AppButton(
           label: 'Back to sign in',
           variant: AppButtonVariant.secondary,
-          onPressed: _isLoading ? null : () => context.go('/sign-in'),
+          onPressed: _isLoading ? null : () => context.go(AppRoutes.signIn),
         ),
       ],
     );
@@ -77,7 +78,7 @@ class _RegistrationEmailStepScreenState
       if (!mounted) return;
       context.go(
         Uri(
-          path: '/register/code',
+          path: AppRoutes.registerCode,
           queryParameters: {
             'email': email,
             'requestId': requestId.uuid,
@@ -146,13 +147,13 @@ class _RegistrationCodeStepScreenState
         body: [
           AppButton(
             label: 'Go to step 1',
-            onPressed: () => context.go('/register/email'),
+            onPressed: () => context.go(AppRoutes.registerEmail),
           ),
           const SizedBox(height: 8),
           AppButton(
             label: 'Back to sign in',
             variant: AppButtonVariant.secondary,
-            onPressed: () => context.go('/sign-in'),
+            onPressed: () => context.go(AppRoutes.signIn),
           ),
         ],
       );
@@ -182,7 +183,9 @@ class _RegistrationCodeStepScreenState
         AppButton(
           label: 'Back',
           variant: AppButtonVariant.secondary,
-          onPressed: _isLoading ? null : () => context.go('/register/email'),
+          onPressed: _isLoading
+              ? null
+              : () => context.go(AppRoutes.registerEmail),
         ),
       ],
     );
@@ -224,7 +227,7 @@ class _RegistrationCodeStepScreenState
       if (!mounted) return;
       context.go(
         Uri(
-          path: '/register/password',
+          path: AppRoutes.registerPassword,
           queryParameters: {
             'email': email,
             'token': registrationToken,
@@ -289,13 +292,13 @@ class _RegistrationPasswordStepScreenState
         body: [
           AppButton(
             label: 'Go to step 1',
-            onPressed: () => context.go('/register/email'),
+            onPressed: () => context.go(AppRoutes.registerEmail),
           ),
           const SizedBox(height: 8),
           AppButton(
             label: 'Back to sign in',
             variant: AppButtonVariant.secondary,
-            onPressed: () => context.go('/sign-in'),
+            onPressed: () => context.go(AppRoutes.signIn),
           ),
         ],
       );
@@ -321,7 +324,9 @@ class _RegistrationPasswordStepScreenState
         AppButton(
           label: 'Start over',
           variant: AppButtonVariant.secondary,
-          onPressed: _isLoading ? null : () => context.go('/register/email'),
+          onPressed: _isLoading
+              ? null
+              : () => context.go(AppRoutes.registerEmail),
         ),
       ],
     );
