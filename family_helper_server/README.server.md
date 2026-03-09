@@ -8,17 +8,27 @@
 - FutureCall workers for reminders/media cleanup/privacy
 
 ## Environment
-Create `config/development.yaml` and `config/passwords.yaml` from Serverpod defaults, then set env:
+Create `config/passwords.yaml` from `config/passwords.yaml.example`, then set env:
 
 - `FAMILY_MEMBER_LIMIT` (default `2`)
-- `MINIO_ENDPOINT`
-- `MINIO_BUCKET`
-- `MINIO_ACCESS_KEY`
-- `MINIO_SECRET_KEY`
-- `MINIO_REGION`
-- `MINIO_PUBLIC_BASE_URL`
-- `FIREBASE_PROJECT_ID`
-- `FCM_SERVICE_ACCOUNT_JSON`
+- MinIO settings in `config/passwords.yaml`:
+  - `minioEndpoint`
+  - `minioBucket`
+  - `minioSecretKey`
+  - `minioPublicBaseUrl`
+  - `minioUseSsl`
+  - `minioSignUrlTtl`
+
+Recommended local values:
+
+```bash
+minioEndpoint: 'localhost:9000'
+minioBucket: 'family-helper'
+minioSecretKey: 'dev-secret'
+minioPublicBaseUrl: 'http://localhost:9000'
+minioUseSsl: 'false'
+minioSignUrlTtl: '900'
+```
 
 ## Local Infra
 From `family_helper_server/`:
@@ -27,7 +37,21 @@ From `family_helper_server/`:
 docker compose up --build -d
 ```
 
+Before running compose, create `.env`:
+
+```bash
+cp .env.example .env
+```
+
 This starts Postgres (+ Redis from template compose).
+It also starts MinIO on:
+- API: `http://localhost:9000`
+- Console: `http://localhost:9001`
+
+`minio_init` bootstraps:
+- bucket `${MINIO_BUCKET}` (default `family-helper`)
+- CORS for local web origins
+- public bucket policy for local development uploads/downloads
 
 ## Migrations
 Migrations are in `migrations/` and include:
@@ -51,6 +75,8 @@ dart bin/main.dart --apply-migrations
 ```bash
 dart bin/main.dart
 ```
+
+MinIO root user/password for Docker bootstrap are still read from `.env` by `docker compose`.
 
 ## Generate Protocol / Endpoints
 ```bash

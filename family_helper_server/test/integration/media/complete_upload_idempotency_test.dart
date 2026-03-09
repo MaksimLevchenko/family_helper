@@ -1,8 +1,7 @@
-import 'package:serverpod/serverpod.dart';
 import 'package:test/test.dart';
-
 import '../test_tools/auth_helpers.dart';
 import '../test_tools/serverpod_test_tools.dart';
+import 'package:family_helper_server/src/generated/protocol.dart';
 
 void main() {
   withServerpod('Media completeUpload idempotency', (sessionBuilder, endpoints) {
@@ -39,21 +38,19 @@ void main() {
       expect(second.status, 'ready');
 
       final changeCount = await withDbSession(owner, (session) async {
-        final rows = await session.db.unsafeQuery(
-          '''
-          SELECT COUNT(*) AS total
-          FROM change_feed
-          WHERE feature = 'media'
-            AND entity_type = 'media_object'
-            AND entity_id = @mediaId
-            AND operation = 'uploaded'
-          ''',
-          parameters: QueryParameters.named({'mediaId': upload.mediaId}),
+        return ChangeFeedRow.db.count(
+          session,
+          where: (t) =>
+              t.feature.equals('media') &
+              t.entityType.equals('media_object') &
+              t.entityId.equals(upload.mediaId) &
+              t.operation.equals('uploaded'),
         );
-        return rows.first.toColumnMap()['total'] as int;
       });
 
       expect(changeCount, 1);
     });
   });
 }
+
+

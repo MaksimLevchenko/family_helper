@@ -1,24 +1,17 @@
+import 'package:family_helper_server/src/workers/future_call_registry.dart';
 import 'package:serverpod/serverpod.dart';
-
 import '../generated/protocol.dart';
 
 class MediaCleanupCall extends FutureCall<MediaCleanupPayload> {
   @override
   Future<void> invoke(Session session, MediaCleanupPayload? object) async {
-    await session.db.unsafeExecute(
-      '''
-      DELETE FROM media_object
-      WHERE deleted_at IS NOT NULL
-        AND deleted_at < @threshold
-      ''',
-      parameters: QueryParameters.named({
-        'threshold': DateTime.now().toUtc().subtract(const Duration(days: 7)),
-      }),
+    final threshold = DateTime.now().toUtc().subtract(const Duration(days: 7));
+    await MediaObjectRow.db.deleteWhere(
+      session,
+      where: (t) => t.deletedAt.notEquals(null) & (t.deletedAt < threshold),
     );
-    await session.server.serverpod.futureCallWithDelay(
-      'mediaCleanup',
-      null,
-      const Duration(minutes: 15),
+    await FutureCallRegistry.scheduleMediaCleanup(
+      session.server.serverpod,
     );
   }
 }

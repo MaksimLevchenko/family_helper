@@ -1,4 +1,5 @@
 import 'package:serverpod/serverpod.dart';
+import '../../generated/protocol.dart';
 
 class IdempotencyService {
   const IdempotencyService();
@@ -10,31 +11,32 @@ class IdempotencyService {
     required String clientOperationId,
     Transaction? transaction,
   }) async {
-    final affected = await session.db.unsafeExecute(
-      '''
-      INSERT INTO idempotency_key (
-        actor_auth_user_id,
-        action,
-        client_operation_id,
-        created_at
-      ) VALUES (
-        @actor,
-        @action,
-        @operation,
-        @createdAt
-      )
-      ON CONFLICT (actor_auth_user_id, action, client_operation_id)
-      DO NOTHING
-      ''',
-      parameters: QueryParameters.named({
-        'actor': actorAuthUserId,
-        'action': action,
-        'operation': clientOperationId,
-        'createdAt': DateTime.now().toUtc(),
-      }),
+    final existing = await IdempotencyKeyRow.db.findFirstRow(
+      session,
+      where: (t) =>
+          t.actorAuthUserId.equals(actorAuthUserId) &
+          t.action.equals(action) &
+          t.clientOperationId.equals(clientOperationId),
       transaction: transaction,
     );
+    if (existing != null) return false;
 
-    return affected > 0;
+    try {
+      await IdempotencyKeyRow.db.insertRow(
+        session,
+        IdempotencyKeyRow(
+          actorAuthUserId: actorAuthUserId,
+          action: action,
+          clientOperationId: clientOperationId,
+          createdAt: DateTime.now().toUtc(),
+        ),
+        transaction: transaction,
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }
+
+

@@ -1,6 +1,6 @@
 import 'dart:convert';
-
 import 'package:serverpod/serverpod.dart';
+import '../../generated/protocol.dart';
 
 class SecurityEventService {
   const SecurityEventService();
@@ -13,30 +13,18 @@ class SecurityEventService {
     Map<String, dynamic>? payload,
     Transaction? transaction,
   }) async {
-    await session.db.unsafeExecute(
-      '''
-      INSERT INTO security_event (
-        auth_user_id,
-        event_type,
-        success,
-        payload_json,
-        created_at
-      ) VALUES (
-        @authUserId,
-        @eventType,
-        @success,
-        @payload,
-        @createdAt
-      )
-      ''',
-      parameters: QueryParameters.named({
-        'authUserId': authUserId,
-        'eventType': eventType,
-        'success': success,
-        'payload': jsonEncode(payload ?? const <String, dynamic>{}),
-        'createdAt': DateTime.now().toUtc(),
-      }),
+    await SecurityEventRow.db.insertRow(
+      session,
+      SecurityEventRow(
+        authUserId: authUserId,
+        eventType: eventType,
+        success: success,
+        payloadJson: jsonEncode(payload ?? const <String, dynamic>{}),
+        createdAt: DateTime.now().toUtc(),
+      ),
       transaction: transaction,
     );
   }
 }
+
+

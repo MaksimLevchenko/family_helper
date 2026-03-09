@@ -67,4 +67,36 @@ void main() {
     expect(replayed, ['op-1', 'op-2']);
     expect(await queue.listPending(), isEmpty);
   });
+
+  test('OfflineQueueManager drops operation after max attempts', () async {
+    final queue = InMemoryOfflineQueue();
+    final manager = OfflineQueueManager(
+      queue,
+      maxAttempts: 1,
+      initialBackoff: Duration.zero,
+      maxBackoff: Duration.zero,
+    );
+
+    await queue.enqueue(
+      OfflineOperation(
+        id: 'op-fail',
+        feature: 'tasks',
+        action: 'create',
+        payload: const {'title': 'failing'},
+        createdAt: DateTime.utc(2026, 1, 1),
+        attempt: 0,
+      ),
+    );
+
+    await manager.replay((_) async {
+      throw StateError('network down');
+    });
+    expect((await queue.listPending()).single.attempt, 1);
+
+    await manager.replay((_) async {
+      throw StateError('still down');
+    });
+
+    expect(await queue.listPending(), isEmpty);
+  });
 }

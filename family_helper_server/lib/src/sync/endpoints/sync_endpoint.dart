@@ -13,12 +13,14 @@ class SyncEndpoint extends Endpoint {
     required DateTime since,
     int? familyId,
     int limit = 500,
+    int lastSeenChangeId = 0,
   }) {
     return service.changes(
       session,
       since: since,
       familyId: familyId,
       limit: limit,
+      lastSeenChangeId: lastSeenChangeId,
     );
   }
 }

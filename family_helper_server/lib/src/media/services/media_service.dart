@@ -1,7 +1,6 @@
 import 'dart:math';
-
+import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
-
 import '../../core/auth/auth_context.dart';
 import '../../core/idempotency/idempotency_service.dart';
 import '../../core/rbac/ensure_family_role_service.dart';
@@ -32,6 +31,7 @@ class MediaService {
     required int sizeBytes,
     String objectPrefix = 'media',
   }) async {
+    final storage = this.storage.forSession(session);
     final authUserId = authContext.requireAuthUserId(session).uuid;
 
     return session.db.transaction((transaction) async {
@@ -59,32 +59,24 @@ class MediaService {
       );
 
       if (!isFresh) {
-        final existing = await session.db.unsafeQuery(
-          '''
-          SELECT
-            id,
-            object_key,
-            upload_expires_at
-          FROM media_object
-          WHERE uploaded_by_profile_id = @profileId
-            AND client_operation_id = @clientOperationId
-          ORDER BY id DESC
-          LIMIT 1
-          ''',
-          parameters: QueryParameters.named({
-            'profileId': profileId,
-            'clientOperationId': clientOperationId,
-          }),
+        final existing = await MediaObjectRow.db.findFirstRow(
+          session,
+          where: (t) =>
+              t.uploadedByProfileId.equals(profileId) &
+              t.clientOperationId.equals(clientOperationId),
+          orderBy: (t) => t.id,
+          orderDescending: true,
           transaction: transaction,
         );
 
-        if (existing.isNotEmpty) {
-          final row = existing.first.toColumnMap();
+        if (existing != null) {
           return UploadSessionDto(
-            mediaId: row['id'] as int,
-            objectKey: row['object_key'] as String,
-            uploadUrl: await storage.presignedPutUrl(row['object_key'] as String),
-            expiresAt: row['upload_expires_at'] as DateTime,
+            mediaId: existing.id!,
+            objectKey: existing.objectKey,
+            uploadUrl: await storage.presignedPutUrl(
+              existing.objectKey,
+            ),
+            expiresAt: existing.uploadExpiresAt!,
           );
         }
       }
@@ -92,59 +84,31 @@ class MediaService {
       final now = DateTime.now().toUtc();
       final objectKey = '$objectPrefix/${_randomCode(12)}/${_randomCode(18)}';
       final expiresAt = now.add(const Duration(minutes: 15));
-      final insertRows = await session.db.unsafeQuery(
-        '''
-        INSERT INTO media_object (
-          family_id,
-          uploaded_by_profile_id,
-          object_key,
-          bucket,
-          mime_type,
-          size_bytes,
-          status,
-          thumbnail_key,
-          client_operation_id,
-          upload_expires_at,
-          created_at,
-          deleted_at,
-          version
-        ) VALUES (
-          @familyId,
-          @profileId,
-          @objectKey,
-          @bucket,
-          @mimeType,
-          @sizeBytes,
-          'uploading',
-          NULL,
-          @clientOperationId,
-          @uploadExpiresAt,
-          @createdAt,
-          NULL,
-          1
-        )
-        RETURNING id, object_key, upload_expires_at
-        ''',
-        parameters: QueryParameters.named({
-          'familyId': familyId,
-          'profileId': profileId,
-          'objectKey': objectKey,
-          'bucket': storage.bucket,
-          'mimeType': mimeType,
-          'sizeBytes': sizeBytes,
-          'clientOperationId': clientOperationId,
-          'uploadExpiresAt': expiresAt,
-          'createdAt': now,
-        }),
+      final row = await MediaObjectRow.db.insertRow(
+        session,
+        MediaObjectRow(
+          familyId: familyId,
+          uploadedByProfileId: profileId,
+          objectKey: objectKey,
+          bucket: storage.bucket,
+          mimeType: mimeType,
+          sizeBytes: sizeBytes,
+          status: 'uploading',
+          thumbnailKey: null,
+          clientOperationId: clientOperationId,
+          uploadExpiresAt: expiresAt,
+          createdAt: now,
+          updatedAt: null,
+          deletedAt: null,
+          version: 1,
+        ),
         transaction: transaction,
       );
-
-      final row = insertRows.first.toColumnMap();
       return UploadSessionDto(
-        mediaId: row['id'] as int,
-        objectKey: row['object_key'] as String,
-        uploadUrl: await storage.presignedPutUrl(row['object_key'] as String),
-        expiresAt: row['upload_expires_at'] as DateTime,
+        mediaId: row.id!,
+        objectKey: row.objectKey,
+        uploadUrl: await storage.presignedPutUrl(row.objectKey),
+        expiresAt: row.uploadExpiresAt!,
       );
     });
   }
@@ -167,75 +131,43 @@ class MediaService {
       );
 
       if (!isFresh) {
-        final existingRows = await session.db.unsafeQuery(
-          '''
-          SELECT
-            id,
-            family_id,
-            uploaded_by_profile_id,
-            object_key,
-            bucket,
-            mime_type,
-            size_bytes,
-            status,
-            thumbnail_key,
-            created_at,
-            deleted_at
-          FROM media_object
-          WHERE id = @id
-          LIMIT 1
-          ''',
-          parameters: QueryParameters.named({'id': mediaId}),
+        final existing = await MediaObjectRow.db.findById(
+          session,
+          mediaId,
           transaction: transaction,
         );
-        if (existingRows.isNotEmpty) {
-          return _mapMedia(existingRows.first.toColumnMap());
+        if (existing != null) {
+          return _mapMedia(existing);
         }
       }
 
       final now = DateTime.now().toUtc();
-      await session.db.unsafeExecute(
-        '''
-        UPDATE media_object
-        SET
-          status = 'ready',
-          thumbnail_key = COALESCE(@thumbnailKey, thumbnail_key),
-          updated_at = @updatedAt,
-          version = version + 1
-        WHERE id = @id
-          AND deleted_at IS NULL
-        ''',
-        parameters: QueryParameters.named({
-          'id': mediaId,
-          'thumbnailKey': thumbnailKey,
-          'updatedAt': now,
-        }),
+      final current = await MediaObjectRow.db.findFirstRow(
+        session,
+        where: (t) => t.id.equals(mediaId) & t.deletedAt.equals(null),
+        transaction: transaction,
+      );
+      if (current == null) {
+        throw FileNotFoundException(message: 'Media not found.');
+      }
+      await MediaObjectRow.db.updateRow(
+        session,
+        current.copyWith(
+          status: 'ready',
+          thumbnailKey: thumbnailKey ?? current.thumbnailKey,
+          updatedAt: now,
+          version: current.version + 1,
+        ),
         transaction: transaction,
       );
 
-      final rows = await session.db.unsafeQuery(
-        '''
-        SELECT
-          id,
-          family_id,
-          uploaded_by_profile_id,
-          object_key,
-          bucket,
-          mime_type,
-          size_bytes,
-          status,
-          thumbnail_key,
-          created_at,
-          deleted_at
-        FROM media_object
-        WHERE id = @id
-        LIMIT 1
-        ''',
-        parameters: QueryParameters.named({'id': mediaId}),
+      final row = await MediaObjectRow.db.findById(
+        session,
+        mediaId,
         transaction: transaction,
       );
 
-      final media = _mapMedia(rows.first.toColumnMap());
+      final media = _mapMedia(row!);
       await changeFeed.appendChange(
         session,
         feature: 'media',
@@ -256,34 +188,22 @@ class MediaService {
     Session session, {
     required int mediaId,
   }) async {
-    final rows = await session.db.unsafeQuery(
-      '''
-      SELECT
-        id,
-        family_id,
-        uploaded_by_profile_id,
-        object_key,
-        bucket,
-        mime_type,
-        size_bytes,
-        status,
-        thumbnail_key,
-        created_at,
-        deleted_at
-      FROM media_object
-      WHERE id = @id
-        AND deleted_at IS NULL
-      LIMIT 1
-      ''',
-      parameters: QueryParameters.named({'id': mediaId}),
+    final storage = this.storage.forSession(session);
+    final row = await MediaObjectRow.db.findFirstRow(
+      session,
+      where: (t) => t.id.equals(mediaId) & t.deletedAt.equals(null),
     );
-    if (rows.isEmpty) {
-      throw Exception('Media not found');
+    if (row == null) {
+      throw FileNotFoundException(message: 'Media not found.');
     }
 
-    final media = _mapMedia(rows.first.toColumnMap());
+    final media = _mapMedia(row);
     if (media.familyId != null) {
-      await rbac.ensureFamilyRole(session, familyId: media.familyId!, minRole: 'member');
+      await rbac.ensureFamilyRole(
+        session,
+        familyId: media.familyId!,
+        minRole: 'member',
+      );
     }
 
     return storage.presignedGetUrl(media.objectKey);
@@ -305,16 +225,16 @@ class MediaService {
         transaction: transaction,
       );
 
-      final rows = await session.db.unsafeQuery(
-        'SELECT family_id FROM media_object WHERE id = @id LIMIT 1',
-        parameters: QueryParameters.named({'id': mediaId}),
+      final row = await MediaObjectRow.db.findById(
+        session,
+        mediaId,
         transaction: transaction,
       );
-      if (rows.isEmpty) {
+      if (row == null) {
         return OperationResult(success: true, message: 'Already deleted');
       }
 
-      final familyId = rows.first.toColumnMap()['family_id'] as int?;
+      final familyId = row.familyId;
       if (familyId != null) {
         await rbac.ensureFamilyRole(
           session,
@@ -324,18 +244,13 @@ class MediaService {
         );
       }
 
-      await session.db.unsafeExecute(
-        '''
-        UPDATE media_object
-        SET deleted_at = @deletedAt,
-            status = 'deleted',
-            version = version + 1
-        WHERE id = @id
-        ''',
-        parameters: QueryParameters.named({
-          'id': mediaId,
-          'deletedAt': DateTime.now().toUtc(),
-        }),
+      await MediaObjectRow.db.updateRow(
+        session,
+        row.copyWith(
+          deletedAt: DateTime.now().toUtc(),
+          status: 'deleted',
+          version: row.version + 1,
+        ),
         transaction: transaction,
       );
 
@@ -355,19 +270,19 @@ class MediaService {
     });
   }
 
-  MediaObjectDto _mapMedia(Map<String, dynamic> row) {
+  MediaObjectDto _mapMedia(MediaObjectRow row) {
     return MediaObjectDto(
-      id: row['id'] as int,
-      familyId: row['family_id'] as int?,
-      uploadedByProfileId: row['uploaded_by_profile_id'] as int,
-      objectKey: row['object_key'] as String,
-      bucket: row['bucket'] as String,
-      mimeType: row['mime_type'] as String,
-      sizeBytes: row['size_bytes'] as int,
-      status: row['status'] as String,
-      thumbnailKey: row['thumbnail_key'] as String?,
-      createdAt: row['created_at'] as DateTime,
-      deletedAt: row['deleted_at'] as DateTime?,
+      id: row.id!,
+      familyId: row.familyId,
+      uploadedByProfileId: row.uploadedByProfileId,
+      objectKey: row.objectKey,
+      bucket: row.bucket,
+      mimeType: row.mimeType,
+      sizeBytes: row.sizeBytes,
+      status: row.status,
+      thumbnailKey: row.thumbnailKey,
+      createdAt: row.createdAt,
+      deletedAt: row.deletedAt,
     );
   }
 

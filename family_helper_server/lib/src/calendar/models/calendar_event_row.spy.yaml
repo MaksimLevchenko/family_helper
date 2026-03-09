@@ -1,0 +1,17 @@
+class: CalendarEventRow
+table: calendar_event
+fields:
+  familyId: int
+  title: String
+  description: String?
+  timezone: String
+  startsAt: DateTime
+  endsAt: DateTime
+  rrule: String?
+  colorKey: String?
+  category: String?
+  createdByProfileId: int
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+  version: int

@@ -2,5 +2,6 @@ class: SyncChangesResponse
 fields:
   since: DateTime
   nextSince: DateTime
+  nextLastSeenChangeId: int
   hasMore: bool
   changes: List<SyncChangeDto>

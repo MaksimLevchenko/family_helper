@@ -1932,6 +1932,7 @@ class _SyncEndpoint {
     required DateTime since,
     int? familyId,
     required int limit,
+    required int lastSeenChangeId,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1948,6 +1949,7 @@ class _SyncEndpoint {
             'since': since,
             'familyId': familyId,
             'limit': limit,
+            'lastSeenChangeId': lastSeenChangeId,
           }),
           serializationManager: _serializationManager,
         );

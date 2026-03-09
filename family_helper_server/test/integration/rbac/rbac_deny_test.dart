@@ -20,5 +20,24 @@ void main() {
         throwsA(isA<Exception>()),
       );
     });
+
+    test('internal worker endpoints are not callable by clients', () async {
+      final owner = authenticatedBuilder(sessionBuilder, user1Id);
+
+      await expectLater(
+        () => endpoints.notifications.processDueReminders(owner),
+        throwsA(isA<Exception>()),
+      );
+
+      await expectLater(
+        () => endpoints.privacy.processExportJobs(owner),
+        throwsA(isA<Exception>()),
+      );
+
+      await expectLater(
+        () => endpoints.privacy.processHardDeletion(owner),
+        throwsA(isA<Exception>()),
+      );
+    });
   });
 }

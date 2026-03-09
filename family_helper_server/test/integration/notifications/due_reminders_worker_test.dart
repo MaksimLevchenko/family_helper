@@ -1,10 +1,15 @@
 import 'package:test/test.dart';
 
+import 'package:family_helper_server/src/notifications/services/notifications_service.dart';
+
 import '../test_tools/auth_helpers.dart';
 import '../test_tools/serverpod_test_tools.dart';
 
 void main() {
-  withServerpod('Notifications due reminder worker', (sessionBuilder, endpoints) {
+  withServerpod('Notifications due reminder worker', (
+    sessionBuilder,
+    endpoints,
+  ) {
     test('processDueReminders fires due reminders exactly once', () async {
       final owner = authenticatedBuilder(sessionBuilder, user1Id);
 
@@ -24,8 +29,15 @@ void main() {
         payloadJson: '{"taskId":123}',
       );
 
-      final firstRun = await endpoints.notifications.processDueReminders(owner);
-      final secondRun = await endpoints.notifications.processDueReminders(owner);
+      final notificationsService = NotificationsService();
+      final firstRun = await withDbSession(
+        owner,
+        notificationsService.processDueReminders,
+      );
+      final secondRun = await withDbSession(
+        owner,
+        notificationsService.processDueReminders,
+      );
 
       expect(firstRun, 1);
       expect(secondRun, 0);
@@ -35,6 +47,7 @@ void main() {
         since: DateTime.utc(2020, 1, 1),
         familyId: family.id,
         limit: 100,
+        lastSeenChangeId: 0,
       );
 
       expect(

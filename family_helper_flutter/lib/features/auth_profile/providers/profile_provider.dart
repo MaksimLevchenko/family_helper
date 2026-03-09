@@ -1,6 +1,7 @@
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/logging/app_error_logger.dart';
 import '../../../core/utils/operation_id.dart';
 import '../data/profile_repository.dart';
 
@@ -72,8 +73,15 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
       final profile = await _repository.me();
-      emit(state.copyWith(isLoading: false, profile: profile, clearError: true));
-    } catch (error) {
+      emit(
+        state.copyWith(isLoading: false, profile: profile, clearError: true),
+      );
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'profile.load',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -91,8 +99,15 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         avatarMediaId: event.avatarMediaId,
         analyticsOptIn: event.analyticsOptIn,
       );
-      emit(state.copyWith(isLoading: false, profile: updated, clearError: true));
-    } catch (error) {
+      emit(
+        state.copyWith(isLoading: false, profile: updated, clearError: true),
+      );
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'profile.update',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }

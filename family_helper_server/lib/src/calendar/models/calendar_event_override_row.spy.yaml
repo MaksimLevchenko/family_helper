@@ -1,0 +1,13 @@
+class: CalendarEventOverrideRow
+table: calendar_event_override
+fields:
+  eventId: int
+  occurrenceStart: DateTime
+  overrideTitle: String?
+  overrideStartsAt: DateTime?
+  overrideEndsAt: DateTime?
+  cancelled: bool
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+  version: int

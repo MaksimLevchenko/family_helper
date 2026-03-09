@@ -1,5 +1,4 @@
 import 'package:serverpod/serverpod.dart';
-
 import '../../core/auth/auth_context.dart';
 import '../../core/idempotency/idempotency_service.dart';
 import '../../core/rbac/ensure_family_role_service.dart';
@@ -60,70 +59,27 @@ class CalendarService {
 
       final now = DateTime.now().toUtc();
       if (eventId == null) {
-        final inserted = await session.db.unsafeQuery(
-          '''
-          INSERT INTO calendar_event (
-            family_id,
-            title,
-            description,
-            timezone,
-            starts_at,
-            ends_at,
-            rrule,
-            color_key,
-            category,
-            created_by_profile_id,
-            created_at,
-            updated_at,
-            deleted_at,
-            version
-          ) VALUES (
-            @familyId,
-            @title,
-            @description,
-            @timezone,
-            @startsAt,
-            @endsAt,
-            @rrule,
-            @colorKey,
-            @category,
-            @createdBy,
-            @now,
-            @now,
-            NULL,
-            1
-          )
-          RETURNING
-            id,
-            family_id,
-            title,
-            description,
-            timezone,
-            starts_at,
-            ends_at,
-            rrule,
-            color_key,
-            category,
-            created_by_profile_id,
-            updated_at,
-            version
-          ''',
-          parameters: QueryParameters.named({
-            'familyId': familyId,
-            'title': title,
-            'description': description,
-            'timezone': timezone,
-            'startsAt': startsAt.toUtc(),
-            'endsAt': endsAt.toUtc(),
-            'rrule': rrule,
-            'colorKey': colorKey,
-            'category': category,
-            'createdBy': profileId,
-            'now': now,
-          }),
+        final inserted = await CalendarEventRow.db.insertRow(
+          session,
+          CalendarEventRow(
+            familyId: familyId,
+            title: title,
+            description: description,
+            timezone: timezone,
+            startsAt: startsAt.toUtc(),
+            endsAt: endsAt.toUtc(),
+            rrule: rrule,
+            colorKey: colorKey,
+            category: category,
+            createdByProfileId: profileId,
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+            version: 1,
+          ),
           transaction: transaction,
         );
-        final dto = _mapEvent(inserted.first.toColumnMap());
+        final dto = _mapEvent(inserted);
 
         await changeFeed.appendChange(
           session,
@@ -153,37 +109,29 @@ class CalendarService {
         return dto;
       }
 
-      await session.db.unsafeExecute(
-        '''
-        UPDATE calendar_event
-        SET
-          title = @title,
-          description = @description,
-          timezone = @timezone,
-          starts_at = @startsAt,
-          ends_at = @endsAt,
-          rrule = @rrule,
-          color_key = @colorKey,
-          category = @category,
-          updated_at = @updatedAt,
-          version = version + 1
-        WHERE id = @id
-          AND family_id = @familyId
-          AND deleted_at IS NULL
-        ''',
-        parameters: QueryParameters.named({
-          'id': eventId,
-          'familyId': familyId,
-          'title': title,
-          'description': description,
-          'timezone': timezone,
-          'startsAt': startsAt.toUtc(),
-          'endsAt': endsAt.toUtc(),
-          'rrule': rrule,
-          'colorKey': colorKey,
-          'category': category,
-          'updatedAt': now,
-        }),
+      final row = await CalendarEventRow.db.findFirstRow(
+        session,
+        where: (t) =>
+            t.id.equals(eventId) &
+            t.familyId.equals(familyId) &
+            t.deletedAt.equals(null),
+        transaction: transaction,
+      );
+      if (row == null) throw Exception('Event not found');
+      await CalendarEventRow.db.updateRow(
+        session,
+        row.copyWith(
+          title: title,
+          description: description,
+          timezone: timezone,
+          startsAt: startsAt.toUtc(),
+          endsAt: endsAt.toUtc(),
+          rrule: rrule,
+          colorKey: colorKey,
+          category: category,
+          updatedAt: now,
+          version: row.version + 1,
+        ),
         transaction: transaction,
       );
 
@@ -254,93 +202,88 @@ class CalendarService {
 
       final now = DateTime.now().toUtc();
       if (scope == 'one') {
-        await session.db.unsafeExecute(
-          '''
-          INSERT INTO calendar_event_override (
-            event_id,
-            occurrence_start,
-            override_title,
-            override_starts_at,
-            override_ends_at,
-            cancelled,
-            created_at,
-            updated_at,
-            deleted_at,
-            version
-          ) VALUES (
-            @eventId,
-            @occurrenceStart,
-            @overrideTitle,
-            @overrideStartsAt,
-            @overrideEndsAt,
-            @cancelled,
-            @now,
-            @now,
-            NULL,
-            1
-          )
-          ON CONFLICT (event_id, occurrence_start)
-          DO UPDATE SET
-            override_title = EXCLUDED.override_title,
-            override_starts_at = EXCLUDED.override_starts_at,
-            override_ends_at = EXCLUDED.override_ends_at,
-            cancelled = EXCLUDED.cancelled,
-            updated_at = EXCLUDED.updated_at,
-            version = calendar_event_override.version + 1,
-            deleted_at = NULL
-          ''',
-          parameters: QueryParameters.named({
-            'eventId': eventId,
-            'occurrenceStart': occurrenceStart.toUtc(),
-            'overrideTitle': overrideTitle,
-            'overrideStartsAt': overrideStartsAt?.toUtc(),
-            'overrideEndsAt': overrideEndsAt?.toUtc(),
-            'cancelled': cancelled,
-            'now': now,
-          }),
+        final existing = await CalendarEventOverrideRow.db.findFirstRow(
+          session,
+          where: (t) =>
+              t.eventId.equals(eventId) &
+              t.occurrenceStart.equals(occurrenceStart.toUtc()),
           transaction: transaction,
         );
-      } else {
-        await session.db.unsafeExecute(
-          '''
-          UPDATE calendar_event
-          SET
-            title = COALESCE(@title, title),
-            starts_at = COALESCE(@startsAt, starts_at),
-            ends_at = COALESCE(@endsAt, ends_at),
-            updated_at = @now,
-            version = version + 1
-          WHERE id = @eventId
-            AND family_id = @familyId
-            AND deleted_at IS NULL
-          ''',
-          parameters: QueryParameters.named({
-            'eventId': eventId,
-            'familyId': familyId,
-            'title': overrideTitle,
-            'startsAt': overrideStartsAt?.toUtc(),
-            'endsAt': overrideEndsAt?.toUtc(),
-            'now': now,
-          }),
-          transaction: transaction,
-        );
-
-        if (scope == 'future') {
-          await session.db.unsafeExecute(
-            '''
-            UPDATE calendar_event_override
-            SET deleted_at = @now, updated_at = @now, version = version + 1
-            WHERE event_id = @eventId
-              AND occurrence_start >= @occurrenceStart
-              AND deleted_at IS NULL
-            ''',
-            parameters: QueryParameters.named({
-              'eventId': eventId,
-              'occurrenceStart': occurrenceStart.toUtc(),
-              'now': now,
-            }),
+        if (existing == null) {
+          await CalendarEventOverrideRow.db.insertRow(
+            session,
+            CalendarEventOverrideRow(
+              eventId: eventId,
+              occurrenceStart: occurrenceStart.toUtc(),
+              overrideTitle: overrideTitle,
+              overrideStartsAt: overrideStartsAt?.toUtc(),
+              overrideEndsAt: overrideEndsAt?.toUtc(),
+              cancelled: cancelled,
+              createdAt: now,
+              updatedAt: now,
+              deletedAt: null,
+              version: 1,
+            ),
             transaction: transaction,
           );
+        } else {
+          await CalendarEventOverrideRow.db.updateRow(
+            session,
+            existing.copyWith(
+              overrideTitle: overrideTitle,
+              overrideStartsAt: overrideStartsAt?.toUtc(),
+              overrideEndsAt: overrideEndsAt?.toUtc(),
+              cancelled: cancelled,
+              updatedAt: now,
+              deletedAt: null,
+              version: existing.version + 1,
+            ),
+            transaction: transaction,
+          );
+        }
+      } else {
+        final event = await CalendarEventRow.db.findFirstRow(
+          session,
+          where: (t) =>
+              t.id.equals(eventId) &
+              t.familyId.equals(familyId) &
+              t.deletedAt.equals(null),
+          transaction: transaction,
+        );
+        if (event != null) {
+          await CalendarEventRow.db.updateRow(
+            session,
+            event.copyWith(
+              title: overrideTitle ?? event.title,
+              startsAt: overrideStartsAt?.toUtc() ?? event.startsAt,
+              endsAt: overrideEndsAt?.toUtc() ?? event.endsAt,
+              updatedAt: now,
+              version: event.version + 1,
+            ),
+            transaction: transaction,
+          );
+        }
+
+        if (scope == 'future') {
+          final futureOverrides = await CalendarEventOverrideRow.db.find(
+            session,
+            where: (t) =>
+                t.eventId.equals(eventId) &
+                (t.occurrenceStart >= occurrenceStart.toUtc()) &
+                t.deletedAt.equals(null),
+            transaction: transaction,
+          );
+          for (final ov in futureOverrides) {
+            await CalendarEventOverrideRow.db.updateRow(
+              session,
+              ov.copyWith(
+                deletedAt: now,
+                updatedAt: now,
+                version: ov.version + 1,
+              ),
+              transaction: transaction,
+            );
+          }
         }
       }
 
@@ -381,54 +324,27 @@ class CalendarService {
   }) async {
     await rbac.ensureFamilyRole(session, familyId: familyId, minRole: 'member');
 
-    final eventsResult = await session.db.unsafeQuery(
-      '''
-      SELECT
-        id,
-        family_id,
-        title,
-        description,
-        timezone,
-        starts_at,
-        ends_at,
-        rrule,
-        color_key,
-        category,
-        created_by_profile_id,
-        updated_at,
-        version
-      FROM calendar_event
-      WHERE family_id = @familyId
-        AND deleted_at IS NULL
-      ORDER BY id ASC
-      ''',
-      parameters: QueryParameters.named({'familyId': familyId}),
+    final eventsResult = await CalendarEventRow.db.find(
+      session,
+      where: (t) => t.familyId.equals(familyId) & t.deletedAt.equals(null),
+      orderBy: (t) => t.id,
     );
 
-    final overridesResult = await session.db.unsafeQuery(
-      '''
-      SELECT
-        event_id,
-        occurrence_start,
-        override_title,
-        override_starts_at,
-        override_ends_at,
-        cancelled
-      FROM calendar_event_override
-      WHERE deleted_at IS NULL
-      ''',
+    final overridesResult = await CalendarEventOverrideRow.db.find(
+      session,
+      where: (t) => t.deletedAt.equals(null),
     );
 
-    final overrides = <String, Map<String, dynamic>>{};
+    final overrides = <String, CalendarEventOverrideRow>{};
     for (final row in overridesResult) {
-      final map = row.toColumnMap();
-      final key = '${map['event_id']}:${(map['occurrence_start'] as DateTime).toUtc().toIso8601String()}';
-      overrides[key] = map;
+      final key =
+          '${row.eventId}:${row.occurrenceStart.toUtc().toIso8601String()}';
+      overrides[key] = row;
     }
 
     final instances = <CalendarInstanceDto>[];
     for (final row in eventsResult) {
-      final event = _mapEvent(row.toColumnMap());
+      final event = _mapEvent(row);
       final occurrences = _expandOccurrences(event, rangeStart.toUtc(), rangeEnd.toUtc());
 
       for (final occurrence in occurrences) {
@@ -448,15 +364,13 @@ class CalendarService {
           continue;
         }
 
-        final cancelled = (override['cancelled'] as bool?) ?? false;
+        final cancelled = override.cancelled;
         instances.add(
           CalendarInstanceDto(
             eventId: event.id,
-            occurrenceStart:
-                (override['override_starts_at'] as DateTime?) ?? occurrence.start,
-            occurrenceEnd:
-                (override['override_ends_at'] as DateTime?) ?? occurrence.end,
-            title: (override['override_title'] as String?) ?? event.title,
+            occurrenceStart: override.overrideStartsAt ?? occurrence.start,
+            occurrenceEnd: override.overrideEndsAt ?? occurrence.end,
+            title: override.overrideTitle ?? event.title,
             cancelled: cancelled,
           ),
         );
@@ -472,48 +386,30 @@ class CalendarService {
     int eventId, {
     Transaction? transaction,
   }) async {
-    final result = await session.db.unsafeQuery(
-      '''
-      SELECT
-        id,
-        family_id,
-        title,
-        description,
-        timezone,
-        starts_at,
-        ends_at,
-        rrule,
-        color_key,
-        category,
-        created_by_profile_id,
-        updated_at,
-        version
-      FROM calendar_event
-      WHERE id = @id
-      LIMIT 1
-      ''',
-      parameters: QueryParameters.named({'id': eventId}),
+    final row = await CalendarEventRow.db.findById(
+      session,
+      eventId,
       transaction: transaction,
     );
 
-    return _mapEvent(result.first.toColumnMap());
+    return _mapEvent(row!);
   }
 
-  CalendarEventDto _mapEvent(Map<String, dynamic> row) {
+  CalendarEventDto _mapEvent(CalendarEventRow row) {
     return CalendarEventDto(
-      id: row['id'] as int,
-      familyId: row['family_id'] as int,
-      title: row['title'] as String,
-      description: row['description'] as String?,
-      timezone: row['timezone'] as String,
-      startsAt: row['starts_at'] as DateTime,
-      endsAt: row['ends_at'] as DateTime,
-      rrule: row['rrule'] as String?,
-      colorKey: row['color_key'] as String?,
-      category: row['category'] as String?,
-      createdByProfileId: row['created_by_profile_id'] as int,
-      updatedAt: row['updated_at'] as DateTime,
-      version: row['version'] as int,
+      id: row.id!,
+      familyId: row.familyId,
+      title: row.title,
+      description: row.description,
+      timezone: row.timezone,
+      startsAt: row.startsAt,
+      endsAt: row.endsAt,
+      rrule: row.rrule,
+      colorKey: row.colorKey,
+      category: row.category,
+      createdByProfileId: row.createdByProfileId,
+      updatedAt: row.updatedAt,
+      version: row.version,
     );
   }
 
@@ -677,3 +573,5 @@ class _Rrule {
   final DateTime? until;
   final int? count;
 }
+
+

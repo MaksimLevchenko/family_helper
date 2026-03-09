@@ -4,6 +4,7 @@ import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../../core/logging/app_error_logger.dart';
 import '../../../core/utils/operation_id.dart';
 import '../data/family_repository.dart';
 
@@ -140,7 +141,13 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
           clearError: true,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'family.loadMembers',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -164,7 +171,12 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
         ),
       );
       return family;
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'family.createFamily',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
       return null;
     }
@@ -196,7 +208,17 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
         ),
       );
       return invite;
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'family.createInvite',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'inviteType': inviteType,
+          'hasEmail': email?.isNotEmpty ?? false,
+        },
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
       return null;
     }
@@ -220,7 +242,12 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
           clearError: true,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'family.acceptInvite',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }

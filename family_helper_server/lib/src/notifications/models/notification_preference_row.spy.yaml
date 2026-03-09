@@ -1,0 +1,10 @@
+class: NotificationPreferenceRow
+table: notification_preference
+fields:
+  profileId: int
+  notificationType: String
+  enabled: bool
+  quietHoursStart: String?
+  quietHoursEnd: String?
+  updatedAt: DateTime
+  version: int

@@ -1,8 +1,7 @@
-import 'package:serverpod/serverpod.dart';
 import 'package:test/test.dart';
-
 import '../test_tools/auth_helpers.dart';
 import '../test_tools/serverpod_test_tools.dart';
+import 'package:family_helper_server/src/generated/protocol.dart';
 
 void main() {
   withServerpod('Task complete generateOnComplete', (sessionBuilder, endpoints) {
@@ -46,19 +45,16 @@ void main() {
       expect(results.last.status, 'completed');
 
       final generatedCount = await withDbSession(owner, (session) async {
-        final rows = await session.db.unsafeQuery(
-          '''
-          SELECT COUNT(*) AS total
-          FROM task
-          WHERE source_task_id = @sourceTaskId
-            AND deleted_at IS NULL
-          ''',
-          parameters: QueryParameters.named({'sourceTaskId': task.id}),
+        return TaskRow.db.count(
+          session,
+          where: (t) =>
+              t.sourceTaskId.equals(task.id) & t.deletedAt.equals(null),
         );
-        return rows.first.toColumnMap()['total'] as int;
       });
 
       expect(generatedCount, 1);
     });
   });
 }
+
+

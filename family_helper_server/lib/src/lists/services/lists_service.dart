@@ -1,5 +1,4 @@
 import 'package:serverpod/serverpod.dart';
-
 import '../../core/auth/auth_context.dart';
 import '../../core/idempotency/idempotency_service.dart';
 import '../../core/rbac/ensure_family_role_service.dart';
@@ -54,46 +53,21 @@ class ListsService {
 
       final now = DateTime.now().toUtc();
       if (listId == null) {
-        final inserted = await session.db.unsafeQuery(
-          '''
-          INSERT INTO family_list (
-            family_id,
-            title,
-            list_type,
-            created_by_profile_id,
-            created_at,
-            updated_at,
-            deleted_at,
-            version
-          ) VALUES (
-            @familyId,
-            @title,
-            @listType,
-            @createdBy,
-            @now,
-            @now,
-            NULL,
-            1
-          )
-          RETURNING
-            id,
-            family_id,
-            title,
-            list_type,
-            created_by_profile_id,
-            updated_at,
-            version
-          ''',
-          parameters: QueryParameters.named({
-            'familyId': familyId,
-            'title': title,
-            'listType': listType,
-            'createdBy': profileId,
-            'now': now,
-          }),
+        final inserted = await FamilyListRow.db.insertRow(
+          session,
+          FamilyListRow(
+            familyId: familyId,
+            title: title,
+            listType: listType,
+            createdByProfileId: profileId,
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+            version: 1,
+          ),
           transaction: transaction,
         );
-        final dto = _mapList(inserted.first.toColumnMap());
+        final dto = _mapList(inserted);
         await _emitListChange(
           session,
           familyId: familyId,
@@ -104,24 +78,23 @@ class ListsService {
         return dto;
       }
 
-      await session.db.unsafeExecute(
-        '''
-        UPDATE family_list
-        SET title = @title,
-            list_type = @listType,
-            updated_at = @updatedAt,
-            version = version + 1
-        WHERE id = @id
-          AND family_id = @familyId
-          AND deleted_at IS NULL
-        ''',
-        parameters: QueryParameters.named({
-          'id': listId,
-          'familyId': familyId,
-          'title': title,
-          'listType': listType,
-          'updatedAt': now,
-        }),
+      final row = await FamilyListRow.db.findFirstRow(
+        session,
+        where: (t) =>
+            t.id.equals(listId) &
+            t.familyId.equals(familyId) &
+            t.deletedAt.equals(null),
+        transaction: transaction,
+      );
+      if (row == null) throw Exception('List not found');
+      await FamilyListRow.db.updateRow(
+        session,
+        row.copyWith(
+          title: title,
+          listType: listType,
+          updatedAt: now,
+          version: row.version + 1,
+        ),
         transaction: transaction,
       );
 
@@ -168,114 +141,53 @@ class ListsService {
       );
 
       if (!isFresh) {
-        final latest = await session.db.unsafeQuery(
-          '''
-          SELECT
-            id,
-            list_id,
-            title,
-            qty,
-            unit,
-            note,
-            price_cents,
-            category,
-            position_index,
-            is_bought,
-            bought_by_profile_id,
-            bought_at,
-            updated_at,
-            version
-          FROM list_item
-          WHERE list_id = @listId
-            AND deleted_at IS NULL
-          ORDER BY id DESC
-          LIMIT 1
-          ''',
-          parameters: QueryParameters.named({'listId': listId}),
+        final latest = await ListItemRow.db.findFirstRow(
+          session,
+          where: (t) => t.listId.equals(listId) & t.deletedAt.equals(null),
+          orderBy: (t) => t.id,
+          orderDescending: true,
           transaction: transaction,
         );
-        if (latest.isNotEmpty) {
-          return _mapItem(latest.first.toColumnMap());
+        if (latest != null) {
+          return _mapItem(latest);
         }
       }
 
       final now = DateTime.now().toUtc();
-      final positionResult = await session.db.unsafeQuery(
-        'SELECT COALESCE(MAX(position_index), 0) + 1 AS next_position FROM list_item WHERE list_id = @listId',
-        parameters: QueryParameters.named({'listId': listId}),
+      final existingItems = await ListItemRow.db.find(
+        session,
+        where: (t) => t.listId.equals(listId),
         transaction: transaction,
       );
-      final nextPosition = positionResult.first.toColumnMap()['next_position'] as int;
+      final maxPos = existingItems.isEmpty
+          ? 0
+          : existingItems.map((e) => e.positionIndex).reduce((a, b) => a > b ? a : b);
+      final nextPosition = maxPos + 1;
 
-      final inserted = await session.db.unsafeQuery(
-        '''
-        INSERT INTO list_item (
-          list_id,
-          title,
-          qty,
-          unit,
-          note,
-          price_cents,
-          category,
-          position_index,
-          is_bought,
-          bought_by_profile_id,
-          bought_at,
-          created_by_profile_id,
-          created_at,
-          updated_at,
-          deleted_at,
-          version
-        ) VALUES (
-          @listId,
-          @title,
-          @qty,
-          @unit,
-          @note,
-          @priceCents,
-          @category,
-          @position,
-          false,
-          NULL,
-          NULL,
-          @createdBy,
-          @now,
-          @now,
-          NULL,
-          1
-        )
-        RETURNING
-          id,
-          list_id,
-          title,
-          qty,
-          unit,
-          note,
-          price_cents,
-          category,
-          position_index,
-          is_bought,
-          bought_by_profile_id,
-          bought_at,
-          updated_at,
-          version
-        ''',
-        parameters: QueryParameters.named({
-          'listId': listId,
-          'title': title,
-          'qty': qty,
-          'unit': unit,
-          'note': note,
-          'priceCents': priceCents,
-          'category': category,
-          'position': nextPosition,
-          'createdBy': actorProfileId,
-          'now': now,
-        }),
+      final inserted = await ListItemRow.db.insertRow(
+        session,
+        ListItemRow(
+          listId: listId,
+          title: title,
+          qty: qty,
+          unit: unit,
+          note: note,
+          priceCents: priceCents,
+          category: category,
+          positionIndex: nextPosition,
+          isBought: false,
+          boughtByProfileId: null,
+          boughtAt: null,
+          createdByProfileId: actorProfileId,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+          version: 1,
+        ),
         transaction: transaction,
       );
 
-      final item = _mapItem(inserted.first.toColumnMap());
+      final item = _mapItem(inserted);
       await _appendItemHistory(
         session,
         itemId: item.id,
@@ -320,64 +232,39 @@ class ListsService {
         transaction: transaction,
       );
 
-      final locked = await session.db.unsafeQuery(
-        '''
-        SELECT
-          li.id,
-          li.list_id,
-          li.title,
-          li.qty,
-          li.unit,
-          li.note,
-          li.price_cents,
-          li.category,
-          li.position_index,
-          li.is_bought,
-          li.bought_by_profile_id,
-          li.bought_at,
-          li.updated_at,
-          li.version,
-          fl.family_id
-        FROM list_item li
-        JOIN family_list fl ON fl.id = li.list_id
-        WHERE li.id = @itemId
-          AND li.deleted_at IS NULL
-          AND fl.family_id = @familyId
-        FOR UPDATE
-        ''',
-        parameters: QueryParameters.named({'itemId': itemId, 'familyId': familyId}),
+      final currentRow = await ListItemRow.db.findFirstRow(
+        session,
+        where: (li) => li.id.equals(itemId) & li.deletedAt.equals(null),
         transaction: transaction,
       );
-      if (locked.isEmpty) {
+      if (currentRow == null) {
+        throw Exception('List item not found');
+      }
+      final list = await FamilyListRow.db.findById(
+        session,
+        currentRow.listId,
+        transaction: transaction,
+      );
+      if (list == null || list.familyId != familyId) {
         throw Exception('List item not found');
       }
 
-      final current = locked.first.toColumnMap();
+      final current = currentRow;
       if (!isFresh) {
-        return _mapItem(current);
+        return _mapItem(currentRow);
       }
 
       final now = DateTime.now().toUtc();
-      final nextBought = !(current['is_bought'] as bool);
-
-      await session.db.unsafeExecute(
-        '''
-        UPDATE list_item
-        SET
-          is_bought = @isBought,
-          bought_by_profile_id = CASE WHEN @isBought THEN @profileId ELSE NULL END,
-          bought_at = CASE WHEN @isBought THEN @boughtAt ELSE NULL END,
-          updated_at = @updatedAt,
-          version = version + 1
-        WHERE id = @itemId
-        ''',
-        parameters: QueryParameters.named({
-          'itemId': itemId,
-          'isBought': nextBought,
-          'profileId': actorProfileId,
-          'boughtAt': now,
-          'updatedAt': now,
-        }),
+      final nextBought = !current.isBought;
+      final updatedRow = await ListItemRow.db.updateRow(
+        session,
+        current.copyWith(
+          isBought: nextBought,
+          boughtByProfileId: nextBought ? actorProfileId : null,
+          boughtAt: nextBought ? now : null,
+          updatedAt: now,
+          version: current.version + 1,
+        ),
         transaction: transaction,
       );
 
@@ -397,32 +284,7 @@ class ListsService {
         transaction: transaction,
       );
 
-      final updated = await session.db.unsafeQuery(
-        '''
-        SELECT
-          id,
-          list_id,
-          title,
-          qty,
-          unit,
-          note,
-          price_cents,
-          category,
-          position_index,
-          is_bought,
-          bought_by_profile_id,
-          bought_at,
-          updated_at,
-          version
-        FROM list_item
-        WHERE id = @itemId
-        LIMIT 1
-        ''',
-        parameters: QueryParameters.named({'itemId': itemId}),
-        transaction: transaction,
-      );
-
-      return _mapItem(updated.first.toColumnMap());
+      return _mapItem(updatedRow);
     });
   }
 
@@ -456,24 +318,25 @@ class ListsService {
       }
 
       for (int i = 0; i < orderedItemIds.length; i++) {
-        await session.db.unsafeExecute(
-          '''
-          UPDATE list_item
-          SET position_index = @position,
-              updated_at = @updatedAt,
-              version = version + 1
-          WHERE id = @itemId
-            AND list_id = @listId
-            AND deleted_at IS NULL
-          ''',
-          parameters: QueryParameters.named({
-            'position': i + 1,
-            'updatedAt': DateTime.now().toUtc(),
-            'itemId': orderedItemIds[i],
-            'listId': listId,
-          }),
+        final row = await ListItemRow.db.findFirstRow(
+          session,
+          where: (t) =>
+              t.id.equals(orderedItemIds[i]) &
+              t.listId.equals(listId) &
+              t.deletedAt.equals(null),
           transaction: transaction,
         );
+        if (row != null) {
+          await ListItemRow.db.updateRow(
+            session,
+            row.copyWith(
+              positionIndex: i + 1,
+              updatedAt: DateTime.now().toUtc(),
+              version: row.version + 1,
+            ),
+            transaction: transaction,
+          );
+        }
       }
 
       await _emitListChange(
@@ -495,34 +358,19 @@ class ListsService {
   }) async {
     await rbac.ensureFamilyRole(session, familyId: familyId, minRole: 'member');
 
-    final rows = await session.db.unsafeQuery(
-      '''
-      SELECT
-        li.id,
-        li.list_id,
-        li.title,
-        li.qty,
-        li.unit,
-        li.note,
-        li.price_cents,
-        li.category,
-        li.position_index,
-        li.is_bought,
-        li.bought_by_profile_id,
-        li.bought_at,
-        li.updated_at,
-        li.version
-      FROM list_item li
-      JOIN family_list fl ON fl.id = li.list_id
-      WHERE li.list_id = @listId
-        AND fl.family_id = @familyId
-        AND li.deleted_at IS NULL
-      ORDER BY li.position_index ASC, li.id ASC
-      ''',
-      parameters: QueryParameters.named({'listId': listId, 'familyId': familyId}),
+    final list = await FamilyListRow.db.findById(session, listId);
+    if (list == null || list.familyId != familyId) return const <ListItemDto>[];
+
+    final rows = await ListItemRow.db.find(
+      session,
+      where: (li) => li.listId.equals(listId) & li.deletedAt.equals(null),
+      orderByList: (li) => [
+        Order(column: li.positionIndex),
+        Order(column: li.id),
+      ],
     );
 
-    return rows.map((row) => _mapItem(row.toColumnMap())).toList();
+    return rows.map(_mapItem).toList();
   }
 
   Future<FamilyListDto> _findList(
@@ -530,25 +378,13 @@ class ListsService {
     int listId, {
     Transaction? transaction,
   }) async {
-    final rows = await session.db.unsafeQuery(
-      '''
-      SELECT
-        id,
-        family_id,
-        title,
-        list_type,
-        created_by_profile_id,
-        updated_at,
-        version
-      FROM family_list
-      WHERE id = @id
-      LIMIT 1
-      ''',
-      parameters: QueryParameters.named({'id': listId}),
+    final row = await FamilyListRow.db.findById(
+      session,
+      listId,
       transaction: transaction,
     );
 
-    return _mapList(rows.first.toColumnMap());
+    return _mapList(row!);
   }
 
   Future<void> _appendItemHistory(
@@ -558,26 +394,14 @@ class ListsService {
     required String eventType,
     Transaction? transaction,
   }) async {
-    await session.db.unsafeExecute(
-      '''
-      INSERT INTO list_item_history (
-        item_id,
-        actor_profile_id,
-        event_type,
-        created_at
-      ) VALUES (
-        @itemId,
-        @actor,
-        @eventType,
-        @createdAt
-      )
-      ''',
-      parameters: QueryParameters.named({
-        'itemId': itemId,
-        'actor': actorProfileId,
-        'eventType': eventType,
-        'createdAt': DateTime.now().toUtc(),
-      }),
+    await ListItemHistoryRow.db.insertRow(
+      session,
+      ListItemHistoryRow(
+        itemId: itemId,
+        actorProfileId: actorProfileId,
+        eventType: eventType,
+        createdAt: DateTime.now().toUtc(),
+      ),
       transaction: transaction,
     );
   }
@@ -614,34 +438,36 @@ class ListsService {
     );
   }
 
-  FamilyListDto _mapList(Map<String, dynamic> row) {
+  FamilyListDto _mapList(FamilyListRow row) {
     return FamilyListDto(
-      id: row['id'] as int,
-      familyId: row['family_id'] as int,
-      title: row['title'] as String,
-      listType: row['list_type'] as String,
-      createdByProfileId: row['created_by_profile_id'] as int,
-      updatedAt: row['updated_at'] as DateTime,
-      version: row['version'] as int,
+      id: row.id!,
+      familyId: row.familyId,
+      title: row.title,
+      listType: row.listType,
+      createdByProfileId: row.createdByProfileId,
+      updatedAt: row.updatedAt,
+      version: row.version,
     );
   }
 
-  ListItemDto _mapItem(Map<String, dynamic> row) {
+  ListItemDto _mapItem(ListItemRow row) {
     return ListItemDto(
-      id: row['id'] as int,
-      listId: row['list_id'] as int,
-      title: row['title'] as String,
-      qty: (row['qty'] as num).toDouble(),
-      unit: row['unit'] as String?,
-      note: row['note'] as String?,
-      priceCents: row['price_cents'] as int?,
-      category: row['category'] as String?,
-      positionIndex: row['position_index'] as int,
-      isBought: row['is_bought'] as bool,
-      boughtByProfileId: row['bought_by_profile_id'] as int?,
-      boughtAt: row['bought_at'] as DateTime?,
-      updatedAt: row['updated_at'] as DateTime,
-      version: row['version'] as int,
+      id: row.id!,
+      listId: row.listId,
+      title: row.title,
+      qty: row.qty,
+      unit: row.unit,
+      note: row.note,
+      priceCents: row.priceCents,
+      category: row.category,
+      positionIndex: row.positionIndex,
+      isBought: row.isBought,
+      boughtByProfileId: row.boughtByProfileId,
+      boughtAt: row.boughtAt,
+      updatedAt: row.updatedAt,
+      version: row.version,
     );
   }
 }
+
+

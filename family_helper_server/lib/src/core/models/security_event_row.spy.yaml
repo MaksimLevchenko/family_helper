@@ -1,0 +1,8 @@
+class: SecurityEventRow
+table: security_event
+fields:
+  authUserId: String
+  eventType: String
+  success: bool
+  payloadJson: String
+  createdAt: DateTime

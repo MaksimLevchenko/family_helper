@@ -1,0 +1,13 @@
+class: ReminderRow
+table: reminder
+fields:
+  familyId: int
+  entityType: String
+  entityId: int
+  profileId: int
+  remindAt: DateTime
+  status: String
+  payloadJson: String
+  clientOperationId: String?
+  firedAt: DateTime?
+  createdAt: DateTime

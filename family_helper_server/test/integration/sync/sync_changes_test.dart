@@ -29,15 +29,20 @@ void main() {
         since: since,
         familyId: family.id,
         limit: 100,
+        lastSeenChangeId: 0,
       );
 
       expect(changes.changes, isNotEmpty);
       expect(
-        changes.changes.any((it) => it.feature == 'family' && it.entityType == 'family'),
+        changes.changes.any(
+          (it) => it.feature == 'family' && it.entityType == 'family',
+        ),
         isTrue,
       );
       expect(
-        changes.changes.any((it) => it.feature == 'tasks' && it.entityType == 'task'),
+        changes.changes.any(
+          (it) => it.feature == 'tasks' && it.entityType == 'task',
+        ),
         isTrue,
       );
     });

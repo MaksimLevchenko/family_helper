@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/logging/app_error_logger.dart';
 import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/tasks_repository.dart';
@@ -71,7 +72,13 @@ class TasksCubit extends Cubit<TasksState> {
           clearError: true,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'tasks.reload',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -103,7 +110,13 @@ class TasksCubit extends Cubit<TasksState> {
       );
 
       await reload();
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'tasks.createTask',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -125,7 +138,16 @@ class TasksCubit extends Cubit<TasksState> {
       );
 
       await reload();
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'tasks.complete',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'taskId': task.id,
+        },
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }

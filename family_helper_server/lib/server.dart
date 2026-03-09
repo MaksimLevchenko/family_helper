@@ -6,10 +6,7 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
-import 'src/workers/account_deletion_call.dart';
-import 'src/workers/media_cleanup_call.dart';
-import 'src/workers/notifications_due_reminder_call.dart';
-import 'src/workers/privacy_export_call.dart';
+import 'src/workers/future_call_registry.dart';
 import 'src/web/routes/app_config_route.dart';
 import 'src/web/routes/root.dart';
 
@@ -78,45 +75,11 @@ void run(List<String> args) async {
   }
 
   // Start the server.
-  pod.registerFutureCall(
-    NotificationsDueReminderCall(),
-    'notificationsDueReminder',
-  );
-  pod.registerFutureCall(
-    MediaCleanupCall(),
-    'mediaCleanup',
-  );
-  pod.registerFutureCall(
-    PrivacyExportCall(),
-    'privacyExport',
-  );
-  pod.registerFutureCall(
-    AccountDeletionCall(),
-    'accountDeletion',
-  );
+  FutureCallRegistry.registerAll(pod);
 
   await pod.start();
 
-  await pod.futureCallWithDelay(
-    'notificationsDueReminder',
-    null,
-    const Duration(seconds: 30),
-  );
-  await pod.futureCallWithDelay(
-    'mediaCleanup',
-    null,
-    const Duration(minutes: 15),
-  );
-  await pod.futureCallWithDelay(
-    'privacyExport',
-    null,
-    const Duration(minutes: 5),
-  );
-  await pod.futureCallWithDelay(
-    'accountDeletion',
-    null,
-    const Duration(hours: 6),
-  );
+  await FutureCallRegistry.scheduleAll(pod);
 }
 
 void _sendRegistrationCode(

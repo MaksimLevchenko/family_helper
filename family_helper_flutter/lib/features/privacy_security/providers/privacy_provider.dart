@@ -1,6 +1,7 @@
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/logging/app_error_logger.dart';
 import '../../../core/utils/operation_id.dart';
 import '../data/privacy_repository.dart';
 
@@ -43,7 +44,9 @@ class PrivacyCubit extends Cubit<PrivacyState> {
   Future<void> requestExport() async {
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
-      final job = await _repository.requestExport(clientOperationId: OperationId.next());
+      final job = await _repository.requestExport(
+        clientOperationId: OperationId.next(),
+      );
       emit(
         state.copyWith(
           isLoading: false,
@@ -51,7 +54,12 @@ class PrivacyCubit extends Cubit<PrivacyState> {
           clearError: true,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'privacy.requestExport',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -69,7 +77,12 @@ class PrivacyCubit extends Cubit<PrivacyState> {
           clearError: true,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'privacy.requestAccountDeletion',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -85,7 +98,12 @@ class PrivacyCubit extends Cubit<PrivacyState> {
           clearError: true,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'privacy.cancelAccountDeletion',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }

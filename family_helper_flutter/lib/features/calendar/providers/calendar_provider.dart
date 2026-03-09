@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/logging/app_error_logger.dart';
 import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/calendar_repository.dart';
@@ -75,7 +76,13 @@ class CalendarCubit extends Cubit<CalendarState> {
           clearError: true,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'calendar.reload',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -104,7 +111,13 @@ class CalendarCubit extends Cubit<CalendarState> {
         rrule: rrule,
       );
       await reload();
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'calendar.createEvent',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -125,7 +138,16 @@ class CalendarCubit extends Cubit<CalendarState> {
         occurrenceStart: instance.occurrenceStart,
       );
       await reload();
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'calendar.cancelOccurrence',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'eventId': instance.eventId,
+        },
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }

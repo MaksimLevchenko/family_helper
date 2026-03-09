@@ -1,8 +1,7 @@
-import 'package:serverpod/serverpod.dart';
 import 'package:test/test.dart';
-
 import '../test_tools/auth_helpers.dart';
 import '../test_tools/serverpod_test_tools.dart';
+import 'package:family_helper_server/src/generated/protocol.dart';
 
 void main() {
   withServerpod('Lists toggle bought', (sessionBuilder, endpoints) {
@@ -50,24 +49,22 @@ void main() {
       expect(toggles.length, 2);
 
       final historyCount = await withDbSession(owner, (session) async {
-        final rows = await session.db.unsafeQuery(
-          'SELECT COUNT(*) AS total FROM list_item_history WHERE item_id = @itemId',
-          parameters: QueryParameters.named({'itemId': item.id}),
+        return ListItemHistoryRow.db.count(
+          session,
+          where: (t) => t.itemId.equals(item.id),
         );
-        return rows.first.toColumnMap()['total'] as int;
       });
 
       expect(historyCount, 2);
 
       final storedState = await withDbSession(owner, (session) async {
-        final rows = await session.db.unsafeQuery(
-          'SELECT is_bought FROM list_item WHERE id = @itemId',
-          parameters: QueryParameters.named({'itemId': item.id}),
-        );
-        return rows.first.toColumnMap()['is_bought'] as bool;
+        final row = await ListItemRow.db.findById(session, item.id);
+        return row!.isBought;
       });
 
       expect(storedState, false);
     });
   });
 }
+
+

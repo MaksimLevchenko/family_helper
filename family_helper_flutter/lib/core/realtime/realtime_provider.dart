@@ -4,12 +4,14 @@ import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../features/family_invites/providers/family_provider.dart';
+import '../logging/app_error_logger.dart';
 import '../sync/sync_controller.dart';
 import 'realtime_subscription_manager.dart';
 
-typedef RealtimeInvalidationCallback = Future<void> Function(
-  FamilyRealtimeEvent event,
-);
+typedef RealtimeInvalidationCallback =
+    Future<void> Function(
+      FamilyRealtimeEvent event,
+    );
 
 class RealtimeState {
   const RealtimeState({
@@ -89,7 +91,13 @@ class RealtimeCubit extends Cubit<RealtimeState> {
         },
       );
       emit(state.copyWith(familyId: familyId, clearError: true));
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'realtime.bindFamily',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
       emit(state.copyWith(error: '$error'));
     }
   }

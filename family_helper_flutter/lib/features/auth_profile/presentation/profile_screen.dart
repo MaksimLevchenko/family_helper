@@ -12,8 +12,25 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  static const _timezones = <String>[
+    'UTC',
+    'Europe/Moscow',
+    'Europe/Berlin',
+    'Europe/London',
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'Asia/Dubai',
+    'Asia/Almaty',
+    'Asia/Bangkok',
+    'Asia/Singapore',
+    'Asia/Tokyo',
+    'Australia/Sydney',
+  ];
+
   final _nameController = TextEditingController();
-  final _timezoneController = TextEditingController();
+  String? _selectedTimezone;
 
   @override
   void initState() {
@@ -26,7 +43,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _timezoneController.dispose();
     super.dispose();
   }
 
@@ -40,7 +56,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final profile = state.profile;
           if (profile != null) {
             _nameController.text = profile.displayName;
-            _timezoneController.text = profile.timezone;
+            _selectedTimezone = _timezones.contains(profile.timezone)
+                ? profile.timezone
+                : 'UTC';
           }
         },
         builder: (context, state) {
@@ -74,7 +92,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
               AppTextField(controller: _nameController, label: 'Display name'),
               const SizedBox(height: 12),
-              AppTextField(controller: _timezoneController, label: 'Timezone'),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedTimezone ?? 'UTC',
+                decoration: const InputDecoration(labelText: 'Timezone'),
+                items: _timezones
+                    .map(
+                      (timezone) => DropdownMenuItem<String>(
+                        value: timezone,
+                        child: Text(timezone),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() {
+                    _selectedTimezone = value;
+                  });
+                },
+              ),
               const SizedBox(height: 12),
               SwitchListTile(
                 value: profile.analyticsOptIn,
@@ -93,7 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   context.read<ProfileBloc>().add(
                     ProfileUpdateRequested(
                       displayName: _nameController.text.trim(),
-                      timezone: _timezoneController.text.trim(),
+                      timezone: _selectedTimezone ?? 'UTC',
                     ),
                   );
                 },

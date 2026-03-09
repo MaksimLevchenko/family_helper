@@ -19,6 +19,7 @@ abstract class SyncChangesResponse
   SyncChangesResponse._({
     required this.since,
     required this.nextSince,
+    required this.nextLastSeenChangeId,
     required this.hasMore,
     required this.changes,
   });
@@ -26,6 +27,7 @@ abstract class SyncChangesResponse
   factory SyncChangesResponse({
     required DateTime since,
     required DateTime nextSince,
+    required int nextLastSeenChangeId,
     required bool hasMore,
     required List<_i2.SyncChangeDto> changes,
   }) = _SyncChangesResponseImpl;
@@ -36,6 +38,7 @@ abstract class SyncChangesResponse
       nextSince: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['nextSince'],
       ),
+      nextLastSeenChangeId: jsonSerialization['nextLastSeenChangeId'] as int,
       hasMore: jsonSerialization['hasMore'] as bool,
       changes: _i3.Protocol().deserialize<List<_i2.SyncChangeDto>>(
         jsonSerialization['changes'],
@@ -47,6 +50,8 @@ abstract class SyncChangesResponse
 
   DateTime nextSince;
 
+  int nextLastSeenChangeId;
+
   bool hasMore;
 
   List<_i2.SyncChangeDto> changes;
@@ -57,6 +62,7 @@ abstract class SyncChangesResponse
   SyncChangesResponse copyWith({
     DateTime? since,
     DateTime? nextSince,
+    int? nextLastSeenChangeId,
     bool? hasMore,
     List<_i2.SyncChangeDto>? changes,
   });
@@ -66,6 +72,7 @@ abstract class SyncChangesResponse
       '__className__': 'SyncChangesResponse',
       'since': since.toJson(),
       'nextSince': nextSince.toJson(),
+      'nextLastSeenChangeId': nextLastSeenChangeId,
       'hasMore': hasMore,
       'changes': changes.toJson(valueToJson: (v) => v.toJson()),
     };
@@ -77,6 +84,7 @@ abstract class SyncChangesResponse
       '__className__': 'SyncChangesResponse',
       'since': since.toJson(),
       'nextSince': nextSince.toJson(),
+      'nextLastSeenChangeId': nextLastSeenChangeId,
       'hasMore': hasMore,
       'changes': changes.toJson(valueToJson: (v) => v.toJsonForProtocol()),
     };
@@ -92,11 +100,13 @@ class _SyncChangesResponseImpl extends SyncChangesResponse {
   _SyncChangesResponseImpl({
     required DateTime since,
     required DateTime nextSince,
+    required int nextLastSeenChangeId,
     required bool hasMore,
     required List<_i2.SyncChangeDto> changes,
   }) : super._(
          since: since,
          nextSince: nextSince,
+         nextLastSeenChangeId: nextLastSeenChangeId,
          hasMore: hasMore,
          changes: changes,
        );
@@ -108,12 +118,14 @@ class _SyncChangesResponseImpl extends SyncChangesResponse {
   SyncChangesResponse copyWith({
     DateTime? since,
     DateTime? nextSince,
+    int? nextLastSeenChangeId,
     bool? hasMore,
     List<_i2.SyncChangeDto>? changes,
   }) {
     return SyncChangesResponse(
       since: since ?? this.since,
       nextSince: nextSince ?? this.nextSince,
+      nextLastSeenChangeId: nextLastSeenChangeId ?? this.nextLastSeenChangeId,
       hasMore: hasMore ?? this.hasMore,
       changes: changes ?? this.changes.map((e0) => e0.copyWith()).toList(),
     );

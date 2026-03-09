@@ -1,6 +1,6 @@
 import 'dart:convert';
-
 import 'package:serverpod/serverpod.dart';
+import '../../generated/protocol.dart';
 
 class ChangeFeedService {
   const ChangeFeedService();
@@ -17,42 +17,22 @@ class ChangeFeedService {
     bool tombstone = false,
     Transaction? transaction,
   }) async {
-    await session.db.unsafeExecute(
-      '''
-      INSERT INTO change_feed (
-        family_id,
-        feature,
-        entity_type,
-        entity_id,
-        operation,
-        changed_at,
-        tombstone,
-        version,
-        payload_json
-      ) VALUES (
-        @familyId,
-        @feature,
-        @entityType,
-        @entityId,
-        @operation,
-        @changedAt,
-        @tombstone,
-        @version,
-        @payload
-      )
-      ''',
-      parameters: QueryParameters.named({
-        'familyId': familyId,
-        'feature': feature,
-        'entityType': entityType,
-        'entityId': entityId,
-        'operation': operation,
-        'changedAt': DateTime.now().toUtc(),
-        'tombstone': tombstone,
-        'version': version,
-        'payload': jsonEncode(payload ?? const <String, dynamic>{}),
-      }),
+    await ChangeFeedRow.db.insertRow(
+      session,
+      ChangeFeedRow(
+        familyId: familyId,
+        feature: feature,
+        entityType: entityType,
+        entityId: entityId,
+        operation: operation,
+        changedAt: DateTime.now().toUtc(),
+        tombstone: tombstone,
+        version: version,
+        payloadJson: jsonEncode(payload ?? const <String, dynamic>{}),
+      ),
       transaction: transaction,
     );
   }
 }
+
+

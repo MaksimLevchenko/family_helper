@@ -1,0 +1,7 @@
+class: IdempotencyKeyRow
+table: idempotency_key
+fields:
+  actorAuthUserId: String
+  action: String
+  clientOperationId: String
+  createdAt: DateTime

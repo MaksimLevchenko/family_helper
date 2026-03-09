@@ -4,6 +4,7 @@ import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:serverpod_auth_core_flutter/serverpod_auth_core_flutter.dart';
 
+import '../logging/app_error_logger.dart';
 import '../network/app_api_client.dart';
 
 class AuthSessionState {
@@ -76,7 +77,12 @@ class AuthCubit extends Cubit<AuthSessionState> {
       );
       await _apiClient.client.auth.updateSignedInUser(authSuccess);
       await refreshProfile();
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'auth.signIn',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(
         AuthSessionState(
           isInitializing: false,
@@ -86,6 +92,87 @@ class AuthCubit extends Cubit<AuthSessionState> {
       );
       rethrow;
     }
+  }
+
+  Future<UuidValue> startRegistration({required String email}) {
+    return _apiClient.client.emailIdp.startRegistration(email: email);
+  }
+
+  Future<void> finishRegistration({
+    required UuidValue accountRequestId,
+    required String verificationCode,
+    required String password,
+  }) async {
+    final registrationToken = await _apiClient.client.emailIdp
+        .verifyRegistrationCode(
+          accountRequestId: accountRequestId,
+          verificationCode: verificationCode,
+        );
+    await finishRegistrationWithToken(
+      registrationToken: registrationToken,
+      password: password,
+    );
+  }
+
+  Future<void> finishRegistrationWithToken({
+    required String registrationToken,
+    required String password,
+  }) async {
+    emit(state.copyWith(isInitializing: true, clearError: true));
+    try {
+      final authSuccess = await _apiClient.client.emailIdp.finishRegistration(
+        registrationToken: registrationToken,
+        password: password,
+      );
+      await _apiClient.client.auth.updateSignedInUser(authSuccess);
+      await refreshProfile();
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'auth.finishRegistrationWithToken',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      emit(
+        AuthSessionState(
+          isInitializing: false,
+          isAuthenticated: false,
+          error: '$error',
+        ),
+      );
+      rethrow;
+    }
+  }
+
+  Future<String> verifyRegistrationCodeByRequestId({
+    required String accountRequestId,
+    required String verificationCode,
+  }) {
+    // ignore: experimental_member_use
+    final requestId = UuidValue.fromString(accountRequestId);
+    return _apiClient.client.emailIdp.verifyRegistrationCode(
+      accountRequestId: requestId,
+      verificationCode: verificationCode,
+    );
+  }
+
+  Future<UuidValue> startPasswordReset({required String email}) {
+    return _apiClient.client.emailIdp.startPasswordReset(email: email);
+  }
+
+  Future<void> finishPasswordReset({
+    required UuidValue passwordResetRequestId,
+    required String verificationCode,
+    required String newPassword,
+  }) async {
+    final finishToken = await _apiClient.client.emailIdp
+        .verifyPasswordResetCode(
+          passwordResetRequestId: passwordResetRequestId,
+          verificationCode: verificationCode,
+        );
+    await _apiClient.client.emailIdp.finishPasswordReset(
+      finishPasswordResetToken: finishToken,
+      newPassword: newPassword,
+    );
   }
 
   Future<void> signOut() async {
@@ -108,7 +195,12 @@ class AuthCubit extends Cubit<AuthSessionState> {
           profile: profile,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'auth.refreshProfile',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(
         AuthSessionState(
           isInitializing: false,

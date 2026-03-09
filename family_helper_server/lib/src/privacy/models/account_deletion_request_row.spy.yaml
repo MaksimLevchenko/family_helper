@@ -1,0 +1,8 @@
+class: AccountDeletionRequestRow
+table: account_deletion_request
+fields:
+  profileId: int
+  status: String
+  scheduledHardDeleteAt: DateTime
+  createdAt: DateTime
+  cancelledAt: DateTime?

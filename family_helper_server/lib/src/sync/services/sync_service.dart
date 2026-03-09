@@ -1,7 +1,4 @@
-import 'dart:convert';
-
 import 'package:serverpod/serverpod.dart';
-
 import '../../core/rbac/ensure_family_role_service.dart';
 import '../../generated/protocol.dart';
 
@@ -15,71 +12,57 @@ class SyncService {
     required DateTime since,
     int? familyId,
     int limit = 500,
+    int lastSeenChangeId = 0,
   }) async {
     if (familyId != null) {
       await rbac.ensureFamilyRole(session, familyId: familyId, minRole: 'member');
     }
 
-    final rows = await session.db.unsafeQuery(
-      '''
-      SELECT
-        id,
-        family_id,
-        feature,
-        entity_type,
-        entity_id,
-        operation,
-        changed_at,
-        tombstone,
-        version,
-        payload_json
-      FROM change_feed
-      WHERE changed_at > @since
-        AND (@familyId IS NULL OR family_id = @familyId)
-      ORDER BY changed_at ASC, id ASC
-      LIMIT @limit
-      ''',
-      parameters: QueryParameters.named({
-        'since': since.toUtc(),
-        'familyId': familyId,
-        'limit': limit,
-      }),
+    final sinceUtc = since.toUtc();
+    final rows = await ChangeFeedRow.db.find(
+      session,
+      where: (t) {
+        final byCursor =
+            (t.changedAt > sinceUtc) |
+            (t.changedAt.equals(sinceUtc) & (t.id > lastSeenChangeId));
+        if (familyId == null) return byCursor;
+        return byCursor & t.familyId.equals(familyId);
+      },
+      orderByList: (t) => [
+        Order(column: t.changedAt),
+        Order(column: t.id),
+      ],
+      limit: limit,
     );
 
-    final items = rows.map((row) => _map(row.toColumnMap())).toList();
+    final items = rows.map(_map).toList();
     final hasMore = items.length >= limit;
-    final nextSince = items.isEmpty
-        ? DateTime.now().toUtc()
-        : items.last.changedAt;
+    final nextSince = items.isEmpty ? sinceUtc : items.last.changedAt;
+    final nextLastSeenChangeId = items.isEmpty ? lastSeenChangeId : items.last.id;
 
     return SyncChangesResponse(
-      since: since.toUtc(),
+      since: sinceUtc,
       nextSince: nextSince,
+      nextLastSeenChangeId: nextLastSeenChangeId,
       hasMore: hasMore,
       changes: items,
     );
   }
 
-  SyncChangeDto _map(Map<String, dynamic> row) {
-    final payloadJsonRaw = row['payload_json'];
-    String payloadJson;
-    if (payloadJsonRaw is String) {
-      payloadJson = payloadJsonRaw;
-    } else {
-      payloadJson = jsonEncode(payloadJsonRaw);
-    }
-
+  SyncChangeDto _map(ChangeFeedRow row) {
     return SyncChangeDto(
-      id: row['id'] as int,
-      familyId: row['family_id'] as int?,
-      feature: row['feature'] as String,
-      entityType: row['entity_type'] as String,
-      entityId: row['entity_id'] as int,
-      operation: row['operation'] as String,
-      changedAt: row['changed_at'] as DateTime,
-      tombstone: row['tombstone'] as bool,
-      version: row['version'] as int,
-      payloadJson: payloadJson,
+      id: row.id!,
+      familyId: row.familyId,
+      feature: row.feature,
+      entityType: row.entityType,
+      entityId: row.entityId,
+      operation: row.operation,
+      changedAt: row.changedAt,
+      tombstone: row.tombstone,
+      version: row.version,
+      payloadJson: row.payloadJson,
     );
   }
 }
+
+

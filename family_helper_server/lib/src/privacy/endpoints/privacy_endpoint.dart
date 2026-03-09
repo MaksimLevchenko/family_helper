@@ -1,3 +1,4 @@
+import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 
 import '../../generated/protocol.dart';
@@ -33,10 +34,14 @@ class PrivacyEndpoint extends Endpoint {
   }
 
   Future<int> processExportJobs(Session session) {
-    return service.processExportJobs(session);
+    throw AccessDeniedException(
+      message: 'This method is internal and is not available to clients.',
+    );
   }
 
   Future<int> processHardDeletion(Session session) {
-    return service.processHardDeletion(session);
+    throw AccessDeniedException(
+      message: 'This method is internal and is not available to clients.',
+    );
   }
 }

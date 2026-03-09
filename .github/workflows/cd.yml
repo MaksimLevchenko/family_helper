@@ -1,0 +1,65 @@
+name: CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy:
+    name: Deploy Backend + Web
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Build Flutter Web
+        working-directory: family_helper_flutter
+        run: |
+          flutter pub get
+          flutter build web --base-href /app/
+
+      - name: Build server binary
+        working-directory: family_helper_server
+        run: |
+          dart pub get
+          dart compile exe bin/main.dart -o bin/server
+
+      - name: Apply migrations
+        working-directory: family_helper_server
+        env:
+          SERVERPOD_PASSWORDS: ${{ secrets.SERVERPOD_PASSWORDS }}
+        run: |
+          mkdir -p config
+          printf '%s' "$SERVERPOD_PASSWORDS" > config/passwords.yaml
+          dart bin/main.dart --mode=${{ inputs.environment }} --apply-migrations
+
+      - name: Build and push Docker image
+        working-directory: family_helper_server
+        env:
+          REGISTRY: ghcr.io
+          IMAGE_NAME: ${{ github.repository }}-server
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GHCR_TOKEN" | docker login $REGISTRY -u "$GHCR_USER" --password-stdin
+          docker build -t "$REGISTRY/$IMAGE_NAME:${{ github.sha }}" .
+          docker push "$REGISTRY/$IMAGE_NAME:${{ github.sha }}"

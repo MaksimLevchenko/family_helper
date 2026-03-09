@@ -1,0 +1,19 @@
+class: ListItemRow
+table: list_item
+fields:
+  listId: int
+  title: String
+  qty: double
+  unit: String?
+  note: String?
+  priceCents: int?
+  category: String?
+  positionIndex: int
+  isBought: bool
+  boughtByProfileId: int?
+  boughtAt: DateTime?
+  createdByProfileId: int
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+  version: int

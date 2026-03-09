@@ -1,5 +1,4 @@
 import 'package:serverpod/serverpod.dart';
-
 import '../../core/auth/auth_context.dart';
 import '../../core/idempotency/idempotency_service.dart';
 import '../../core/rbac/ensure_family_role_service.dart';
@@ -57,63 +56,26 @@ class MoneyGoalsService {
 
       final now = DateTime.now().toUtc();
       if (goalId == null) {
-        final inserted = await session.db.unsafeQuery(
-          '''
-          INSERT INTO money_goal (
-            family_id,
-            title,
-            description,
-            target_amount_cents,
-            current_amount_cents,
-            currency,
-            deadline_at,
-            reached_at,
-            created_by_profile_id,
-            created_at,
-            updated_at,
-            deleted_at,
-            version
-          ) VALUES (
-            @familyId,
-            @title,
-            @description,
-            @targetAmount,
-            0,
-            @currency,
-            @deadlineAt,
-            NULL,
-            @createdBy,
-            @now,
-            @now,
-            NULL,
-            1
-          )
-          RETURNING
-            id,
-            family_id,
-            title,
-            description,
-            target_amount_cents,
-            current_amount_cents,
-            currency,
-            deadline_at,
-            reached_at,
-            updated_at,
-            version
-          ''',
-          parameters: QueryParameters.named({
-            'familyId': familyId,
-            'title': title,
-            'description': description,
-            'targetAmount': targetAmountCents,
-            'currency': currency,
-            'deadlineAt': deadlineAt?.toUtc(),
-            'createdBy': actorProfileId,
-            'now': now,
-          }),
+        final inserted = await MoneyGoalRow.db.insertRow(
+          session,
+          MoneyGoalRow(
+            familyId: familyId,
+            title: title,
+            description: description,
+            targetAmountCents: targetAmountCents,
+            currentAmountCents: 0,
+            currency: currency,
+            deadlineAt: deadlineAt?.toUtc(),
+            reachedAt: null,
+            createdByProfileId: actorProfileId,
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+            version: 1,
+          ),
           transaction: transaction,
         );
-        final dto = _mapGoal(inserted.first.toColumnMap());
+        final dto = _mapGoal(inserted);
         await _emitGoalChange(
           session,
           familyId: familyId,
@@ -124,31 +86,26 @@ class MoneyGoalsService {
         return dto;
       }
 
-      await session.db.unsafeExecute(
-        '''
-        UPDATE money_goal
-        SET
-          title = @title,
-          description = @description,
-          target_amount_cents = @targetAmount,
-          currency = @currency,
-          deadline_at = @deadlineAt,
-          updated_at = @updatedAt,
-          version = version + 1
-        WHERE id = @id
-          AND family_id = @familyId
-          AND deleted_at IS NULL
-        ''',
-        parameters: QueryParameters.named({
-          'id': goalId,
-          'familyId': familyId,
-          'title': title,
-          'description': description,
-          'targetAmount': targetAmountCents,
-          'currency': currency,
-          'deadlineAt': deadlineAt?.toUtc(),
-          'updatedAt': now,
-        }),
+      final row = await MoneyGoalRow.db.findFirstRow(
+        session,
+        where: (t) =>
+            t.id.equals(goalId) &
+            t.familyId.equals(familyId) &
+            t.deletedAt.equals(null),
+        transaction: transaction,
+      );
+      if (row == null) throw Exception('Goal not found');
+      await MoneyGoalRow.db.updateRow(
+        session,
+        row.copyWith(
+          title: title,
+          description: description,
+          targetAmountCents: targetAmountCents,
+          currency: currency,
+          deadlineAt: deadlineAt?.toUtc(),
+          updatedAt: now,
+          version: row.version + 1,
+        ),
         transaction: transaction,
       );
 
@@ -191,161 +148,74 @@ class MoneyGoalsService {
         transaction: transaction,
       );
 
-      final lockedGoalRows = await session.db.unsafeQuery(
-        '''
-        SELECT
-          id,
-          family_id,
-          title,
-          description,
-          target_amount_cents,
-          current_amount_cents,
-          currency,
-          deadline_at,
-          reached_at,
-          updated_at,
-          version
-        FROM money_goal
-        WHERE id = @goalId
-          AND family_id = @familyId
-          AND deleted_at IS NULL
-        FOR UPDATE
-        ''',
-        parameters: QueryParameters.named({'goalId': goalId, 'familyId': familyId}),
+      final goalRow = await MoneyGoalRow.db.findFirstRow(
+        session,
+        where: (t) =>
+            t.id.equals(goalId) &
+            t.familyId.equals(familyId) &
+            t.deletedAt.equals(null),
         transaction: transaction,
       );
-      if (lockedGoalRows.isEmpty) {
+      if (goalRow == null) {
         throw Exception('Goal not found');
       }
 
-      final goal = _mapGoal(lockedGoalRows.first.toColumnMap());
+      final goal = _mapGoal(goalRow);
       if (goal.currency != currency) {
         throw Exception('Contribution currency must match goal currency');
       }
 
       if (!started) {
-        final existing = await session.db.unsafeQuery(
-          '''
-          SELECT
-            id,
-            goal_id,
-            profile_id,
-            amount_cents,
-            currency,
-            note,
-            created_at,
-            revoked_at
-          FROM money_contribution
-          WHERE goal_id = @goalId
-            AND client_operation_id = @clientOperationId
-          LIMIT 1
-          ''',
-          parameters: QueryParameters.named({
-            'goalId': goalId,
-            'clientOperationId': clientOperationId,
-          }),
+        final existing = await MoneyContributionRow.db.findFirstRow(
+          session,
+          where: (t) =>
+              t.goalId.equals(goalId) &
+              t.clientOperationId.equals(clientOperationId),
           transaction: transaction,
         );
 
-        if (existing.isNotEmpty) {
-          return _mapContribution(existing.first.toColumnMap());
+        if (existing != null) {
+          return _mapContribution(existing);
         }
       }
 
       final now = DateTime.now().toUtc();
-      final contributionRows = await session.db.unsafeQuery(
-        '''
-        INSERT INTO money_contribution (
-          goal_id,
-          profile_id,
-          amount_cents,
-          currency,
-          note,
-          client_operation_id,
-          created_at,
-          revoked_at
-        ) VALUES (
-          @goalId,
-          @profileId,
-          @amountCents,
-          @currency,
-          @note,
-          @clientOperationId,
-          @createdAt,
-          NULL
-        )
-        ON CONFLICT (goal_id, client_operation_id)
-        DO NOTHING
-        RETURNING
-          id,
-          goal_id,
-          profile_id,
-          amount_cents,
-          currency,
-          note,
-          created_at,
-          revoked_at
-        ''',
-        parameters: QueryParameters.named({
-          'goalId': goalId,
-          'profileId': actorProfileId,
-          'amountCents': amountCents,
-          'currency': currency,
-          'note': note,
-          'clientOperationId': clientOperationId,
-          'createdAt': now,
-        }),
-        transaction: transaction,
-      );
+      final contributionRow = await MoneyContributionRow.db.findFirstRow(
+            session,
+            where: (t) =>
+                t.goalId.equals(goalId) &
+                t.clientOperationId.equals(clientOperationId),
+            transaction: transaction,
+          ) ??
+          await MoneyContributionRow.db.insertRow(
+            session,
+            MoneyContributionRow(
+              goalId: goalId,
+              profileId: actorProfileId,
+              amountCents: amountCents,
+              currency: currency,
+              note: note,
+              clientOperationId: clientOperationId,
+              createdAt: now,
+              revokedAt: null,
+            ),
+            transaction: transaction,
+          );
+      final contribution = _mapContribution(contributionRow);
 
-      MoneyContributionDto contribution;
-      if (contributionRows.isEmpty) {
-        final existing = await session.db.unsafeQuery(
-          '''
-          SELECT
-            id,
-            goal_id,
-            profile_id,
-            amount_cents,
-            currency,
-            note,
-            created_at,
-            revoked_at
-          FROM money_contribution
-          WHERE goal_id = @goalId
-            AND client_operation_id = @clientOperationId
-          LIMIT 1
-          ''',
-          parameters: QueryParameters.named({
-            'goalId': goalId,
-            'clientOperationId': clientOperationId,
-          }),
-          transaction: transaction,
-        );
-        contribution = _mapContribution(existing.first.toColumnMap());
-      } else {
-        contribution = _mapContribution(contributionRows.first.toColumnMap());
-      }
-
-      await session.db.unsafeExecute(
-        '''
-        UPDATE money_goal
-        SET
-          current_amount_cents = current_amount_cents + @amountCents,
-          reached_at = CASE
-            WHEN reached_at IS NULL AND current_amount_cents + @amountCents >= target_amount_cents
-              THEN @now
-            ELSE reached_at
-          END,
-          updated_at = @now,
-          version = version + 1
-        WHERE id = @goalId
-        ''',
-        parameters: QueryParameters.named({
-          'goalId': goalId,
-          'amountCents': amountCents,
-          'now': now,
-        }),
+      final nextAmount = goalRow.currentAmountCents + amountCents;
+      final nextReachedAt =
+          goalRow.reachedAt == null && nextAmount >= goalRow.targetAmountCents
+          ? now
+          : goalRow.reachedAt;
+      await MoneyGoalRow.db.updateRow(
+        session,
+        goalRow.copyWith(
+          currentAmountCents: nextAmount,
+          reachedAt: nextReachedAt,
+          updatedAt: now,
+          version: goalRow.version + 1,
+        ),
         transaction: transaction,
       );
 
@@ -367,29 +237,14 @@ class MoneyGoalsService {
   }) async {
     await rbac.ensureFamilyRole(session, familyId: familyId, minRole: 'member');
 
-    final rows = await session.db.unsafeQuery(
-      '''
-      SELECT
-        id,
-        family_id,
-        title,
-        description,
-        target_amount_cents,
-        current_amount_cents,
-        currency,
-        deadline_at,
-        reached_at,
-        updated_at,
-        version
-      FROM money_goal
-      WHERE family_id = @familyId
-        AND deleted_at IS NULL
-      ORDER BY id DESC
-      ''',
-      parameters: QueryParameters.named({'familyId': familyId}),
+    final rows = await MoneyGoalRow.db.find(
+      session,
+      where: (t) => t.familyId.equals(familyId) & t.deletedAt.equals(null),
+      orderBy: (t) => t.id,
+      orderDescending: true,
     );
 
-    return rows.map((row) => _mapGoal(row.toColumnMap())).toList();
+    return rows.map(_mapGoal).toList();
   }
 
   Future<MoneyGoalDto> _findGoal(
@@ -397,29 +252,12 @@ class MoneyGoalsService {
     int goalId, {
     Transaction? transaction,
   }) async {
-    final rows = await session.db.unsafeQuery(
-      '''
-      SELECT
-        id,
-        family_id,
-        title,
-        description,
-        target_amount_cents,
-        current_amount_cents,
-        currency,
-        deadline_at,
-        reached_at,
-        updated_at,
-        version
-      FROM money_goal
-      WHERE id = @id
-      LIMIT 1
-      ''',
-      parameters: QueryParameters.named({'id': goalId}),
+    final row = await MoneyGoalRow.db.findById(
+      session,
+      goalId,
       transaction: transaction,
     );
-
-    return _mapGoal(rows.first.toColumnMap());
+    return _mapGoal(row!);
   }
 
   Future<void> _emitGoalChange(
@@ -456,32 +294,34 @@ class MoneyGoalsService {
     );
   }
 
-  MoneyGoalDto _mapGoal(Map<String, dynamic> row) {
+  MoneyGoalDto _mapGoal(MoneyGoalRow row) {
     return MoneyGoalDto(
-      id: row['id'] as int,
-      familyId: row['family_id'] as int,
-      title: row['title'] as String,
-      description: row['description'] as String?,
-      targetAmountCents: row['target_amount_cents'] as int,
-      currentAmountCents: row['current_amount_cents'] as int,
-      currency: row['currency'] as String,
-      deadlineAt: row['deadline_at'] as DateTime?,
-      reachedAt: row['reached_at'] as DateTime?,
-      updatedAt: row['updated_at'] as DateTime,
-      version: row['version'] as int,
+      id: row.id!,
+      familyId: row.familyId,
+      title: row.title,
+      description: row.description,
+      targetAmountCents: row.targetAmountCents,
+      currentAmountCents: row.currentAmountCents,
+      currency: row.currency,
+      deadlineAt: row.deadlineAt,
+      reachedAt: row.reachedAt,
+      updatedAt: row.updatedAt,
+      version: row.version,
     );
   }
 
-  MoneyContributionDto _mapContribution(Map<String, dynamic> row) {
+  MoneyContributionDto _mapContribution(MoneyContributionRow row) {
     return MoneyContributionDto(
-      id: row['id'] as int,
-      goalId: row['goal_id'] as int,
-      profileId: row['profile_id'] as int,
-      amountCents: row['amount_cents'] as int,
-      currency: row['currency'] as String,
-      note: row['note'] as String?,
-      createdAt: row['created_at'] as DateTime,
-      revokedAt: row['revoked_at'] as DateTime?,
+      id: row.id!,
+      goalId: row.goalId,
+      profileId: row.profileId,
+      amountCents: row.amountCents,
+      currency: row.currency,
+      note: row.note,
+      createdAt: row.createdAt,
+      revokedAt: row.revokedAt,
     );
   }
 }
+
+

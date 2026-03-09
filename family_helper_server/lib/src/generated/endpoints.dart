@@ -1474,6 +1474,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<int>(),
               nullable: false,
             ),
+            'lastSeenChangeId': _i1.ParameterDescription(
+              name: 'lastSeenChangeId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
           },
           call:
               (
@@ -1484,6 +1489,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 since: params['since'],
                 familyId: params['familyId'],
                 limit: params['limit'],
+                lastSeenChangeId: params['lastSeenChangeId'],
               ),
         ),
       },

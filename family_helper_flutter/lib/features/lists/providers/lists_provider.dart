@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/logging/app_error_logger.dart';
 import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/lists_repository.dart';
@@ -72,7 +73,10 @@ class ListsCubit extends Cubit<ListsState> {
     emit(state.copyWith(isLoading: true, clearError: true));
 
     try {
-      final items = await _repository.listItems(familyId: familyId, listId: listId);
+      final items = await _repository.listItems(
+        familyId: familyId,
+        listId: listId,
+      );
       emit(
         state.copyWith(
           isLoading: false,
@@ -80,7 +84,16 @@ class ListsCubit extends Cubit<ListsState> {
           clearError: true,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'lists.reload',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'listId': listId,
+        },
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -102,7 +115,10 @@ class ListsCubit extends Cubit<ListsState> {
         listType: listType,
       );
 
-      final items = await _repository.listItems(familyId: familyId, listId: list.id);
+      final items = await _repository.listItems(
+        familyId: familyId,
+        listId: list.id,
+      );
       emit(
         state.copyWith(
           isLoading: false,
@@ -111,7 +127,13 @@ class ListsCubit extends Cubit<ListsState> {
           clearError: true,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'lists.createList',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -143,7 +165,16 @@ class ListsCubit extends Cubit<ListsState> {
       );
 
       await reload();
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'lists.addItem',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'listId': listId,
+        },
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -166,7 +197,17 @@ class ListsCubit extends Cubit<ListsState> {
       );
 
       await reload();
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'lists.toggleBought',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'listId': listId,
+          'itemId': item.id,
+        },
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -181,7 +222,11 @@ class ListsCubit extends Cubit<ListsState> {
     emit(state.copyWith(isLoading: true, clearError: true));
 
     try {
-      final orderedIds = state.items.map((e) => e.id).toList().reversed.toList();
+      final orderedIds = state.items
+          .map((e) => e.id)
+          .toList()
+          .reversed
+          .toList();
       await _repository.reorderItems(
         clientOperationId: OperationId.next(),
         familyId: familyId,
@@ -190,7 +235,17 @@ class ListsCubit extends Cubit<ListsState> {
       );
 
       await reload();
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'lists.reorderDescending',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'listId': listId,
+          'itemsCount': state.items.length,
+        },
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }

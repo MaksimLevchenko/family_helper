@@ -30,21 +30,18 @@ flutter run
 ## Required Environment
 ### Server
 - DB and Serverpod configs in `family_helper_server/config/*.yaml`
+- Copy `family_helper_server/config/passwords.yaml.example` to `family_helper_server/config/passwords.yaml`
 - `FAMILY_MEMBER_LIMIT` (default `2`)
-- MinIO/S3 vars:
+- MinIO vars:
   - `MINIO_ENDPOINT`
   - `MINIO_BUCKET`
-  - `MINIO_ACCESS_KEY`
   - `MINIO_SECRET_KEY`
-  - `MINIO_REGION`
-  - `MINIO_PUBLIC_BASE_URL`
-- FCM vars:
-  - `FIREBASE_PROJECT_ID`
-  - `FCM_SERVICE_ACCOUNT_JSON`
+  - `MINIO_PUBLIC_BASE_URL` (optional)
+  - `MINIO_USE_SSL` (optional, default `false`)
+  - `SIGN_URL_TTL` (optional, default `900`)
 
 ### Client
 - Optional `SERVER_URL` via `--dart-define`
-- Firebase Android config for push
 
 ## MinIO Example (docker-compose snippet)
 ```yaml
@@ -58,6 +55,14 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+```
+
+## Local docker-compose secrets
+Set `family_helper_server/.env` from `family_helper_server/.env.example` before running:
+
+```bash
+cd family_helper_server
+cp .env.example .env
 ```
 
 ## Acceptance Flow (manual)

@@ -1,0 +1,10 @@
+class: MediaAttachmentRow
+table: media_attachment
+fields:
+  mediaId: int
+  entityType: String
+  entityId: int
+  createdByProfileId: int
+  createdAt: DateTime
+  deletedAt: DateTime?
+  version: int

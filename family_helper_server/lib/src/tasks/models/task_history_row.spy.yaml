@@ -1,0 +1,8 @@
+class: TaskHistoryRow
+table: task_history
+fields:
+  taskId: int
+  actorProfileId: int
+  eventType: String
+  details: String?
+  createdAt: DateTime

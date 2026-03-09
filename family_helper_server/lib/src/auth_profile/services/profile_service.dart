@@ -1,5 +1,5 @@
+import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
-
 import '../../core/auth/auth_context.dart';
 import '../../core/idempotency/idempotency_service.dart';
 import '../../generated/protocol.dart';
@@ -15,25 +15,8 @@ class ProfileService {
 
   Future<ProfileDto> getMyProfile(Session session) async {
     final profileId = await authContext.ensureProfileId(session);
-    final result = await session.db.unsafeQuery(
-      '''
-      SELECT
-        id,
-        auth_user_id,
-        display_name,
-        timezone,
-        avatar_media_id,
-        analytics_opt_in,
-        created_at,
-        updated_at
-      FROM app_profile
-      WHERE id = @id
-      LIMIT 1
-      ''',
-      parameters: QueryParameters.named({'id': profileId}),
-    );
-
-    return _mapProfile(result.first.toColumnMap());
+    final profile = await AppProfileRow.db.findById(session, profileId);
+    return _mapProfile(profile!);
   }
 
   Future<ProfileDto> updateMyProfile(
@@ -69,26 +52,25 @@ class ProfileService {
         return current;
       }
 
-      await session.db.unsafeExecute(
-        '''
-        UPDATE app_profile
-        SET
-          display_name = COALESCE(@displayName, display_name),
-          timezone = COALESCE(@timezone, timezone),
-          avatar_media_id = COALESCE(@avatarMediaId, avatar_media_id),
-          analytics_opt_in = COALESCE(@analyticsOptIn, analytics_opt_in),
-          updated_at = @updatedAt,
-          version = version + 1
-        WHERE id = @id
-        ''',
-        parameters: QueryParameters.named({
-          'id': profileId,
-          'displayName': displayName,
-          'timezone': timezone,
-          'avatarMediaId': avatarMediaId,
-          'analyticsOptIn': analyticsOptIn,
-          'updatedAt': DateTime.now().toUtc(),
-        }),
+      final row = await AppProfileRow.db.findById(
+        session,
+        profileId,
+        transaction: transaction,
+      );
+      if (row == null) {
+        throw AccessDeniedException(message: 'Profile not found.');
+      }
+
+      await AppProfileRow.db.updateRow(
+        session,
+        row.copyWith(
+          displayName: displayName ?? row.displayName,
+          timezone: timezone ?? row.timezone,
+          avatarMediaId: avatarMediaId ?? row.avatarMediaId,
+          analyticsOptIn: analyticsOptIn ?? row.analyticsOptIn,
+          updatedAt: DateTime.now().toUtc(),
+          version: row.version + 1,
+        ),
         transaction: transaction,
       );
 
@@ -101,38 +83,24 @@ class ProfileService {
     int profileId, {
     Transaction? transaction,
   }) async {
-    final result = await session.db.unsafeQuery(
-      '''
-      SELECT
-        id,
-        auth_user_id,
-        display_name,
-        timezone,
-        avatar_media_id,
-        analytics_opt_in,
-        created_at,
-        updated_at
-      FROM app_profile
-      WHERE id = @id
-      LIMIT 1
-      ''',
-      parameters: QueryParameters.named({'id': profileId}),
+    final row = await AppProfileRow.db.findById(
+      session,
+      profileId,
       transaction: transaction,
     );
-
-    return _mapProfile(result.first.toColumnMap());
+    return _mapProfile(row!);
   }
 
-  ProfileDto _mapProfile(Map<String, dynamic> row) {
+  ProfileDto _mapProfile(AppProfileRow row) {
     return ProfileDto(
-      id: row['id'] as int,
-      authUserId: row['auth_user_id'] as String,
-      displayName: row['display_name'] as String,
-      timezone: row['timezone'] as String,
-      avatarMediaId: row['avatar_media_id'] as int?,
-      analyticsOptIn: row['analytics_opt_in'] as bool,
-      createdAt: row['created_at'] as DateTime,
-      updatedAt: row['updated_at'] as DateTime,
+      id: row.id!,
+      authUserId: row.authUserId,
+      displayName: row.displayName,
+      timezone: row.timezone,
+      avatarMediaId: row.avatarMediaId,
+      analyticsOptIn: row.analyticsOptIn,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
     );
   }
 }

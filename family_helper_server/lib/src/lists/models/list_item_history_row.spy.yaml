@@ -1,0 +1,7 @@
+class: ListItemHistoryRow
+table: list_item_history
+fields:
+  itemId: int
+  actorProfileId: int
+  eventType: String
+  createdAt: DateTime

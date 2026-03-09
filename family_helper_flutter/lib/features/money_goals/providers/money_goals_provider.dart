@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/logging/app_error_logger.dart';
 import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/money_goals_repository.dart';
@@ -80,7 +81,13 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
           clearError: true,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'moneyGoals.reload',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -116,7 +123,13 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
           clearError: true,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'moneyGoals.createGoal',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -146,7 +159,16 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
       );
 
       await reload();
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'moneyGoals.addContribution',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'goalId': goalId,
+        },
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }

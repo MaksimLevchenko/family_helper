@@ -25,11 +25,8 @@ Optional server URL:
 flutter run --dart-define=SERVER_URL=http://<host>:8080/
 ```
 
-## Firebase (Push)
-1. Add Firebase app config (`google-services.json`) to Android app.
-2. Enable Cloud Messaging.
-3. Server must have `FIREBASE_PROJECT_ID` and `FCM_SERVICE_ACCOUNT_JSON`.
-4. In app, open Notifications screen and run `Register push token`.
+## Notifications
+The app schedules local reminders on-device. No Firebase setup is required.
 
 ## Offline Queue
 - Interface: `OfflineOperationQueue`

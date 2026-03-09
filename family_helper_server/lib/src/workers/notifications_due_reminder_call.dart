@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import '../notifications/services/notifications_service.dart';
+import 'future_call_registry.dart';
 
 class NotificationsDueReminderCall extends FutureCall<NotificationsDuePayload> {
   NotificationsDueReminderCall({NotificationsService? service})
@@ -12,10 +13,8 @@ class NotificationsDueReminderCall extends FutureCall<NotificationsDuePayload> {
   @override
   Future<void> invoke(Session session, NotificationsDuePayload? object) async {
     await service.processDueReminders(session);
-    await session.server.serverpod.futureCallWithDelay(
-      'notificationsDueReminder',
-      null,
-      const Duration(seconds: 30),
+    await FutureCallRegistry.scheduleNotificationsDueReminder(
+      session.server.serverpod,
     );
   }
 }

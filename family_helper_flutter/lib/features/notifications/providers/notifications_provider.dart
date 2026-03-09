@@ -1,10 +1,7 @@
-import 'dart:io';
-
 import 'package:family_helper_client/family_helper_client.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/logging/app_error_logger.dart';
 import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/local_notification_service.dart';
@@ -56,32 +53,14 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   Future<void> initPush() async {
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
-      try {
-        await Firebase.initializeApp();
-      } catch (_) {}
-
-      final messaging = FirebaseMessaging.instance;
-      final permission = await messaging.requestPermission();
-      if (permission.authorizationStatus == AuthorizationStatus.denied) {
-        emit(state.copyWith(isLoading: false));
-        return;
-      }
-
-      final token = await messaging.getToken();
-      if (token == null) {
-        emit(state.copyWith(isLoading: false));
-        return;
-      }
-
-      await _repository.registerPushToken(
-        clientOperationId: OperationId.next(),
-        token: token,
-        platform: Platform.isAndroid ? 'android' : 'unknown',
-      );
-
       await _localNotificationService.initialize();
       emit(state.copyWith(isLoading: false, clearError: true));
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'notifications.initPush',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -102,7 +81,13 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         quietHoursEnd: quietHoursEnd,
       );
       emit(state.copyWith(isLoading: false, clearError: true));
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'notifications.setPreference',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'notificationType': notificationType},
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }
@@ -144,20 +129,18 @@ class NotificationsCubit extends Cubit<NotificationsState> {
           clearError: true,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'notifications.scheduleReminder',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'entityType': entityType,
+          'entityId': entityId,
+        },
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
-    }
-  }
-
-  Future<int?> processDueReminders() async {
-    emit(state.copyWith(isLoading: true, clearError: true));
-    try {
-      final processed = await _repository.processDueReminders();
-      emit(state.copyWith(isLoading: false, clearError: true));
-      return processed;
-    } catch (error) {
-      emit(state.copyWith(isLoading: false, error: '$error'));
-      return null;
     }
   }
 }

@@ -1,0 +1,20 @@
+class: TaskRow
+table: task
+fields:
+  familyId: int
+  title: String
+  description: String?
+  isPersonal: bool
+  priority: String
+  status: String
+  dueAt: DateTime?
+  recurrenceMode: String?
+  recurrenceRrule: String?
+  assigneeProfileId: int?
+  createdByProfileId: int
+  completedAt: DateTime?
+  sourceTaskId: int?
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+  version: int

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/auth/auth_error_mapper.dart';
 import '../../../core/auth/auth_session.dart';
+import '../../../core/logging/app_error_logger.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../ui_kit/ui_kit.dart';
 
@@ -82,9 +85,14 @@ class _SignInScreenState extends State<SignInScreen> {
                         email: _emailController.text.trim(),
                         password: _passwordController.text,
                       );
-                    } catch (error) {
+                    } catch (error, stackTrace) {
+                      AppErrorLogger.logHandled(
+                        scope: 'authUi.signIn',
+                        error: error,
+                        stackTrace: stackTrace,
+                      );
                       setState(() {
-                        _error = '$error';
+                        _error = AuthErrorMapper.toMessage(error);
                       });
                     } finally {
                       if (mounted) {
@@ -95,11 +103,139 @@ class _SignInScreenState extends State<SignInScreen> {
                     }
                   },
                 ),
+                const SizedBox(height: 12),
+                AppButton(
+                  label: 'Create account (email code)',
+                  variant: AppButtonVariant.secondary,
+                  onPressed: _isLoading
+                      ? null
+                      : () => context.go('/register/email'),
+                ),
+                const SizedBox(height: 8),
+                AppButton(
+                  label: 'Reset password (email code)',
+                  variant: AppButtonVariant.secondary,
+                  onPressed: _isLoading
+                      ? null
+                      : () async {
+                          await _runPasswordResetFlow(context);
+                        },
+                ),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _runPasswordResetFlow(BuildContext context) async {
+    final email = await _askValue(
+      context,
+      title: 'Reset password',
+      label: 'Email',
+    );
+    if (email == null || email.trim().isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _error = null;
+      _isLoading = true;
+    });
+
+    try {
+      final requestId = await context.read<AuthCubit>().startPasswordReset(
+        email: email.trim(),
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Password reset request created: ${requestId.uuid}'),
+        ),
+      );
+
+      final code = await _askValue(
+        context,
+        title: 'Reset password',
+        label: 'Verification code',
+      );
+      if (code == null || code.trim().isEmpty) {
+        return;
+      }
+
+      final newPassword = await _askValue(
+        context,
+        title: 'Reset password',
+        label: 'New password',
+        obscureText: true,
+      );
+      if (newPassword == null || newPassword.isEmpty) {
+        return;
+      }
+
+      await context.read<AuthCubit>().finishPasswordReset(
+        passwordResetRequestId: requestId,
+        verificationCode: code.trim(),
+        newPassword: newPassword,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password has been reset.')),
+      );
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'authUi.passwordResetFlow',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      setState(() {
+        _error = AuthErrorMapper.toMessage(error);
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<String?> _askValue(
+    BuildContext context, {
+    required String title,
+    required String label,
+    bool obscureText = false,
+  }) async {
+    final controller = TextEditingController();
+    try {
+      return await showDialog<String>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(title),
+            content: TextField(
+              controller: controller,
+              obscureText: obscureText,
+              decoration: InputDecoration(labelText: label),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(controller.text),
+                child: const Text('Continue'),
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      controller.dispose();
+    }
   }
 }

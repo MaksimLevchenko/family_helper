@@ -1,0 +1,10 @@
+class: PrivacyExportJobRow
+table: privacy_export_job
+fields:
+  profileId: int
+  status: String
+  objectKey: String
+  signedUrl: String?
+  expiresAt: DateTime?
+  createdAt: DateTime
+  completedAt: DateTime?

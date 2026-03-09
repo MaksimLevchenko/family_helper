@@ -1,0 +1,11 @@
+class: MoneyContributionRow
+table: money_contribution
+fields:
+  goalId: int
+  profileId: int
+  amountCents: int
+  currency: String
+  note: String?
+  clientOperationId: String?
+  createdAt: DateTime
+  revokedAt: DateTime?

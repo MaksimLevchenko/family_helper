@@ -1,0 +1,16 @@
+class: MoneyGoalRow
+table: money_goal
+fields:
+  familyId: int
+  title: String
+  description: String?
+  targetAmountCents: int
+  currentAmountCents: int
+  currency: String
+  deadlineAt: DateTime?
+  reachedAt: DateTime?
+  createdByProfileId: int
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+  version: int

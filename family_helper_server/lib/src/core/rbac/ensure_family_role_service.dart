@@ -1,6 +1,7 @@
+import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
-
 import '../auth/auth_context.dart';
+import '../../generated/protocol.dart';
 
 class EnsureFamilyRoleService {
   const EnsureFamilyRoleService({this.authContext = const AuthContext()});
@@ -18,29 +19,26 @@ class EnsureFamilyRoleService {
       transaction: transaction,
     );
 
-    final result = await session.db.unsafeQuery(
-      '''
-      SELECT role
-      FROM family_member
-      WHERE family_id = @familyId
-        AND profile_id = @profileId
-        AND status = 'active'
-      LIMIT 1
-      ''',
-      parameters: QueryParameters.named({
-        'familyId': familyId,
-        'profileId': profileId,
-      }),
+    final membership = await FamilyMemberRow.db.findFirstRow(
+      session,
+      where: (t) =>
+          t.familyId.equals(familyId) &
+          t.profileId.equals(profileId) &
+          t.status.equals('active'),
       transaction: transaction,
     );
 
-    if (result.isEmpty) {
-      throw Exception('Access denied: not a family member');
+    if (membership == null) {
+      throw AccessDeniedException(
+        message: 'Access denied: not a family member.',
+      );
     }
 
-    final role = result.first.toColumnMap()['role'] as String;
+    final role = membership.role;
     if (!_hasAccess(role: role, minRole: minRole)) {
-      throw Exception('Access denied: role is insufficient');
+      throw AccessDeniedException(
+        message: 'Access denied: role is insufficient.',
+      );
     }
 
     return profileId;
@@ -48,6 +46,7 @@ class EnsureFamilyRoleService {
 
   bool _hasAccess({required String role, required String minRole}) {
     const rank = <String, int>{'member': 1, 'owner': 2};
-    return (rank[role.toLowerCase()] ?? 0) >= (rank[minRole.toLowerCase()] ?? 0);
+    return (rank[role.toLowerCase()] ?? 0) >=
+        (rank[minRole.toLowerCase()] ?? 0);
   }
 }

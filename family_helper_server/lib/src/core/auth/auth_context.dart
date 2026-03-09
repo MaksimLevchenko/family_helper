@@ -1,5 +1,7 @@
+import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
+import '../../generated/protocol.dart';
 
 class AuthContext {
   const AuthContext();
@@ -7,7 +9,7 @@ class AuthContext {
   UuidValue requireAuthUserId(Session session) {
     final auth = session.authenticated;
     if (auth == null) {
-      throw Exception('Unauthorized');
+      throw AccessDeniedException(message: 'Unauthorized.');
     }
     return auth.authUserId;
   }
@@ -19,47 +21,40 @@ class AuthContext {
     final authUserId = requireAuthUserId(session).uuid;
     final now = DateTime.now().toUtc();
 
-    final existing = await session.db.unsafeQuery(
-      'SELECT id FROM app_profile WHERE auth_user_id = @authUserId LIMIT 1',
-      parameters: QueryParameters.named({'authUserId': authUserId}),
+    final existing = await AppProfileRow.db.findFirstRow(
+      session,
+      where: (t) => t.authUserId.equals(authUserId),
       transaction: transaction,
     );
-    if (existing.isNotEmpty) {
-      return existing.first.toColumnMap()['id'] as int;
+    if (existing?.id != null) {
+      return existing!.id!;
     }
 
-    final inserted = await session.db.unsafeQuery(
-      '''
-      INSERT INTO app_profile (
-        auth_user_id,
-        display_name,
-        timezone,
-        analytics_opt_in,
-        created_at,
-        updated_at,
-        version
-      ) VALUES (
-        @authUserId,
-        @displayName,
-        @timezone,
-        false,
-        @now,
-        @now,
-        1
-      )
-      ON CONFLICT (auth_user_id) DO UPDATE SET
-        updated_at = EXCLUDED.updated_at
-      RETURNING id
-      ''',
-      parameters: QueryParameters.named({
-        'authUserId': authUserId,
-        'displayName': 'User ${authUserId.substring(0, 8)}',
-        'timezone': 'UTC',
-        'now': now,
-      }),
-      transaction: transaction,
-    );
-
-    return inserted.first.toColumnMap()['id'] as int;
+    try {
+      final inserted = await AppProfileRow.db.insertRow(
+        session,
+        AppProfileRow(
+          authUserId: authUserId,
+          displayName: 'User ${authUserId.substring(0, 8)}',
+          timezone: 'UTC',
+          avatarMediaId: null,
+          analyticsOptIn: false,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+          version: 1,
+        ),
+        transaction: transaction,
+      );
+      return inserted.id!;
+    } catch (_) {
+      final concurrent = await AppProfileRow.db.findFirstRow(
+        session,
+        where: (t) => t.authUserId.equals(authUserId),
+        transaction: transaction,
+      );
+      if (concurrent?.id != null) return concurrent!.id!;
+      rethrow;
+    }
   }
 }

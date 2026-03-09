@@ -824,6 +824,7 @@ class EndpointSync extends _i2.EndpointRef {
     required DateTime since,
     int? familyId,
     required int limit,
+    required int lastSeenChangeId,
   }) => caller.callServerEndpoint<_i24.SyncChangesResponse>(
     'sync',
     'changes',
@@ -831,6 +832,7 @@ class EndpointSync extends _i2.EndpointRef {
       'since': since,
       'familyId': familyId,
       'limit': limit,
+      'lastSeenChangeId': lastSeenChangeId,
     },
   );
 }

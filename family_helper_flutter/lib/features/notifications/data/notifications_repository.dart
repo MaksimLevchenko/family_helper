@@ -53,7 +53,4 @@ class NotificationsRepository {
     );
   }
 
-  Future<int> processDueReminders() {
-    return _apiClient.client.notifications.processDueReminders();
-  }
 }

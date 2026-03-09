@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/logging/app_error_logger.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/media_repository.dart';
 
@@ -64,7 +65,13 @@ class MediaCubit extends Cubit<MediaState> {
           clearError: true,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'media.uploadImage',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': _familySelectionCubit.state},
+      );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
   }

@@ -81,14 +81,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   );
                 },
               ),
-              const SizedBox(height: 12),
-              AppButton(
-                label: 'Run due reminders worker',
-                onPressed: () async {
-                  await context.read<NotificationsCubit>().processDueReminders();
-                },
-                variant: AppButtonVariant.secondary,
-              ),
               const SizedBox(height: 24),
               if (state.reminders.isEmpty)
                 const EmptyState(
