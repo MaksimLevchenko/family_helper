@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import '../../core/auth/auth_context.dart';
+import '../../core/clock/clock_service.dart';
 import '../../core/idempotency/idempotency_service.dart';
 import '../../core/rbac/ensure_family_role_service.dart';
 import '../../core/storage/minio_storage_service.dart';
@@ -11,6 +12,7 @@ import '../../generated/protocol.dart';
 class MediaService {
   MediaService({
     this.authContext = const AuthContext(),
+    this.clock = const ClockService(),
     this.idempotency = const IdempotencyService(),
     this.rbac = const EnsureFamilyRoleService(),
     MinioStorageService? storage,
@@ -18,6 +20,7 @@ class MediaService {
   }) : storage = storage ?? MinioStorageService();
 
   final AuthContext authContext;
+  final ClockService clock;
   final IdempotencyService idempotency;
   final EnsureFamilyRoleService rbac;
   final MinioStorageService storage;
@@ -48,6 +51,13 @@ class MediaService {
           session,
           transaction: transaction,
         );
+      }
+
+      if (mimeType.trim().isEmpty) {
+        throw ArgumentError.value(mimeType, 'mimeType', 'MIME type is required.');
+      }
+      if (sizeBytes <= 0) {
+        throw ArgumentError.value(sizeBytes, 'sizeBytes', 'Size must be positive.');
       }
 
       final isFresh = await idempotency.tryBegin(
@@ -81,7 +91,7 @@ class MediaService {
         }
       }
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       final objectKey = '$objectPrefix/${_randomCode(12)}/${_randomCode(18)}';
       final expiresAt = now.add(const Duration(minutes: 15));
       final row = await MediaObjectRow.db.insertRow(
@@ -141,14 +151,25 @@ class MediaService {
         }
       }
 
-      final now = DateTime.now().toUtc();
-      final current = await MediaObjectRow.db.findFirstRow(
+      final current = (await _requireMediaAccess(
         session,
-        where: (t) => t.id.equals(mediaId) & t.deletedAt.equals(null),
+        mediaId: mediaId,
+        requireOwnerForPersonal: true,
         transaction: transaction,
-      );
-      if (current == null) {
-        throw FileNotFoundException(message: 'Media not found.');
+      ))!;
+      if (current.status == 'ready') {
+        return _mapMedia(current);
+      }
+      if (current.status != 'uploading') {
+        throw AccessDeniedException(
+          message: 'Media is not in uploading state.',
+        );
+      }
+
+      final now = clock.nowUtc();
+      final expiresAt = current.uploadExpiresAt;
+      if (expiresAt != null && expiresAt.isBefore(now)) {
+        throw AccessDeniedException(message: 'Upload session has expired.');
       }
       await MediaObjectRow.db.updateRow(
         session,
@@ -189,24 +210,16 @@ class MediaService {
     required int mediaId,
   }) async {
     final storage = this.storage.forSession(session);
-    final row = await MediaObjectRow.db.findFirstRow(
+    final row = (await _requireMediaAccess(
       session,
-      where: (t) => t.id.equals(mediaId) & t.deletedAt.equals(null),
-    );
-    if (row == null) {
-      throw FileNotFoundException(message: 'Media not found.');
+      mediaId: mediaId,
+      requireOwnerForPersonal: true,
+    ))!;
+    if (row.status != 'ready') {
+      throw AccessDeniedException(message: 'Media is not available for download.');
     }
 
-    final media = _mapMedia(row);
-    if (media.familyId != null) {
-      await rbac.ensureFamilyRole(
-        session,
-        familyId: media.familyId!,
-        minRole: 'member',
-      );
-    }
-
-    return storage.presignedGetUrl(media.objectKey);
+    return storage.presignedGetUrl(row.objectKey);
   }
 
   Future<OperationResult> softDelete(
@@ -225,29 +238,21 @@ class MediaService {
         transaction: transaction,
       );
 
-      final row = await MediaObjectRow.db.findById(
+      final row = await _requireMediaAccess(
         session,
-        mediaId,
+        mediaId: mediaId,
+        requireOwnerForPersonal: true,
         transaction: transaction,
+        throwIfMissing: false,
       );
       if (row == null) {
         return OperationResult(success: true, message: 'Already deleted');
       }
 
-      final familyId = row.familyId;
-      if (familyId != null) {
-        await rbac.ensureFamilyRole(
-          session,
-          familyId: familyId,
-          minRole: 'member',
-          transaction: transaction,
-        );
-      }
-
       await MediaObjectRow.db.updateRow(
         session,
         row.copyWith(
-          deletedAt: DateTime.now().toUtc(),
+          deletedAt: clock.nowUtc(),
           status: 'deleted',
           version: row.version + 1,
         ),
@@ -260,7 +265,7 @@ class MediaService {
         entityType: 'media_object',
         entityId: mediaId,
         operation: 'deleted',
-        familyId: familyId,
+        familyId: row.familyId,
         version: 1,
         tombstone: true,
         transaction: transaction,
@@ -268,6 +273,46 @@ class MediaService {
 
       return OperationResult(success: true, message: 'Media deleted');
     });
+  }
+
+  Future<MediaObjectRow?> _requireMediaAccess(
+    Session session, {
+    required int mediaId,
+    bool requireOwnerForPersonal = false,
+    bool throwIfMissing = true,
+    Transaction? transaction,
+  }) async {
+    final row = await MediaObjectRow.db.findFirstRow(
+      session,
+      where: (t) => t.id.equals(mediaId) & t.deletedAt.equals(null),
+      transaction: transaction,
+    );
+    if (row == null) {
+      if (throwIfMissing) {
+        throw FileNotFoundException(message: 'Media not found.');
+      }
+      return null;
+    }
+
+    if (row.familyId != null) {
+      await rbac.ensureFamilyRole(
+        session,
+        familyId: row.familyId!,
+        minRole: 'member',
+        transaction: transaction,
+      );
+      return row;
+    }
+
+    final profileId = await authContext.ensureProfileId(
+      session,
+      transaction: transaction,
+    );
+    if (requireOwnerForPersonal && row.uploadedByProfileId != profileId) {
+      throw AccessDeniedException(message: 'Access denied to personal media.');
+    }
+
+    return row;
   }
 
   MediaObjectDto _mapMedia(MediaObjectRow row) {

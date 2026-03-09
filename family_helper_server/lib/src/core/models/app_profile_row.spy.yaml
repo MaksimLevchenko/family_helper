@@ -10,3 +10,7 @@ fields:
   updatedAt: DateTime
   deletedAt: DateTime?
   version: int
+indexes:
+  app_profile_auth_user_id_idx:
+    fields: authUserId
+    unique: true

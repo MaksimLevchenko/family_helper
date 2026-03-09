@@ -14,6 +14,7 @@ Create `config/passwords.yaml` from `config/passwords.yaml.example`, then set en
 - MinIO settings in `config/passwords.yaml`:
   - `minioEndpoint`
   - `minioBucket`
+  - `minioAccessKey`
   - `minioSecretKey`
   - `minioPublicBaseUrl`
   - `minioUseSsl`
@@ -24,7 +25,8 @@ Recommended local values:
 ```bash
 minioEndpoint: 'localhost:9000'
 minioBucket: 'family-helper'
-minioSecretKey: 'dev-secret'
+minioAccessKey: 'replace-me'
+minioSecretKey: 'replace-me'
 minioPublicBaseUrl: 'http://localhost:9000'
 minioUseSsl: 'false'
 minioSignUrlTtl: '900'
@@ -43,7 +45,7 @@ Before running compose, create `.env`:
 cp .env.example .env
 ```
 
-This starts Postgres (+ Redis from template compose).
+This starts Postgres, Redis, and MinIO using values from `.env`.
 It also starts MinIO on:
 - API: `http://localhost:9000`
 - Console: `http://localhost:9001`
@@ -51,7 +53,7 @@ It also starts MinIO on:
 `minio_init` bootstraps:
 - bucket `${MINIO_BUCKET}` (default `family-helper`)
 - CORS for local web origins
-- public bucket policy for local development uploads/downloads
+- private bucket for presigned upload/download flows
 
 ## Migrations
 Migrations are in `migrations/` and include:
@@ -76,7 +78,7 @@ dart bin/main.dart --apply-migrations
 dart bin/main.dart
 ```
 
-MinIO root user/password for Docker bootstrap are still read from `.env` by `docker compose`.
+MinIO root user/password for Docker bootstrap are read from `.env` by `docker compose`.
 
 ## Generate Protocol / Endpoints
 ```bash

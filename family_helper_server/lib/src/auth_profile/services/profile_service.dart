@@ -1,16 +1,19 @@
 import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import '../../core/auth/auth_context.dart';
+import '../../core/clock/clock_service.dart';
 import '../../core/idempotency/idempotency_service.dart';
 import '../../generated/protocol.dart';
 
 class ProfileService {
   ProfileService({
     this.authContext = const AuthContext(),
+    this.clock = const ClockService(),
     this.idempotency = const IdempotencyService(),
   });
 
   final AuthContext authContext;
+  final ClockService clock;
   final IdempotencyService idempotency;
 
   Future<ProfileDto> getMyProfile(Session session) async {
@@ -25,6 +28,7 @@ class ProfileService {
     String? displayName,
     String? timezone,
     int? avatarMediaId,
+    bool clearAvatarMedia = false,
     bool? analyticsOptIn,
   }) async {
     final authUserId = authContext.requireAuthUserId(session).uuid;
@@ -66,9 +70,11 @@ class ProfileService {
         row.copyWith(
           displayName: displayName ?? row.displayName,
           timezone: timezone ?? row.timezone,
-          avatarMediaId: avatarMediaId ?? row.avatarMediaId,
+          avatarMediaId: clearAvatarMedia
+              ? null
+              : (avatarMediaId ?? row.avatarMediaId),
           analyticsOptIn: analyticsOptIn ?? row.analyticsOptIn,
-          updatedAt: DateTime.now().toUtc(),
+          updatedAt: clock.nowUtc(),
           version: row.version + 1,
         ),
         transaction: transaction,

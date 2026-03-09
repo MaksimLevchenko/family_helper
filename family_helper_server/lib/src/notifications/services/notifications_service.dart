@@ -1,5 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 import '../../core/auth/auth_context.dart';
+import '../../core/clock/clock_service.dart';
 import '../../core/idempotency/idempotency_service.dart';
 import '../../core/rbac/ensure_family_role_service.dart';
 import '../../core/realtime/realtime_publisher.dart';
@@ -9,6 +10,7 @@ import '../../generated/protocol.dart';
 class NotificationsService {
   NotificationsService({
     this.authContext = const AuthContext(),
+    this.clock = const ClockService(),
     this.idempotency = const IdempotencyService(),
     this.rbac = const EnsureFamilyRoleService(),
     this.changeFeed = const ChangeFeedService(),
@@ -16,6 +18,7 @@ class NotificationsService {
   });
 
   final AuthContext authContext;
+  final ClockService clock;
   final IdempotencyService idempotency;
   final EnsureFamilyRoleService rbac;
   final ChangeFeedService changeFeed;
@@ -43,7 +46,7 @@ class NotificationsService {
         transaction: transaction,
       );
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       final existing = await PushTokenRow.db.findFirstRow(
         session,
         where: (t) => t.profileId.equals(profileId) & t.token.equals(token),
@@ -104,7 +107,7 @@ class NotificationsService {
         transaction: transaction,
       );
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       final existing = await NotificationPreferenceRow.db.findFirstRow(
         session,
         where: (t) =>
@@ -169,7 +172,7 @@ class NotificationsService {
         transaction: transaction,
       );
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       final existing = await ReminderRow.db.findFirstRow(
         session,
         where: (t) =>
@@ -224,7 +227,7 @@ class NotificationsService {
           entityType: 'reminder',
           entityId: row.id!,
           eventType: 'notifications.updated',
-          changedAt: DateTime.now().toUtc(),
+          changedAt: now,
         ),
       );
 
@@ -233,22 +236,35 @@ class NotificationsService {
   }
 
   Future<int> processDueReminders(Session session) async {
-    final dueRows = await ReminderRow.db.find(
-      session,
-      where: (t) => t.status.equals('scheduled') & (t.remindAt <= DateTime.now().toUtc()),
-      orderBy: (t) => t.remindAt,
-      limit: 200,
-    );
-
-    int sent = 0;
-    for (final row in dueRows) {
-      final firedAt = DateTime.now().toUtc();
-      final updated = await ReminderRow.db.updateRow(
-        session,
-        row.copyWith(status: 'fired', firedAt: firedAt),
+    final firedAt = clock.nowUtc();
+    final firedReminders = await session.db.transaction((transaction) async {
+      final result = await session.db.unsafeQuery(
+        '''
+        UPDATE "reminder"
+        SET "status" = 'fired',
+            "firedAt" = @firedAt
+        WHERE "id" IN (
+          SELECT "id"
+          FROM "reminder"
+          WHERE "status" = 'scheduled'
+            AND "remindAt" <= @firedAt
+          ORDER BY "remindAt"
+          LIMIT 200
+          FOR UPDATE SKIP LOCKED
+        )
+        RETURNING "id", "familyId", "entityType", "entityId", "profileId",
+                  "remindAt", "status", "payloadJson", "firedAt", "createdAt"
+        ''',
+        transaction: transaction,
+        parameters: QueryParameters.named({'firedAt': firedAt}),
       );
-      final reminder = _mapReminder(updated);
 
+      return result
+          .map((row) => _mapReminderColumns(row.toColumnMap()))
+          .toList();
+    });
+
+    for (final reminder in firedReminders) {
       await realtime.publish(
         session,
         familyId: reminder.familyId,
@@ -258,14 +274,12 @@ class NotificationsService {
           entityType: 'reminder',
           entityId: reminder.id,
           eventType: 'reminder_fired',
-          changedAt: DateTime.now().toUtc(),
+          changedAt: firedAt,
         ),
       );
-
-      sent += 1;
     }
 
-    return sent;
+    return firedReminders.length;
   }
 
   NotificationPreferenceDto _mapPreference(NotificationPreferenceRow row) {
@@ -292,6 +306,21 @@ class NotificationsService {
       payloadJson: row.payloadJson,
       firedAt: row.firedAt,
       createdAt: row.createdAt,
+    );
+  }
+
+  ReminderDto _mapReminderColumns(Map<String, dynamic> columns) {
+    return ReminderDto(
+      id: columns['id'] as int,
+      familyId: columns['familyId'] as int,
+      entityType: columns['entityType'] as String,
+      entityId: columns['entityId'] as int,
+      profileId: columns['profileId'] as int,
+      remindAt: (columns['remindAt'] as DateTime).toUtc(),
+      status: columns['status'] as String,
+      payloadJson: columns['payloadJson'] as String,
+      firedAt: (columns['firedAt'] as DateTime?)?.toUtc(),
+      createdAt: (columns['createdAt'] as DateTime).toUtc(),
     );
   }
 }

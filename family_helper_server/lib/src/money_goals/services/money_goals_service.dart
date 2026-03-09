@@ -1,5 +1,7 @@
+import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import '../../core/auth/auth_context.dart';
+import '../../core/clock/clock_service.dart';
 import '../../core/idempotency/idempotency_service.dart';
 import '../../core/rbac/ensure_family_role_service.dart';
 import '../../core/realtime/realtime_publisher.dart';
@@ -9,6 +11,7 @@ import '../../generated/protocol.dart';
 class MoneyGoalsService {
   MoneyGoalsService({
     this.authContext = const AuthContext(),
+    this.clock = const ClockService(),
     this.idempotency = const IdempotencyService(),
     this.rbac = const EnsureFamilyRoleService(),
     this.changeFeed = const ChangeFeedService(),
@@ -16,6 +19,7 @@ class MoneyGoalsService {
   });
 
   final AuthContext authContext;
+  final ClockService clock;
   final IdempotencyService idempotency;
   final EnsureFamilyRoleService rbac;
   final ChangeFeedService changeFeed;
@@ -53,8 +57,24 @@ class MoneyGoalsService {
       if (!isFresh && goalId != null) {
         return _findGoal(session, goalId, transaction: transaction);
       }
+      if (!isFresh) {
+        final binding = await idempotency.getBinding(
+          session,
+          actorAuthUserId: authUserId,
+          action: 'money.upsertGoal',
+          clientOperationId: clientOperationId,
+          transaction: transaction,
+        );
+        if (binding?.resourceType == 'money_goal') {
+          return _findGoal(
+            session,
+            binding!.resourceId,
+            transaction: transaction,
+          );
+        }
+      }
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       if (goalId == null) {
         final inserted = await MoneyGoalRow.db.insertRow(
           session,
@@ -76,6 +96,15 @@ class MoneyGoalsService {
           transaction: transaction,
         );
         final dto = _mapGoal(inserted);
+        await idempotency.bindResource(
+          session,
+          actorAuthUserId: authUserId,
+          action: 'money.upsertGoal',
+          clientOperationId: clientOperationId,
+          resourceType: 'money_goal',
+          resourceId: dto.id,
+          transaction: transaction,
+        );
         await _emitGoalChange(
           session,
           familyId: familyId,
@@ -94,7 +123,9 @@ class MoneyGoalsService {
             t.deletedAt.equals(null),
         transaction: transaction,
       );
-      if (row == null) throw Exception('Goal not found');
+      if (row == null) {
+        throw FileNotFoundException(message: 'Goal not found.');
+      }
       await MoneyGoalRow.db.updateRow(
         session,
         row.copyWith(
@@ -109,7 +140,11 @@ class MoneyGoalsService {
         transaction: transaction,
       );
 
-      final updated = await _findGoal(session, goalId, transaction: transaction);
+      final updated = await _findGoal(
+        session,
+        goalId,
+        transaction: transaction,
+      );
       await _emitGoalChange(
         session,
         familyId: familyId,
@@ -148,6 +183,14 @@ class MoneyGoalsService {
         transaction: transaction,
       );
 
+      await session.db.unsafeQuery(
+        'SELECT "id" FROM "money_goal" WHERE "id" = @goalId AND "familyId" = @familyId AND "deletedAt" IS NULL FOR UPDATE',
+        transaction: transaction,
+        parameters: QueryParameters.named({
+          'goalId': goalId,
+          'familyId': familyId,
+        }),
+      );
       final goalRow = await MoneyGoalRow.db.findFirstRow(
         session,
         where: (t) =>
@@ -157,12 +200,16 @@ class MoneyGoalsService {
         transaction: transaction,
       );
       if (goalRow == null) {
-        throw Exception('Goal not found');
+        throw FileNotFoundException(message: 'Goal not found.');
       }
 
       final goal = _mapGoal(goalRow);
       if (goal.currency != currency) {
-        throw Exception('Contribution currency must match goal currency');
+        throw ArgumentError.value(
+          currency,
+          'currency',
+          'Contribution currency must match goal currency.',
+        );
       }
 
       if (!started) {
@@ -179,28 +226,51 @@ class MoneyGoalsService {
         }
       }
 
-      final now = DateTime.now().toUtc();
-      final contributionRow = await MoneyContributionRow.db.findFirstRow(
-            session,
-            where: (t) =>
-                t.goalId.equals(goalId) &
-                t.clientOperationId.equals(clientOperationId),
-            transaction: transaction,
-          ) ??
-          await MoneyContributionRow.db.insertRow(
-            session,
-            MoneyContributionRow(
-              goalId: goalId,
-              profileId: actorProfileId,
-              amountCents: amountCents,
-              currency: currency,
-              note: note,
-              clientOperationId: clientOperationId,
-              createdAt: now,
-              revokedAt: null,
-            ),
-            transaction: transaction,
-          );
+      final now = clock.nowUtc();
+      MoneyContributionRow contributionRow;
+      try {
+        contributionRow = await MoneyContributionRow.db.insertRow(
+          session,
+          MoneyContributionRow(
+            goalId: goalId,
+            profileId: actorProfileId,
+            amountCents: amountCents,
+            currency: currency,
+            note: note,
+            clientOperationId: clientOperationId,
+            createdAt: now,
+            revokedAt: null,
+          ),
+          transaction: transaction,
+        );
+      } on DatabaseInsertRowException {
+        final existing = await MoneyContributionRow.db.findFirstRow(
+          session,
+          where: (t) =>
+              t.goalId.equals(goalId) &
+              t.clientOperationId.equals(clientOperationId),
+          transaction: transaction,
+        );
+        if (existing != null) {
+          return _mapContribution(existing);
+        }
+        rethrow;
+      } on DatabaseQueryException catch (error) {
+        if (error.code != '23505') {
+          rethrow;
+        }
+        final existing = await MoneyContributionRow.db.findFirstRow(
+          session,
+          where: (t) =>
+              t.goalId.equals(goalId) &
+              t.clientOperationId.equals(clientOperationId),
+          transaction: transaction,
+        );
+        if (existing != null) {
+          return _mapContribution(existing);
+        }
+        rethrow;
+      }
       final contribution = _mapContribution(contributionRow);
 
       final nextAmount = goalRow.currentAmountCents + amountCents;
@@ -289,7 +359,7 @@ class MoneyGoalsService {
         eventType: operation == 'contribution_added'
             ? 'contribution_added'
             : 'money_goal.updated',
-        changedAt: DateTime.now().toUtc(),
+        changedAt: clock.nowUtc(),
       ),
     );
   }
@@ -323,5 +393,3 @@ class MoneyGoalsService {
     );
   }
 }
-
-

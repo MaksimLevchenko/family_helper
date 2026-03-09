@@ -1,18 +1,20 @@
 import 'dart:io';
 import 'dart:math';
+import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import '../../core/audit/audit_service.dart';
 import '../../core/auth/auth_context.dart';
+import '../../core/clock/clock_service.dart';
 import '../../core/idempotency/idempotency_service.dart';
 import '../../core/rbac/ensure_family_role_service.dart';
 import '../../core/realtime/realtime_publisher.dart';
 import '../../core/sync/change_feed_service.dart';
 import '../../generated/protocol.dart';
 
-
 class FamilyService {
   FamilyService({
     this.authContext = const AuthContext(),
+    this.clock = const ClockService(),
     this.idempotency = const IdempotencyService(),
     this.rbac = const EnsureFamilyRoleService(),
     this.changeFeed = const ChangeFeedService(),
@@ -21,6 +23,7 @@ class FamilyService {
   });
 
   final AuthContext authContext;
+  final ClockService clock;
   final IdempotencyService idempotency;
   final EnsureFamilyRoleService rbac;
   final ChangeFeedService changeFeed;
@@ -49,26 +52,33 @@ class FamilyService {
       );
 
       if (!isFresh) {
-        final existing = await FamilyRow.db.findFirstRow(
+        final binding = await idempotency.getBinding(
           session,
-          where: (t) =>
-              t.ownerProfileId.equals(ownerProfileId) & t.deletedAt.equals(null),
-          orderBy: (t) => t.id,
-          orderDescending: true,
+          actorAuthUserId: authUserId,
+          action: 'family.create',
+          clientOperationId: clientOperationId,
           transaction: transaction,
         );
-        if (existing != null) {
-          return _mapFamily(existing);
+        if (binding?.resourceType == 'family') {
+          return _findFamily(
+            session,
+            binding!.resourceId,
+            transaction: transaction,
+          );
         }
       }
 
-      final memberLimit = int.tryParse(
-            const String.fromEnvironment('FAMILY_MEMBER_LIMIT', defaultValue: ''),
+      final memberLimit =
+          int.tryParse(
+            const String.fromEnvironment(
+              'FAMILY_MEMBER_LIMIT',
+              defaultValue: '',
+            ),
           ) ??
           int.tryParse(Platform.environment['FAMILY_MEMBER_LIMIT'] ?? '2') ??
           2;
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       final insertedFamily = await FamilyRow.db.insertRow(
         session,
         FamilyRow(
@@ -84,6 +94,16 @@ class FamilyService {
       );
 
       final family = _mapFamily(insertedFamily);
+
+      await idempotency.bindResource(
+        session,
+        actorAuthUserId: authUserId,
+        action: 'family.create',
+        clientOperationId: clientOperationId,
+        resourceType: 'family',
+        resourceId: family.id,
+        transaction: transaction,
+      );
 
       await FamilyMemberRow.db.insertRow(
         session,
@@ -130,7 +150,7 @@ class FamilyService {
           entityType: 'family',
           entityId: family.id,
           eventType: 'family.updated',
-          changedAt: DateTime.now().toUtc(),
+          changedAt: now,
         ),
       );
 
@@ -149,7 +169,7 @@ class FamilyService {
       where: (t) => t.familyId.equals(familyId) & t.deletedAt.equals(null),
       orderBy: (t) => t.id,
     );
-    final profileIds = members.map((m) => m.profileId).toSet().cast<int?>().toSet();
+    final profileIds = members.map((m) => m.profileId).toSet();
     final profiles = profileIds.isEmpty
         ? <AppProfileRow>[]
         : await AppProfileRow.db.find(
@@ -158,7 +178,9 @@ class FamilyService {
           );
     final profilesById = {for (final p in profiles) p.id!: p};
 
-    return members.map((m) => _mapMember(m, profilesById[m.profileId])).toList();
+    return members
+        .map((m) => _mapMember(m, profilesById[m.profileId]))
+        .toList();
   }
 
   Future<FamilyInviteDto> createInvite(
@@ -187,22 +209,23 @@ class FamilyService {
       );
 
       if (!isFresh) {
-        final existing = await FamilyInviteRow.db.findFirstRow(
+        final binding = await idempotency.getBinding(
           session,
-          where: (t) =>
-              t.familyId.equals(familyId) &
-              t.acceptedAt.equals(null) &
-              (t.expiresAt > DateTime.now().toUtc()),
-          orderBy: (t) => t.id,
-          orderDescending: true,
+          actorAuthUserId: authUserId,
+          action: 'family.createInvite',
+          clientOperationId: clientOperationId,
           transaction: transaction,
         );
-        if (existing != null) {
-          return _mapInvite(existing);
+        if (binding?.resourceType == 'family_invite') {
+          return _findInvite(
+            session,
+            binding!.resourceId,
+            transaction: transaction,
+          );
         }
       }
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       final inviteCode = _randomCode(8);
       final token = _randomCode(32);
 
@@ -224,6 +247,16 @@ class FamilyService {
       );
 
       final invite = _mapInvite(inserted);
+
+      await idempotency.bindResource(
+        session,
+        actorAuthUserId: authUserId,
+        action: 'family.createInvite',
+        clientOperationId: clientOperationId,
+        resourceType: 'family_invite',
+        resourceId: invite.id,
+        transaction: transaction,
+      );
 
       await changeFeed.appendChange(
         session,
@@ -288,19 +321,19 @@ class FamilyService {
         session,
         where: (t) =>
             (t.token.equals(tokenOrCode) | t.inviteCode.equals(tokenOrCode)) &
-            (t.expiresAt > DateTime.now().toUtc()),
+            (t.expiresAt > clock.nowUtc()),
         orderBy: (t) => t.id,
         orderDescending: true,
         transaction: transaction,
       );
 
       if (invite == null) {
-        throw Exception('Invite not found or expired');
+        throw FileNotFoundException(message: 'Invite not found or expired.');
       }
       final inviteDto = _mapInvite(invite);
 
       if (isFresh) {
-        final now = DateTime.now().toUtc();
+        final now = clock.nowUtc();
         final existingMember = await FamilyMemberRow.db.findFirstRow(
           session,
           where: (t) =>
@@ -385,7 +418,7 @@ class FamilyService {
           entityType: 'member',
           entityId: profileId,
           eventType: 'family.updated',
-          changedAt: DateTime.now().toUtc(),
+          changedAt: clock.nowUtc(),
         ),
       );
 
@@ -421,7 +454,7 @@ class FamilyService {
         return OperationResult(success: true, message: 'Already processed');
       }
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       final members = await FamilyMemberRow.db.find(
         session,
         where: (t) =>
@@ -480,7 +513,7 @@ class FamilyService {
           entityType: 'family',
           entityId: familyId,
           eventType: 'family.updated',
-          changedAt: DateTime.now().toUtc(),
+          changedAt: now,
         ),
       );
 
@@ -522,7 +555,9 @@ class FamilyService {
       final ownerProfileId = family!.ownerProfileId;
 
       if (ownerProfileId == profileId) {
-        throw Exception('Owner cannot leave before transfer ownership');
+        throw AccessDeniedException(
+          message: 'Owner cannot leave before transfer ownership.',
+        );
       }
 
       final member = await FamilyMemberRow.db.findFirstRow(
@@ -532,7 +567,7 @@ class FamilyService {
         transaction: transaction,
       );
       if (member != null) {
-        final now = DateTime.now().toUtc();
+        final now = clock.nowUtc();
         await FamilyMemberRow.db.updateRow(
           session,
           member.copyWith(
@@ -566,12 +601,38 @@ class FamilyService {
           entityType: 'member',
           entityId: profileId,
           eventType: 'family.updated',
-          changedAt: DateTime.now().toUtc(),
+          changedAt: clock.nowUtc(),
         ),
       );
 
       return OperationResult(success: true, message: 'Left family');
     });
+  }
+
+  Future<FamilyDto> _findFamily(
+    Session session,
+    int familyId, {
+    Transaction? transaction,
+  }) async {
+    final row = await FamilyRow.db.findById(
+      session,
+      familyId,
+      transaction: transaction,
+    );
+    return _mapFamily(row!);
+  }
+
+  Future<FamilyInviteDto> _findInvite(
+    Session session,
+    int inviteId, {
+    Transaction? transaction,
+  }) async {
+    final row = await FamilyInviteRow.db.findById(
+      session,
+      inviteId,
+      transaction: transaction,
+    );
+    return _mapInvite(row!);
   }
 
   FamilyDto _mapFamily(FamilyRow row) {
@@ -612,7 +673,8 @@ class FamilyService {
   }
 
   String _randomCode(int length) {
-    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz';
+    const alphabet =
+        'ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz';
     final random = Random.secure();
     return List<String>.generate(
       length,
@@ -620,5 +682,3 @@ class FamilyService {
     ).join();
   }
 }
-
-

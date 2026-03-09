@@ -19,6 +19,8 @@ abstract class IdempotencyKeyRow
     required this.actorAuthUserId,
     required this.action,
     required this.clientOperationId,
+    this.resourceType,
+    this.resourceId,
     required this.createdAt,
   });
 
@@ -27,6 +29,8 @@ abstract class IdempotencyKeyRow
     required String actorAuthUserId,
     required String action,
     required String clientOperationId,
+    String? resourceType,
+    int? resourceId,
     required DateTime createdAt,
   }) = _IdempotencyKeyRowImpl;
 
@@ -36,6 +40,8 @@ abstract class IdempotencyKeyRow
       actorAuthUserId: jsonSerialization['actorAuthUserId'] as String,
       action: jsonSerialization['action'] as String,
       clientOperationId: jsonSerialization['clientOperationId'] as String,
+      resourceType: jsonSerialization['resourceType'] as String?,
+      resourceId: jsonSerialization['resourceId'] as int?,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -55,6 +61,10 @@ abstract class IdempotencyKeyRow
 
   String clientOperationId;
 
+  String? resourceType;
+
+  int? resourceId;
+
   DateTime createdAt;
 
   @override
@@ -68,6 +78,8 @@ abstract class IdempotencyKeyRow
     String? actorAuthUserId,
     String? action,
     String? clientOperationId,
+    String? resourceType,
+    int? resourceId,
     DateTime? createdAt,
   });
   @override
@@ -78,6 +90,8 @@ abstract class IdempotencyKeyRow
       'actorAuthUserId': actorAuthUserId,
       'action': action,
       'clientOperationId': clientOperationId,
+      if (resourceType != null) 'resourceType': resourceType,
+      if (resourceId != null) 'resourceId': resourceId,
       'createdAt': createdAt.toJson(),
     };
   }
@@ -90,6 +104,8 @@ abstract class IdempotencyKeyRow
       'actorAuthUserId': actorAuthUserId,
       'action': action,
       'clientOperationId': clientOperationId,
+      if (resourceType != null) 'resourceType': resourceType,
+      if (resourceId != null) 'resourceId': resourceId,
       'createdAt': createdAt.toJson(),
     };
   }
@@ -132,12 +148,16 @@ class _IdempotencyKeyRowImpl extends IdempotencyKeyRow {
     required String actorAuthUserId,
     required String action,
     required String clientOperationId,
+    String? resourceType,
+    int? resourceId,
     required DateTime createdAt,
   }) : super._(
          id: id,
          actorAuthUserId: actorAuthUserId,
          action: action,
          clientOperationId: clientOperationId,
+         resourceType: resourceType,
+         resourceId: resourceId,
          createdAt: createdAt,
        );
 
@@ -150,6 +170,8 @@ class _IdempotencyKeyRowImpl extends IdempotencyKeyRow {
     String? actorAuthUserId,
     String? action,
     String? clientOperationId,
+    Object? resourceType = _Undefined,
+    Object? resourceId = _Undefined,
     DateTime? createdAt,
   }) {
     return IdempotencyKeyRow(
@@ -157,6 +179,8 @@ class _IdempotencyKeyRowImpl extends IdempotencyKeyRow {
       actorAuthUserId: actorAuthUserId ?? this.actorAuthUserId,
       action: action ?? this.action,
       clientOperationId: clientOperationId ?? this.clientOperationId,
+      resourceType: resourceType is String? ? resourceType : this.resourceType,
+      resourceId: resourceId is int? ? resourceId : this.resourceId,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -183,6 +207,17 @@ class IdempotencyKeyRowUpdateTable
         value,
       );
 
+  _i1.ColumnValue<String, String> resourceType(String? value) =>
+      _i1.ColumnValue(
+        table.resourceType,
+        value,
+      );
+
+  _i1.ColumnValue<int, int> resourceId(int? value) => _i1.ColumnValue(
+    table.resourceId,
+    value,
+  );
+
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
@@ -206,6 +241,14 @@ class IdempotencyKeyRowTable extends _i1.Table<int?> {
       'clientOperationId',
       this,
     );
+    resourceType = _i1.ColumnString(
+      'resourceType',
+      this,
+    );
+    resourceId = _i1.ColumnInt(
+      'resourceId',
+      this,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
       this,
@@ -220,6 +263,10 @@ class IdempotencyKeyRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnString clientOperationId;
 
+  late final _i1.ColumnString resourceType;
+
+  late final _i1.ColumnInt resourceId;
+
   late final _i1.ColumnDateTime createdAt;
 
   @override
@@ -228,6 +275,8 @@ class IdempotencyKeyRowTable extends _i1.Table<int?> {
     actorAuthUserId,
     action,
     clientOperationId,
+    resourceType,
+    resourceId,
     createdAt,
   ];
 }

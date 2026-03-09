@@ -1,10 +1,13 @@
 import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
+import '../clock/clock_service.dart';
 import '../../generated/protocol.dart';
 
 class AuthContext {
-  const AuthContext();
+  const AuthContext({this.clock = const ClockService()});
+
+  final ClockService clock;
 
   UuidValue requireAuthUserId(Session session) {
     final auth = session.authenticated;
@@ -19,7 +22,7 @@ class AuthContext {
     Transaction? transaction,
   }) async {
     final authUserId = requireAuthUserId(session).uuid;
-    final now = DateTime.now().toUtc();
+    final now = clock.nowUtc();
 
     final existing = await AppProfileRow.db.findFirstRow(
       session,
@@ -47,7 +50,18 @@ class AuthContext {
         transaction: transaction,
       );
       return inserted.id!;
-    } catch (_) {
+    } on DatabaseInsertRowException {
+      final concurrent = await AppProfileRow.db.findFirstRow(
+        session,
+        where: (t) => t.authUserId.equals(authUserId),
+        transaction: transaction,
+      );
+      if (concurrent?.id != null) return concurrent!.id!;
+      rethrow;
+    } on DatabaseQueryException catch (error) {
+      if (error.code != '23505') {
+        rethrow;
+      }
       final concurrent = await AppProfileRow.db.findFirstRow(
         session,
         where: (t) => t.authUserId.equals(authUserId),

@@ -1,5 +1,7 @@
+import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import '../../core/auth/auth_context.dart';
+import '../../core/clock/clock_service.dart';
 import '../../core/idempotency/idempotency_service.dart';
 import '../../core/rbac/ensure_family_role_service.dart';
 import '../../core/realtime/realtime_publisher.dart';
@@ -9,6 +11,7 @@ import '../../generated/protocol.dart';
 class ListsService {
   ListsService({
     this.authContext = const AuthContext(),
+    this.clock = const ClockService(),
     this.idempotency = const IdempotencyService(),
     this.rbac = const EnsureFamilyRoleService(),
     this.changeFeed = const ChangeFeedService(),
@@ -16,6 +19,7 @@ class ListsService {
   });
 
   final AuthContext authContext;
+  final ClockService clock;
   final IdempotencyService idempotency;
   final EnsureFamilyRoleService rbac;
   final ChangeFeedService changeFeed;
@@ -50,8 +54,24 @@ class ListsService {
       if (!isFresh && listId != null) {
         return _findList(session, listId, transaction: transaction);
       }
+      if (!isFresh) {
+        final binding = await idempotency.getBinding(
+          session,
+          actorAuthUserId: authUserId,
+          action: 'lists.upsertList',
+          clientOperationId: clientOperationId,
+          transaction: transaction,
+        );
+        if (binding?.resourceType == 'family_list') {
+          return _findList(
+            session,
+            binding!.resourceId,
+            transaction: transaction,
+          );
+        }
+      }
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       if (listId == null) {
         final inserted = await FamilyListRow.db.insertRow(
           session,
@@ -68,6 +88,15 @@ class ListsService {
           transaction: transaction,
         );
         final dto = _mapList(inserted);
+        await idempotency.bindResource(
+          session,
+          actorAuthUserId: authUserId,
+          action: 'lists.upsertList',
+          clientOperationId: clientOperationId,
+          resourceType: 'family_list',
+          resourceId: dto.id,
+          transaction: transaction,
+        );
         await _emitListChange(
           session,
           familyId: familyId,
@@ -86,7 +115,9 @@ class ListsService {
             t.deletedAt.equals(null),
         transaction: transaction,
       );
-      if (row == null) throw Exception('List not found');
+      if (row == null) {
+        throw FileNotFoundException(message: 'List not found.');
+      }
       await FamilyListRow.db.updateRow(
         session,
         row.copyWith(
@@ -153,7 +184,12 @@ class ListsService {
         }
       }
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
+      await session.db.unsafeQuery(
+        'SELECT "id" FROM "family_list" WHERE "id" = @listId FOR UPDATE',
+        transaction: transaction,
+        parameters: QueryParameters.named({'listId': listId}),
+      );
       final existingItems = await ListItemRow.db.find(
         session,
         where: (t) => t.listId.equals(listId),
@@ -232,13 +268,18 @@ class ListsService {
         transaction: transaction,
       );
 
+      await session.db.unsafeQuery(
+        'SELECT "id" FROM "list_item" WHERE "id" = @itemId AND "deletedAt" IS NULL FOR UPDATE',
+        transaction: transaction,
+        parameters: QueryParameters.named({'itemId': itemId}),
+      );
       final currentRow = await ListItemRow.db.findFirstRow(
         session,
         where: (li) => li.id.equals(itemId) & li.deletedAt.equals(null),
         transaction: transaction,
       );
       if (currentRow == null) {
-        throw Exception('List item not found');
+        throw FileNotFoundException(message: 'List item not found.');
       }
       final list = await FamilyListRow.db.findById(
         session,
@@ -246,7 +287,7 @@ class ListsService {
         transaction: transaction,
       );
       if (list == null || list.familyId != familyId) {
-        throw Exception('List item not found');
+        throw FileNotFoundException(message: 'List item not found.');
       }
 
       final current = currentRow;
@@ -254,7 +295,7 @@ class ListsService {
         return _mapItem(currentRow);
       }
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       final nextBought = !current.isBought;
       final updatedRow = await ListItemRow.db.updateRow(
         session,
@@ -331,7 +372,7 @@ class ListsService {
             session,
             row.copyWith(
               positionIndex: i + 1,
-              updatedAt: DateTime.now().toUtc(),
+              updatedAt: clock.nowUtc(),
               version: row.version + 1,
             ),
             transaction: transaction,
@@ -400,7 +441,7 @@ class ListsService {
         itemId: itemId,
         actorProfileId: actorProfileId,
         eventType: eventType,
-        createdAt: DateTime.now().toUtc(),
+        createdAt: clock.nowUtc(),
       ),
       transaction: transaction,
     );
@@ -433,7 +474,7 @@ class ListsService {
         entityType: entityType,
         entityId: entityId,
         eventType: 'lists.updated',
-        changedAt: DateTime.now().toUtc(),
+        changedAt: clock.nowUtc(),
       ),
     );
   }

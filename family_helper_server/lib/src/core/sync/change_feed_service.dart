@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:serverpod/serverpod.dart';
+import '../clock/clock_service.dart';
 import '../../generated/protocol.dart';
 
 class ChangeFeedService {
-  const ChangeFeedService();
+  const ChangeFeedService({this.clock = const ClockService()});
+
+  final ClockService clock;
 
   Future<void> appendChange(
     Session session, {
@@ -25,7 +28,7 @@ class ChangeFeedService {
         entityType: entityType,
         entityId: entityId,
         operation: operation,
-        changedAt: DateTime.now().toUtc(),
+        changedAt: clock.nowUtc(),
         tombstone: tombstone,
         version: version,
         payloadJson: jsonEncode(payload ?? const <String, dynamic>{}),
@@ -34,5 +37,3 @@ class ChangeFeedService {
     );
   }
 }
-
-

@@ -8,3 +8,7 @@ fields:
   updatedAt: DateTime
   deletedAt: DateTime?
   version: int
+indexes:
+  push_token_profile_token_idx:
+    fields: profileId, token
+    unique: true

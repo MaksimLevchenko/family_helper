@@ -1,5 +1,7 @@
+import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import '../../core/auth/auth_context.dart';
+import '../../core/clock/clock_service.dart';
 import '../../core/idempotency/idempotency_service.dart';
 import '../../core/rbac/ensure_family_role_service.dart';
 import '../../core/realtime/realtime_publisher.dart';
@@ -9,6 +11,7 @@ import '../../generated/protocol.dart';
 class TasksService {
   TasksService({
     this.authContext = const AuthContext(),
+    this.clock = const ClockService(),
     this.idempotency = const IdempotencyService(),
     this.rbac = const EnsureFamilyRoleService(),
     this.changeFeed = const ChangeFeedService(),
@@ -16,6 +19,7 @@ class TasksService {
   });
 
   final AuthContext authContext;
+  final ClockService clock;
   final IdempotencyService idempotency;
   final EnsureFamilyRoleService rbac;
   final ChangeFeedService changeFeed;
@@ -56,8 +60,24 @@ class TasksService {
       if (!isFresh && taskId != null) {
         return _findTask(session, taskId, transaction: transaction);
       }
+      if (!isFresh) {
+        final binding = await idempotency.getBinding(
+          session,
+          actorAuthUserId: authUserId,
+          action: 'tasks.upsertTask',
+          clientOperationId: clientOperationId,
+          transaction: transaction,
+        );
+        if (binding?.resourceType == 'task') {
+          return _findTask(
+            session,
+            binding!.resourceId,
+            transaction: transaction,
+          );
+        }
+      }
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       if (taskId == null) {
         final inserted = await TaskRow.db.insertRow(
           session,
@@ -84,6 +104,15 @@ class TasksService {
         );
 
         final dto = _mapTask(inserted);
+        await idempotency.bindResource(
+          session,
+          actorAuthUserId: authUserId,
+          action: 'tasks.upsertTask',
+          clientOperationId: clientOperationId,
+          resourceType: 'task',
+          resourceId: dto.id,
+          transaction: transaction,
+        );
         await _appendHistory(
           session,
           taskId: dto.id,
@@ -129,7 +158,9 @@ class TasksService {
             t.deletedAt.equals(null),
         transaction: transaction,
       );
-      if (row == null) throw Exception('Task not found');
+      if (row == null) {
+        throw FileNotFoundException(message: 'Task not found.');
+      }
       await TaskRow.db.updateRow(
         session,
         row.copyWith(
@@ -147,7 +178,11 @@ class TasksService {
         transaction: transaction,
       );
 
-      final updated = await _findTask(session, taskId, transaction: transaction);
+      final updated = await _findTask(
+        session,
+        taskId,
+        transaction: transaction,
+      );
 
       await _appendHistory(
         session,
@@ -234,6 +269,14 @@ class TasksService {
         transaction: transaction,
       );
 
+      await session.db.unsafeQuery(
+        'SELECT "id" FROM "task" WHERE "id" = @taskId AND "familyId" = @familyId AND "deletedAt" IS NULL FOR UPDATE',
+        transaction: transaction,
+        parameters: QueryParameters.named({
+          'taskId': taskId,
+          'familyId': familyId,
+        }),
+      );
       final currentRow = await TaskRow.db.findFirstRow(
         session,
         where: (t) =>
@@ -243,7 +286,7 @@ class TasksService {
         transaction: transaction,
       );
       if (currentRow == null) {
-        throw Exception('Task not found');
+        throw FileNotFoundException(message: 'Task not found.');
       }
 
       final current = _mapTask(currentRow);
@@ -251,7 +294,7 @@ class TasksService {
         return current;
       }
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       await TaskRow.db.updateRow(
         session,
         currentRow.copyWith(
@@ -285,29 +328,38 @@ class TasksService {
             transaction: transaction,
           );
           if (existingNext == null) {
-            await TaskRow.db.insertRow(
-              session,
-              TaskRow(
-                familyId: current.familyId,
-                title: current.title,
-                description: current.description,
-                isPersonal: current.isPersonal,
-                priority: current.priority,
-                status: 'open',
-                dueAt: nextDueAt,
-                recurrenceMode: current.recurrenceMode,
-                recurrenceRrule: current.recurrenceRrule,
-                assigneeProfileId: current.assigneeProfileId,
-                createdByProfileId: actorProfileId,
-                completedAt: null,
-                sourceTaskId: current.id,
-                createdAt: now,
-                updatedAt: now,
-                deletedAt: null,
-                version: 1,
-              ),
-              transaction: transaction,
-            );
+            try {
+              await TaskRow.db.insertRow(
+                session,
+                TaskRow(
+                  familyId: current.familyId,
+                  title: current.title,
+                  description: current.description,
+                  isPersonal: current.isPersonal,
+                  priority: current.priority,
+                  status: 'open',
+                  dueAt: nextDueAt,
+                  recurrenceMode: current.recurrenceMode,
+                  recurrenceRrule: current.recurrenceRrule,
+                  assigneeProfileId: current.assigneeProfileId,
+                  createdByProfileId: actorProfileId,
+                  completedAt: null,
+                  sourceTaskId: current.id,
+                  createdAt: now,
+                  updatedAt: now,
+                  deletedAt: null,
+                  version: 1,
+                ),
+                transaction: transaction,
+              );
+            } on DatabaseInsertRowException {
+              // A concurrent completion already created the follow-up task.
+            } on DatabaseQueryException catch (error) {
+              if (error.code != '23505') {
+                rethrow;
+              }
+              // A concurrent completion already created the follow-up task.
+            }
           }
         }
       }
@@ -369,7 +421,7 @@ class TasksService {
         actorProfileId: actorProfileId,
         eventType: eventType,
         details: details,
-        createdAt: DateTime.now().toUtc(),
+        createdAt: clock.nowUtc(),
       ),
       transaction: transaction,
     );
@@ -435,5 +487,3 @@ class TasksService {
     );
   }
 }
-
-

@@ -1,19 +1,26 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import '../../core/auth/auth_context.dart';
+import '../../core/clock/clock_service.dart';
 import '../../core/idempotency/idempotency_service.dart';
+import '../../core/storage/minio_storage_service.dart';
 import '../../generated/protocol.dart';
 
 class PrivacyService {
   PrivacyService({
     this.authContext = const AuthContext(),
+    this.clock = const ClockService(),
     this.idempotency = const IdempotencyService(),
-  });
+    MinioStorageService? storage,
+  }) : storage = storage ?? MinioStorageService();
 
   final AuthContext authContext;
+  final ClockService clock;
   final IdempotencyService idempotency;
+  final MinioStorageService storage;
 
   Future<PrivacyExportJobDto> requestExport(
     Session session, {
@@ -54,10 +61,10 @@ class PrivacyService {
           profileId: profileId,
           status: 'pending',
           objectKey:
-              'exports/profile_$profileId/export_${DateTime.now().millisecondsSinceEpoch}.json',
+              'exports/profile_$profileId/export_${clock.nowUtc().millisecondsSinceEpoch}.json',
           signedUrl: null,
           expiresAt: null,
-          createdAt: DateTime.now().toUtc(),
+          createdAt: clock.nowUtc(),
           completedAt: null,
         ),
         transaction: transaction,
@@ -90,7 +97,7 @@ class PrivacyService {
       final graceDays =
           int.tryParse(Platform.environment['DELETION_GRACE_DAYS'] ?? '30') ??
           30;
-      final scheduled = DateTime.now().toUtc().add(Duration(days: graceDays));
+      final scheduled = clock.nowUtc().add(Duration(days: graceDays));
 
       final existing = await AccountDeletionRequestRow.db.findFirstRow(
         session,
@@ -104,7 +111,7 @@ class PrivacyService {
                 profileId: profileId,
                 status: 'scheduled',
                 scheduledHardDeleteAt: scheduled,
-                createdAt: DateTime.now().toUtc(),
+                createdAt: clock.nowUtc(),
                 cancelledAt: null,
               ),
               transaction: transaction,
@@ -132,7 +139,7 @@ class PrivacyService {
         transaction: transaction,
       );
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       final existing = await AccountDeletionRequestRow.db.findFirstRow(
         session,
         where: (t) => t.profileId.equals(profileId),
@@ -153,22 +160,36 @@ class PrivacyService {
   }
 
   Future<int> processExportJobs(Session session) async {
-    final pending = await PrivacyExportJobRow.db.find(
-      session,
-      where: (t) => t.status.equals('pending'),
-      orderBy: (t) => t.id,
-      limit: 100,
-    );
+    final pending = await session.db.transaction((transaction) async {
+      final result = await session.db.unsafeQuery(
+        '''
+        UPDATE "privacy_export_job"
+        SET "status" = 'processing'
+        WHERE "id" IN (
+          SELECT "id"
+          FROM "privacy_export_job"
+          WHERE "status" = 'pending'
+          ORDER BY "id"
+          LIMIT 100
+          FOR UPDATE SKIP LOCKED
+        )
+        RETURNING "id", "profileId", "status", "objectKey", "signedUrl",
+                  "expiresAt", "createdAt", "completedAt"
+        ''',
+        transaction: transaction,
+      );
+
+      return result
+          .map((row) => PrivacyExportJobRow.fromJson(row.toColumnMap()))
+          .toList();
+    });
 
     int processed = 0;
+    final storageClient = storage.forSession(session);
     for (final row in pending) {
       final id = row.id!;
       final profileId = row.profileId;
       final objectKey = row.objectKey;
-      await PrivacyExportJobRow.db.updateRow(
-        session,
-        row.copyWith(status: 'processing'),
-      );
 
       try {
         final payload = await _buildExportPayload(
@@ -176,12 +197,14 @@ class PrivacyService {
           profileId: profileId,
           objectKey: objectKey,
         );
-        final signedUrl = Uri.dataFromString(
-          jsonEncode(payload),
-          mimeType: 'application/json',
-          encoding: utf8,
-        ).toString();
-        final expiresAt = DateTime.now().toUtc().add(const Duration(hours: 24));
+        final bytes = Uint8List.fromList(utf8.encode(jsonEncode(payload)));
+        await storageClient.uploadBytes(
+          objectKey,
+          bytes,
+          contentType: 'application/json',
+        );
+        final signedUrl = await storageClient.presignedGetUrl(objectKey);
+        final expiresAt = clock.nowUtc().add(const Duration(hours: 24));
 
         await PrivacyExportJobRow.db.updateById(
           session,
@@ -190,7 +213,7 @@ class PrivacyService {
             t.status('ready'),
             t.signedUrl(signedUrl),
             t.expiresAt(expiresAt),
-            t.completedAt(DateTime.now().toUtc()),
+            t.completedAt(clock.nowUtc()),
           ],
         );
 
@@ -203,7 +226,7 @@ class PrivacyService {
             t.status('failed'),
             t.signedUrl(null),
             t.expiresAt(null),
-            t.completedAt(DateTime.now().toUtc()),
+            t.completedAt(clock.nowUtc()),
           ],
         );
       }
@@ -217,14 +240,14 @@ class PrivacyService {
       session,
       where: (t) =>
           t.status.equals('scheduled') &
-          (t.scheduledHardDeleteAt <= DateTime.now().toUtc()),
+          (t.scheduledHardDeleteAt <= clock.nowUtc()),
     );
 
     int deleted = 0;
     for (final row in due) {
       final profileId = row.profileId;
       await session.db.transaction((transaction) async {
-        final now = DateTime.now().toUtc();
+        final now = clock.nowUtc();
 
         await _reassignOrCloseOwnedFamilies(
           session,
@@ -399,7 +422,7 @@ class PrivacyService {
         ? <FamilyRow>[]
         : await FamilyRow.db.find(
             session,
-            where: (t) => t.id.inSet(familyIds.cast<int?>().toSet()),
+            where: (t) => t.id.inSet(familyIds.toSet()),
           );
     final familiesById = {for (final f in families) f.id!: f};
     final preferencesRows = await NotificationPreferenceRow.db.find(
@@ -420,7 +443,7 @@ class PrivacyService {
 
     final exportPayload = <String, dynamic>{
       'meta': {
-        'generatedAt': DateTime.now().toUtc().toIso8601String(),
+        'generatedAt': clock.nowUtc().toIso8601String(),
         'profileId': profileId,
         'objectKey': objectKey,
       },

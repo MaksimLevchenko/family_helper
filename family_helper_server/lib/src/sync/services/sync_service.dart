@@ -19,6 +19,7 @@ class SyncService {
     }
 
     final sinceUtc = since.toUtc();
+    final normalizedLimit = limit <= 0 ? 1 : (limit > 500 ? 500 : limit);
     final rows = await ChangeFeedRow.db.find(
       session,
       where: (t) {
@@ -32,11 +33,11 @@ class SyncService {
         Order(column: t.changedAt),
         Order(column: t.id),
       ],
-      limit: limit,
+      limit: normalizedLimit,
     );
 
     final items = rows.map(_map).toList();
-    final hasMore = items.length >= limit;
+    final hasMore = items.length >= normalizedLimit;
     final nextSince = items.isEmpty ? sinceUtc : items.last.changedAt;
     final nextLastSeenChangeId = items.isEmpty ? lastSeenChangeId : items.last.id;
 

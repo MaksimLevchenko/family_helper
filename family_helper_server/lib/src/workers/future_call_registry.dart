@@ -1,5 +1,9 @@
-import 'package:serverpod/serverpod.dart';
+// ignore_for_file: implementation_imports
 
+import 'package:serverpod/serverpod.dart';
+import 'package:serverpod/src/generated/future_call_entry.dart';
+
+import '../core/clock/clock_service.dart';
 import 'account_deletion_call.dart';
 import 'future_call_names.dart';
 import 'media_cleanup_call.dart';
@@ -8,6 +12,8 @@ import 'privacy_export_call.dart';
 
 final class FutureCallRegistry {
   const FutureCallRegistry._();
+
+  static const _clock = ClockService();
 
   static void registerAll(Serverpod pod) {
     pod.registerFutureCall(
@@ -78,12 +84,24 @@ final class FutureCallRegistry {
     required String identifier,
   }) async {
     // Keep exactly one pending job per worker across server restarts.
-    await pod.cancelFutureCall(identifier);
-    await pod.futureCallWithDelay(
-      callName,
-      null,
-      delay,
-      identifier: identifier,
-    );
+    final session = await pod.createSession();
+    try {
+      await FutureCallEntry.db.deleteWhere(
+        session,
+        where: (t) => t.identifier.equals(identifier),
+      );
+      await FutureCallEntry.db.insertRow(
+        session,
+        FutureCallEntry(
+          name: callName,
+          time: _clock.nowUtc().add(delay),
+          serializedObject: null,
+          serverId: pod.serverId,
+          identifier: identifier,
+        ),
+      );
+    } finally {
+      await session.close();
+    }
   }
 }

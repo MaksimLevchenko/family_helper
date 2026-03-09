@@ -1,5 +1,7 @@
+import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import '../../core/auth/auth_context.dart';
+import '../../core/clock/clock_service.dart';
 import '../../core/idempotency/idempotency_service.dart';
 import '../../core/rbac/ensure_family_role_service.dart';
 import '../../core/realtime/realtime_publisher.dart';
@@ -9,6 +11,7 @@ import '../../generated/protocol.dart';
 class CalendarService {
   CalendarService({
     this.authContext = const AuthContext(),
+    this.clock = const ClockService(),
     this.idempotency = const IdempotencyService(),
     this.rbac = const EnsureFamilyRoleService(),
     this.changeFeed = const ChangeFeedService(),
@@ -16,6 +19,7 @@ class CalendarService {
   });
 
   final AuthContext authContext;
+  final ClockService clock;
   final IdempotencyService idempotency;
   final EnsureFamilyRoleService rbac;
   final ChangeFeedService changeFeed;
@@ -56,8 +60,24 @@ class CalendarService {
       if (!isFresh && eventId != null) {
         return _findEvent(session, eventId, transaction: transaction);
       }
+      if (!isFresh) {
+        final binding = await idempotency.getBinding(
+          session,
+          actorAuthUserId: authUserId,
+          action: 'calendar.upsertEvent',
+          clientOperationId: clientOperationId,
+          transaction: transaction,
+        );
+        if (binding?.resourceType == 'calendar_event') {
+          return _findEvent(
+            session,
+            binding!.resourceId,
+            transaction: transaction,
+          );
+        }
+      }
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       if (eventId == null) {
         final inserted = await CalendarEventRow.db.insertRow(
           session,
@@ -80,6 +100,16 @@ class CalendarService {
           transaction: transaction,
         );
         final dto = _mapEvent(inserted);
+
+        await idempotency.bindResource(
+          session,
+          actorAuthUserId: authUserId,
+          action: 'calendar.upsertEvent',
+          clientOperationId: clientOperationId,
+          resourceType: 'calendar_event',
+          resourceId: dto.id,
+          transaction: transaction,
+        );
 
         await changeFeed.appendChange(
           session,
@@ -117,7 +147,9 @@ class CalendarService {
             t.deletedAt.equals(null),
         transaction: transaction,
       );
-      if (row == null) throw Exception('Event not found');
+      if (row == null) {
+        throw FileNotFoundException(message: 'Event not found.');
+      }
       await CalendarEventRow.db.updateRow(
         session,
         row.copyWith(
@@ -200,7 +232,7 @@ class CalendarService {
         return OperationResult(success: true, message: 'Already processed');
       }
 
-      final now = DateTime.now().toUtc();
+      final now = clock.nowUtc();
       if (scope == 'one') {
         final existing = await CalendarEventOverrideRow.db.findFirstRow(
           session,

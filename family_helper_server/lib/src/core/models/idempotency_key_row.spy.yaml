@@ -4,4 +4,10 @@ fields:
   actorAuthUserId: String
   action: String
   clientOperationId: String
+  resourceType: String?
+  resourceId: int?
   createdAt: DateTime
+indexes:
+  idempotency_key_actor_action_client_operation_idx:
+    fields: actorAuthUserId, action, clientOperationId
+    unique: true

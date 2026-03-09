@@ -6,3 +6,7 @@ fields:
   scheduledHardDeleteAt: DateTime
   createdAt: DateTime
   cancelledAt: DateTime?
+indexes:
+  account_deletion_request_profile_id_idx:
+    fields: profileId
+    unique: true

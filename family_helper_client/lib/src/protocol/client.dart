@@ -280,6 +280,7 @@ class EndpointProfile extends _i2.EndpointRef {
     String? displayName,
     String? timezone,
     int? avatarMediaId,
+    required bool clearAvatarMedia,
     bool? analyticsOptIn,
   }) => caller.callServerEndpoint<_i5.ProfileDto>(
     'profile',
@@ -289,6 +290,7 @@ class EndpointProfile extends _i2.EndpointRef {
       'displayName': displayName,
       'timezone': timezone,
       'avatarMediaId': avatarMediaId,
+      'clearAvatarMedia': clearAvatarMedia,
       'analyticsOptIn': analyticsOptIn,
     },
   );

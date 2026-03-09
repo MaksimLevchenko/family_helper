@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
@@ -27,7 +29,7 @@ class EmailIdpEndpoint extends EmailIdpBaseEndpoint {
         authUserId: auth.authUserId.uuid,
         eventType: 'login.success',
         success: true,
-        payload: {'emailHash': email.hashCode.toString()},
+        payload: {'emailHash': _emailFingerprint(session, email)},
       );
 
       return auth;
@@ -37,9 +39,25 @@ class EmailIdpEndpoint extends EmailIdpBaseEndpoint {
         authUserId: 'unknown',
         eventType: 'login.failed',
         success: false,
-        payload: {'emailHash': email.hashCode.toString(), 'error': '$error'},
+        payload: {
+          'emailHash': _emailFingerprint(session, email),
+          'errorType': error.runtimeType.toString(),
+        },
       );
       rethrow;
     }
+  }
+
+  String _emailFingerprint(Session session, String email) {
+    final normalizedEmail = email.trim().toLowerCase();
+    final pepper =
+        session.passwords['emailSecretHashPepper'] ??
+        session.passwords['serviceSecret'] ??
+        'missing-pepper';
+    final digest = Hmac(
+      sha256,
+      utf8.encode(pepper),
+    ).convert(utf8.encode(normalizedEmail));
+    return digest.toString();
   }
 }

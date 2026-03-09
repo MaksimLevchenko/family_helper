@@ -8,3 +8,7 @@ fields:
   quietHoursEnd: String?
   updatedAt: DateTime
   version: int
+indexes:
+  notification_preference_profile_type_idx:
+    fields: profileId, notificationType
+    unique: true

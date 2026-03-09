@@ -350,6 +350,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<int?>(),
               nullable: true,
             ),
+            'clearAvatarMedia': _i1.ParameterDescription(
+              name: 'clearAvatarMedia',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
             'analyticsOptIn': _i1.ParameterDescription(
               name: 'analyticsOptIn',
               type: _i1.getType<bool?>(),
@@ -366,6 +371,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 displayName: params['displayName'],
                 timezone: params['timezone'],
                 avatarMediaId: params['avatarMediaId'],
+                clearAvatarMedia: params['clearAvatarMedia'],
                 analyticsOptIn: params['analyticsOptIn'],
               ),
         ),

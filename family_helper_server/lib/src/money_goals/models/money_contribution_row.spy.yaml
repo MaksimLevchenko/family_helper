@@ -9,3 +9,7 @@ fields:
   clientOperationId: String?
   createdAt: DateTime
   revokedAt: DateTime?
+indexes:
+  money_contribution_goal_client_operation_idx:
+    fields: goalId, clientOperationId
+    unique: true

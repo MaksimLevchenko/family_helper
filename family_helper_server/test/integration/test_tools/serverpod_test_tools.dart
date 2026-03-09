@@ -594,6 +594,7 @@ class _ProfileEndpoint {
     String? displayName,
     String? timezone,
     int? avatarMediaId,
+    required bool clearAvatarMedia,
     bool? analyticsOptIn,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -612,6 +613,7 @@ class _ProfileEndpoint {
             'displayName': displayName,
             'timezone': timezone,
             'avatarMediaId': avatarMediaId,
+            'clearAvatarMedia': clearAvatarMedia,
             'analyticsOptIn': analyticsOptIn,
           }),
           serializationManager: _serializationManager,

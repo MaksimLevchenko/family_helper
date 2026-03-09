@@ -18,6 +18,7 @@ class ProfileEndpoint extends Endpoint {
     String? displayName,
     String? timezone,
     int? avatarMediaId,
+    bool clearAvatarMedia = false,
     bool? analyticsOptIn,
   }) {
     return service.updateMyProfile(
@@ -26,6 +27,7 @@ class ProfileEndpoint extends Endpoint {
       displayName: displayName,
       timezone: timezone,
       avatarMediaId: avatarMediaId,
+      clearAvatarMedia: clearAvatarMedia,
       analyticsOptIn: analyticsOptIn,
     );
   }

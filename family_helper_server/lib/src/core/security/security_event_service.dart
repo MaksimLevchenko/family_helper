@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:serverpod/serverpod.dart';
+import '../clock/clock_service.dart';
 import '../../generated/protocol.dart';
 
 class SecurityEventService {
-  const SecurityEventService();
+  const SecurityEventService({this.clock = const ClockService()});
+
+  final ClockService clock;
 
   Future<void> append(
     Session session, {
@@ -20,11 +23,9 @@ class SecurityEventService {
         eventType: eventType,
         success: success,
         payloadJson: jsonEncode(payload ?? const <String, dynamic>{}),
-        createdAt: DateTime.now().toUtc(),
+        createdAt: clock.nowUtc(),
       ),
       transaction: transaction,
     );
   }
 }
-
-
