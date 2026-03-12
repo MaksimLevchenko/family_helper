@@ -21,6 +21,31 @@ class PrivacyState {
   final bool isLoading;
   final String? error;
 
+  bool get hasActiveDeletionRequest {
+    final status = accountDeletion?.status;
+    return status == 'requested' ||
+        status == 'pending' ||
+        status == 'scheduled' ||
+        status == 'processing';
+  }
+
+  bool get shouldShowDeletionCard => hasActiveDeletionRequest;
+
+  bool get isExportExpired {
+    final expiresAt = lastExportJob?.expiresAt;
+    if (expiresAt == null) {
+      return false;
+    }
+    return expiresAt.isBefore(DateTime.now().toUtc());
+  }
+
+  bool get canDownloadExport =>
+      (lastExportJob?.signedUrl?.trim().isNotEmpty ?? false) &&
+      !isExportExpired;
+
+  bool get hasVisiblePrivacyRequest =>
+      lastExportJob != null || shouldShowDeletionCard;
+
   PrivacyState copyWith({
     PrivacyExportJobDto? lastExportJob,
     AccountDeletionStatusDto? accountDeletion,

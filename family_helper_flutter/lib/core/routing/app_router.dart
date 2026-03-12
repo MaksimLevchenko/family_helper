@@ -113,33 +113,38 @@ GoRouter createAppRouter(AuthCubit authCubit) {
       ),
     ],
     redirect: (context, state) {
-      final auth = authCubit.state;
-      final isLoading = state.matchedLocation == AppRoutes.loading;
-      final isSignIn = state.matchedLocation == AppRoutes.signIn;
-      final isRegistration = state.matchedLocation.startsWith('/register/');
-      final isHome = state.matchedLocation.startsWith('/home');
-
-      if (auth.isInitializing) {
-        return isLoading ? null : AppRoutes.loading;
-      }
-
-      final isAuthenticated = auth.isAuthenticated;
-
-      if (!isAuthenticated && !isSignIn && !isRegistration) {
-        return AppRoutes.signIn;
-      }
-      if (isAuthenticated && (isSignIn || isLoading)) {
-        return AppRoutes.overview;
-      }
-      if (!isAuthenticated && isLoading) {
-        return AppRoutes.signIn;
-      }
-      if (isAuthenticated && !isHome) {
-        return AppRoutes.overview;
-      }
-      return null;
+      return redirectForAuthState(authCubit.state, state.matchedLocation);
     },
   );
+}
+
+String? redirectForAuthState(AuthSessionState auth, String matchedLocation) {
+  final isLoading = matchedLocation == AppRoutes.loading;
+  final isSignIn = matchedLocation == AppRoutes.signIn;
+  final isRegistration = matchedLocation.startsWith('/register/');
+  final isHome = matchedLocation.startsWith('/home');
+
+  if (auth.isInitializing) {
+    // Keep auth forms mounted while a sign-in or registration request is running
+    // so the UI can surface inline errors instead of bouncing through /loading.
+    return (isLoading || isSignIn || isRegistration) ? null : AppRoutes.loading;
+  }
+
+  final isAuthenticated = auth.isAuthenticated;
+
+  if (!isAuthenticated && !isSignIn && !isRegistration) {
+    return AppRoutes.signIn;
+  }
+  if (isAuthenticated && (isSignIn || isLoading)) {
+    return AppRoutes.overview;
+  }
+  if (!isAuthenticated && isLoading) {
+    return AppRoutes.signIn;
+  }
+  if (isAuthenticated && !isHome) {
+    return AppRoutes.overview;
+  }
+  return null;
 }
 
 class _StreamRefreshNotifier extends ChangeNotifier {

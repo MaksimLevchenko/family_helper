@@ -44,23 +44,25 @@ import 'package:family_helper_client/src/protocol/money_goals/models/money_goal_
     as _i17;
 import 'package:family_helper_client/src/protocol/money_goals/models/money_contribution_dto.dart'
     as _i18;
-import 'package:family_helper_client/src/protocol/notifications/models/notification_preference_dto.dart'
+import 'package:family_helper_client/src/protocol/money_goals/models/money_goal_history_entry_dto.dart'
     as _i19;
-import 'package:family_helper_client/src/protocol/notifications/models/reminder_dto.dart'
+import 'package:family_helper_client/src/protocol/notifications/models/notification_preference_dto.dart'
     as _i20;
-import 'package:family_helper_client/src/protocol/privacy/models/privacy_export_job_dto.dart'
+import 'package:family_helper_client/src/protocol/notifications/models/reminder_dto.dart'
     as _i21;
-import 'package:family_helper_client/src/protocol/privacy/models/account_deletion_status_dto.dart'
+import 'package:family_helper_client/src/protocol/privacy/models/privacy_export_job_dto.dart'
     as _i22;
-import 'package:family_helper_client/src/protocol/privacy/models/privacy_status_dto.dart'
+import 'package:family_helper_client/src/protocol/privacy/models/account_deletion_status_dto.dart'
     as _i23;
-import 'package:family_helper_client/src/protocol/realtime/models/family_realtime_event.dart'
+import 'package:family_helper_client/src/protocol/privacy/models/privacy_status_dto.dart'
     as _i24;
-import 'package:family_helper_client/src/protocol/sync/models/sync_changes_response.dart'
+import 'package:family_helper_client/src/protocol/realtime/models/family_realtime_event.dart'
     as _i25;
-import 'package:family_helper_client/src/protocol/tasks/models/task_dto.dart'
+import 'package:family_helper_client/src/protocol/sync/models/sync_changes_response.dart'
     as _i26;
-import 'protocol.dart' as _i27;
+import 'package:family_helper_client/src/protocol/tasks/models/task_dto.dart'
+    as _i27;
+import 'protocol.dart' as _i28;
 
 /// {@category Endpoint}
 class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
@@ -399,6 +401,20 @@ class EndpointFamily extends _i2.EndpointRef {
         {'familyId': familyId},
       );
 
+  _i3.Future<_i9.FamilyDto> renameFamily({
+    required int familyId,
+    required String clientOperationId,
+    required String title,
+  }) => caller.callServerEndpoint<_i9.FamilyDto>(
+    'family',
+    'renameFamily',
+    {
+      'familyId': familyId,
+      'clientOperationId': clientOperationId,
+      'title': title,
+    },
+  );
+
   _i3.Future<_i11.FamilyInviteDto> createInvite({
     required int familyId,
     required String clientOperationId,
@@ -688,6 +704,68 @@ class EndpointMoneyGoals extends _i2.EndpointRef {
     },
   );
 
+  _i3.Future<_i18.MoneyContributionDto> withdrawFunds({
+    required String clientOperationId,
+    required int familyId,
+    required int goalId,
+    required int amountCents,
+    required String currency,
+    String? note,
+  }) => caller.callServerEndpoint<_i18.MoneyContributionDto>(
+    'moneyGoals',
+    'withdrawFunds',
+    {
+      'clientOperationId': clientOperationId,
+      'familyId': familyId,
+      'goalId': goalId,
+      'amountCents': amountCents,
+      'currency': currency,
+      'note': note,
+    },
+  );
+
+  _i3.Future<_i17.MoneyGoalDto> archiveGoal({
+    required String clientOperationId,
+    required int familyId,
+    required int goalId,
+  }) => caller.callServerEndpoint<_i17.MoneyGoalDto>(
+    'moneyGoals',
+    'archiveGoal',
+    {
+      'clientOperationId': clientOperationId,
+      'familyId': familyId,
+      'goalId': goalId,
+    },
+  );
+
+  _i3.Future<_i7.OperationResult> deleteGoal({
+    required String clientOperationId,
+    required int familyId,
+    required int goalId,
+  }) => caller.callServerEndpoint<_i7.OperationResult>(
+    'moneyGoals',
+    'deleteGoal',
+    {
+      'clientOperationId': clientOperationId,
+      'familyId': familyId,
+      'goalId': goalId,
+    },
+  );
+
+  _i3.Future<List<_i19.MoneyGoalHistoryEntryDto>> listGoalHistory({
+    required int familyId,
+    required int goalId,
+    required int limit,
+  }) => caller.callServerEndpoint<List<_i19.MoneyGoalHistoryEntryDto>>(
+    'moneyGoals',
+    'listGoalHistory',
+    {
+      'familyId': familyId,
+      'goalId': goalId,
+      'limit': limit,
+    },
+  );
+
   _i3.Future<List<_i17.MoneyGoalDto>> listGoals({required int familyId}) =>
       caller.callServerEndpoint<List<_i17.MoneyGoalDto>>(
         'moneyGoals',
@@ -717,13 +795,13 @@ class EndpointNotifications extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<_i19.NotificationPreferenceDto> upsertPreference({
+  _i3.Future<_i20.NotificationPreferenceDto> upsertPreference({
     required String clientOperationId,
     required String notificationType,
     required bool enabled,
     String? quietHoursStart,
     String? quietHoursEnd,
-  }) => caller.callServerEndpoint<_i19.NotificationPreferenceDto>(
+  }) => caller.callServerEndpoint<_i20.NotificationPreferenceDto>(
     'notifications',
     'upsertPreference',
     {
@@ -735,21 +813,21 @@ class EndpointNotifications extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<List<_i19.NotificationPreferenceDto>> listPreferences() =>
-      caller.callServerEndpoint<List<_i19.NotificationPreferenceDto>>(
+  _i3.Future<List<_i20.NotificationPreferenceDto>> listPreferences() =>
+      caller.callServerEndpoint<List<_i20.NotificationPreferenceDto>>(
         'notifications',
         'listPreferences',
         {},
       );
 
-  _i3.Future<_i20.ReminderDto> scheduleReminder({
+  _i3.Future<_i21.ReminderDto> scheduleReminder({
     required String clientOperationId,
     required int familyId,
     required String entityType,
     required int entityId,
     required DateTime remindAt,
     required String payloadJson,
-  }) => caller.callServerEndpoint<_i20.ReminderDto>(
+  }) => caller.callServerEndpoint<_i21.ReminderDto>(
     'notifications',
     'scheduleReminder',
     {
@@ -762,11 +840,11 @@ class EndpointNotifications extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<List<_i20.ReminderDto>> listReminders({
+  _i3.Future<List<_i21.ReminderDto>> listReminders({
     int? familyId,
     String? status,
     required int limit,
-  }) => caller.callServerEndpoint<List<_i20.ReminderDto>>(
+  }) => caller.callServerEndpoint<List<_i21.ReminderDto>>(
     'notifications',
     'listReminders',
     {
@@ -790,31 +868,31 @@ class EndpointPrivacy extends _i2.EndpointRef {
   @override
   String get name => 'privacy';
 
-  _i3.Future<_i21.PrivacyExportJobDto> requestExport({
+  _i3.Future<_i22.PrivacyExportJobDto> requestExport({
     required String clientOperationId,
-  }) => caller.callServerEndpoint<_i21.PrivacyExportJobDto>(
+  }) => caller.callServerEndpoint<_i22.PrivacyExportJobDto>(
     'privacy',
     'requestExport',
     {'clientOperationId': clientOperationId},
   );
 
-  _i3.Future<_i22.AccountDeletionStatusDto> requestAccountDeletion({
+  _i3.Future<_i23.AccountDeletionStatusDto> requestAccountDeletion({
     required String clientOperationId,
-  }) => caller.callServerEndpoint<_i22.AccountDeletionStatusDto>(
+  }) => caller.callServerEndpoint<_i23.AccountDeletionStatusDto>(
     'privacy',
     'requestAccountDeletion',
     {'clientOperationId': clientOperationId},
   );
 
-  _i3.Future<_i22.AccountDeletionStatusDto> cancelAccountDeletion() =>
-      caller.callServerEndpoint<_i22.AccountDeletionStatusDto>(
+  _i3.Future<_i23.AccountDeletionStatusDto> cancelAccountDeletion() =>
+      caller.callServerEndpoint<_i23.AccountDeletionStatusDto>(
         'privacy',
         'cancelAccountDeletion',
         {},
       );
 
-  _i3.Future<_i23.PrivacyStatusDto> getStatus() =>
-      caller.callServerEndpoint<_i23.PrivacyStatusDto>(
+  _i3.Future<_i24.PrivacyStatusDto> getStatus() =>
+      caller.callServerEndpoint<_i24.PrivacyStatusDto>(
         'privacy',
         'getStatus',
         {},
@@ -840,12 +918,12 @@ class EndpointRealtime extends _i2.EndpointRef {
   @override
   String get name => 'realtime';
 
-  _i3.Stream<_i24.FamilyRealtimeEvent> watchFamilyEvents({
+  _i3.Stream<_i25.FamilyRealtimeEvent> watchFamilyEvents({
     required int familyId,
   }) =>
       caller.callStreamingServerEndpoint<
-        _i3.Stream<_i24.FamilyRealtimeEvent>,
-        _i24.FamilyRealtimeEvent
+        _i3.Stream<_i25.FamilyRealtimeEvent>,
+        _i25.FamilyRealtimeEvent
       >(
         'realtime',
         'watchFamilyEvents',
@@ -861,12 +939,12 @@ class EndpointSync extends _i2.EndpointRef {
   @override
   String get name => 'sync';
 
-  _i3.Future<_i25.SyncChangesResponse> changes({
+  _i3.Future<_i26.SyncChangesResponse> changes({
     required DateTime since,
     int? familyId,
     required int limit,
     required int lastSeenChangeId,
-  }) => caller.callServerEndpoint<_i25.SyncChangesResponse>(
+  }) => caller.callServerEndpoint<_i26.SyncChangesResponse>(
     'sync',
     'changes',
     {
@@ -885,7 +963,7 @@ class EndpointTasks extends _i2.EndpointRef {
   @override
   String get name => 'tasks';
 
-  _i3.Future<_i26.TaskDto> upsertTask({
+  _i3.Future<_i27.TaskDto> upsertTask({
     required String clientOperationId,
     int? taskId,
     required int familyId,
@@ -897,7 +975,7 @@ class EndpointTasks extends _i2.EndpointRef {
     String? recurrenceMode,
     String? recurrenceRrule,
     int? assigneeProfileId,
-  }) => caller.callServerEndpoint<_i26.TaskDto>(
+  }) => caller.callServerEndpoint<_i27.TaskDto>(
     'tasks',
     'upsertTask',
     {
@@ -915,18 +993,18 @@ class EndpointTasks extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<List<_i26.TaskDto>> listTasks({required int familyId}) =>
-      caller.callServerEndpoint<List<_i26.TaskDto>>(
+  _i3.Future<List<_i27.TaskDto>> listTasks({required int familyId}) =>
+      caller.callServerEndpoint<List<_i27.TaskDto>>(
         'tasks',
         'listTasks',
         {'familyId': familyId},
       );
 
-  _i3.Future<_i26.TaskDto> completeTask({
+  _i3.Future<_i27.TaskDto> completeTask({
     required String clientOperationId,
     required int familyId,
     required int taskId,
-  }) => caller.callServerEndpoint<_i26.TaskDto>(
+  }) => caller.callServerEndpoint<_i27.TaskDto>(
     'tasks',
     'completeTask',
     {
@@ -968,7 +1046,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i27.Protocol(),
+         _i28.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

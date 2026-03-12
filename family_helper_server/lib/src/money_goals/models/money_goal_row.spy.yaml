@@ -9,6 +9,7 @@ fields:
   currency: String
   deadlineAt: DateTime?
   reachedAt: DateTime?
+  archivedAt: DateTime?
   createdByProfileId: int
   createdAt: DateTime
   updatedAt: DateTime

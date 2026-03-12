@@ -626,6 +626,37 @@ class Endpoints extends _i1.EndpointDispatch {
                 familyId: params['familyId'],
               ),
         ),
+        'renameFamily': _i1.MethodConnector(
+          name: 'renameFamily',
+          params: {
+            'familyId': _i1.ParameterDescription(
+              name: 'familyId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'clientOperationId': _i1.ParameterDescription(
+              name: 'clientOperationId',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'title': _i1.ParameterDescription(
+              name: 'title',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['family'] as _i6.FamilyEndpoint).renameFamily(
+                    session,
+                    familyId: params['familyId'],
+                    clientOperationId: params['clientOperationId'],
+                    title: params['title'],
+                  ),
+        ),
         'createInvite': _i1.MethodConnector(
           name: 'createInvite',
           params: {
@@ -1232,6 +1263,148 @@ class Endpoints extends _i1.EndpointDispatch {
                     amountCents: params['amountCents'],
                     currency: params['currency'],
                     note: params['note'],
+                  ),
+        ),
+        'withdrawFunds': _i1.MethodConnector(
+          name: 'withdrawFunds',
+          params: {
+            'clientOperationId': _i1.ParameterDescription(
+              name: 'clientOperationId',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'familyId': _i1.ParameterDescription(
+              name: 'familyId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'goalId': _i1.ParameterDescription(
+              name: 'goalId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'amountCents': _i1.ParameterDescription(
+              name: 'amountCents',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'currency': _i1.ParameterDescription(
+              name: 'currency',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'note': _i1.ParameterDescription(
+              name: 'note',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['moneyGoals'] as _i10.MoneyGoalsEndpoint)
+                  .withdrawFunds(
+                    session,
+                    clientOperationId: params['clientOperationId'],
+                    familyId: params['familyId'],
+                    goalId: params['goalId'],
+                    amountCents: params['amountCents'],
+                    currency: params['currency'],
+                    note: params['note'],
+                  ),
+        ),
+        'archiveGoal': _i1.MethodConnector(
+          name: 'archiveGoal',
+          params: {
+            'clientOperationId': _i1.ParameterDescription(
+              name: 'clientOperationId',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'familyId': _i1.ParameterDescription(
+              name: 'familyId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'goalId': _i1.ParameterDescription(
+              name: 'goalId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['moneyGoals'] as _i10.MoneyGoalsEndpoint)
+                  .archiveGoal(
+                    session,
+                    clientOperationId: params['clientOperationId'],
+                    familyId: params['familyId'],
+                    goalId: params['goalId'],
+                  ),
+        ),
+        'deleteGoal': _i1.MethodConnector(
+          name: 'deleteGoal',
+          params: {
+            'clientOperationId': _i1.ParameterDescription(
+              name: 'clientOperationId',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'familyId': _i1.ParameterDescription(
+              name: 'familyId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'goalId': _i1.ParameterDescription(
+              name: 'goalId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['moneyGoals'] as _i10.MoneyGoalsEndpoint)
+                  .deleteGoal(
+                    session,
+                    clientOperationId: params['clientOperationId'],
+                    familyId: params['familyId'],
+                    goalId: params['goalId'],
+                  ),
+        ),
+        'listGoalHistory': _i1.MethodConnector(
+          name: 'listGoalHistory',
+          params: {
+            'familyId': _i1.ParameterDescription(
+              name: 'familyId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'goalId': _i1.ParameterDescription(
+              name: 'goalId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['moneyGoals'] as _i10.MoneyGoalsEndpoint)
+                  .listGoalHistory(
+                    session,
+                    familyId: params['familyId'],
+                    goalId: params['goalId'],
+                    limit: params['limit'],
                   ),
         ),
         'listGoals': _i1.MethodConnector(

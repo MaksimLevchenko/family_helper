@@ -19,6 +19,7 @@ family:
   - createFamily:
   - listMembers:
   - getFamily:
+  - renameFamily:
   - createInvite:
   - acceptInvite:
   - transferOwnership:
@@ -40,6 +41,10 @@ media:
 moneyGoals:
   - upsertGoal:
   - addContribution:
+  - withdrawFunds:
+  - archiveGoal:
+  - deleteGoal:
+  - listGoalHistory:
   - listGoals:
 notifications:
   - registerPushToken:

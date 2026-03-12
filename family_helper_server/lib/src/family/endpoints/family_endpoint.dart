@@ -35,6 +35,20 @@ class FamilyEndpoint extends Endpoint {
     return service.getFamily(session, familyId: familyId);
   }
 
+  Future<FamilyDto> renameFamily(
+    Session session, {
+    required int familyId,
+    required String clientOperationId,
+    required String title,
+  }) {
+    return service.renameFamily(
+      session,
+      familyId: familyId,
+      clientOperationId: clientOperationId,
+      title: title,
+    );
+  }
+
   Future<FamilyInviteDto> createInvite(
     Session session, {
     required int familyId,

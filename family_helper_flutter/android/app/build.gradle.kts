@@ -13,6 +13,17 @@ val releaseKeyAlias = providers.gradleProperty("ANDROID_KEY_ALIAS")
     .orElse(providers.environmentVariable("ANDROID_KEY_ALIAS"))
 val releaseKeyPassword = providers.gradleProperty("ANDROID_KEY_PASSWORD")
     .orElse(providers.environmentVariable("ANDROID_KEY_PASSWORD"))
+val hasReleaseSigningConfig =
+    listOf(
+        releaseKeystorePath.orNull,
+        releaseKeystorePassword.orNull,
+        releaseKeyAlias.orNull,
+        releaseKeyPassword.orNull,
+    ).all { !it.isNullOrBlank() }
+val isReleaseTaskRequested =
+    gradle.startParameter.taskNames.any { taskName ->
+        taskName.contains("release", ignoreCase = true)
+    }
 
 android {
     namespace = "com.example.family_helper_flutter"
@@ -22,6 +33,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -37,36 +49,36 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            val storeFilePath = releaseKeystorePath.orNull
-            val storePasswordValue = releaseKeystorePassword.orNull
-            val keyAliasValue = releaseKeyAlias.orNull
-            val keyPasswordValue = releaseKeyPassword.orNull
-            if (
-                storeFilePath.isNullOrBlank() ||
-                storePasswordValue.isNullOrBlank() ||
-                keyAliasValue.isNullOrBlank() ||
-                keyPasswordValue.isNullOrBlank()
-            ) {
-                throw GradleException(
-                    "Release signing is not configured. Set ANDROID_KEYSTORE_PATH, " +
-                        "ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD.",
-                )
+        if (hasReleaseSigningConfig) {
+            create("release") {
+                storeFile = file(releaseKeystorePath.get())
+                storePassword = releaseKeystorePassword.get()
+                keyAlias = releaseKeyAlias.get()
+                keyPassword = releaseKeyPassword.get()
             }
-            storeFile = file(storeFilePath)
-            storePassword = storePasswordValue
-            keyAlias = keyAliasValue
-            keyPassword = keyPasswordValue
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            if (hasReleaseSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 }
 
+if (!hasReleaseSigningConfig && isReleaseTaskRequested) {
+    throw GradleException(
+        "Release signing is not configured. Set ANDROID_KEYSTORE_PATH, " +
+            "ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD.",
+    )
+}
+
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

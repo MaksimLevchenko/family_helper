@@ -13,13 +13,14 @@ import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/local_notification_service.dart';
 import '../data/notifications_repository.dart';
+import '../domain/notification_models.dart';
 
 class NotificationsState {
   const NotificationsState({
     required this.isLoading,
     required this.reminders,
     required this.preferences,
-    required this.localNotificationsEnabled,
+    required this.permissionStatus,
     this.lastRegisteredPushToken,
     this.error,
   });
@@ -27,7 +28,7 @@ class NotificationsState {
   final bool isLoading;
   final List<ReminderDto> reminders;
   final List<NotificationPreferenceDto> preferences;
-  final bool localNotificationsEnabled;
+  final NotificationPermissionStatus permissionStatus;
   final String? lastRegisteredPushToken;
   final String? error;
 
@@ -36,7 +37,7 @@ class NotificationsState {
       isLoading: false,
       reminders: [],
       preferences: [],
-      localNotificationsEnabled: false,
+      permissionStatus: NotificationPermissionStatus.notDetermined,
     );
   }
 
@@ -44,7 +45,7 @@ class NotificationsState {
     bool? isLoading,
     List<ReminderDto>? reminders,
     List<NotificationPreferenceDto>? preferences,
-    bool? localNotificationsEnabled,
+    NotificationPermissionStatus? permissionStatus,
     String? lastRegisteredPushToken,
     String? error,
     bool clearError = false,
@@ -53,8 +54,7 @@ class NotificationsState {
       isLoading: isLoading ?? this.isLoading,
       reminders: reminders ?? this.reminders,
       preferences: preferences ?? this.preferences,
-      localNotificationsEnabled:
-          localNotificationsEnabled ?? this.localNotificationsEnabled,
+      permissionStatus: permissionStatus ?? this.permissionStatus,
       lastRegisteredPushToken:
           lastRegisteredPushToken ?? this.lastRegisteredPushToken,
       error: clearError ? null : (error ?? this.error),
@@ -103,13 +103,20 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     emit(
       NotificationsState.initial().copyWith(
         preferences: preserveAccountSettings ? state.preferences : const [],
-        localNotificationsEnabled: preserveAccountSettings
-            ? state.localNotificationsEnabled
-            : false,
+        permissionStatus: preserveAccountSettings
+            ? state.permissionStatus
+            : NotificationPermissionStatus.notDetermined,
         lastRegisteredPushToken: preserveAccountSettings
             ? state.lastRegisteredPushToken
             : null,
       ),
+    );
+  }
+
+  bool isPreferenceEnabled(String notificationType) {
+    return state.preferences.any(
+      (preference) =>
+          preference.notificationType == notificationType && preference.enabled,
     );
   }
 
@@ -134,25 +141,18 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }
   }
 
-  Future<void> initializeLocalReminders() async {
+  Future<void> refreshPermissionStatus() async {
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
-      await _replayQueuedOperations();
-      final granted = await _localNotificationService
-          .initializeAndRequestPermissions();
-      String? token;
-      if (granted) {
-        token = await _ensureStablePushToken();
-        await _registerPushToken(
-          token: token,
-          platform: _platformName(),
-          showLoadingState: false,
-        );
-      }
+      final permissionStatus = await _localNotificationService
+          .getPermissionStatus();
+      final token = await _registerPushTokenIfNeeded(
+        permissionStatus: permissionStatus,
+      );
       emit(
         state.copyWith(
           isLoading: false,
-          localNotificationsEnabled: granted,
+          permissionStatus: permissionStatus,
           lastRegisteredPushToken: token ?? state.lastRegisteredPushToken,
           clearError: true,
         ),
@@ -165,6 +165,38 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       );
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
+  }
+
+  Future<NotificationPermissionStatus> requestSystemPermission() async {
+    emit(state.copyWith(isLoading: true, clearError: true));
+    try {
+      final permissionStatus = await _localNotificationService
+          .requestPermissions();
+      final token = await _registerPushTokenIfNeeded(
+        permissionStatus: permissionStatus,
+      );
+      emit(
+        state.copyWith(
+          isLoading: false,
+          permissionStatus: permissionStatus,
+          lastRegisteredPushToken: token ?? state.lastRegisteredPushToken,
+          clearError: true,
+        ),
+      );
+      return permissionStatus;
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'notifications.requestSystemPermission',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      emit(state.copyWith(isLoading: false, error: '$error'));
+      return state.permissionStatus;
+    }
+  }
+
+  Future<bool> openSystemNotificationSettings() {
+    return _localNotificationService.openNotificationSettings();
   }
 
   Future<void> reloadReminders({String? status}) async {
@@ -210,7 +242,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     );
   }
 
-  Future<void> setPreference({
+  Future<bool> setPreference({
     required String notificationType,
     required bool enabled,
     String? quietHoursStart,
@@ -233,6 +265,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
           clearError: true,
         ),
       );
+      return true;
     } catch (error, stackTrace) {
       AppErrorLogger.logHandled(
         scope: 'notifications.setPreference',
@@ -257,22 +290,25 @@ class NotificationsCubit extends Cubit<NotificationsState> {
             error: 'Network unavailable. Preference change queued.',
           ),
         );
-        return;
+        return true;
       }
       emit(state.copyWith(isLoading: false, error: '$error'));
+      return false;
     }
   }
 
-  Future<void> scheduleReminder({
+  Future<ReminderActionResult> scheduleReminder({
     required String entityType,
     required int entityId,
     required DateTime remindAt,
     required String payloadJson,
+    required String title,
+    required String body,
   }) async {
     final familyId = _familySelectionCubit.state;
     if (familyId == null) {
       emit(state.copyWith(error: 'Family is not selected'));
-      return;
+      return ReminderActionResult.failure('Family is not selected.');
     }
 
     emit(state.copyWith(isLoading: true, clearError: true));
@@ -289,8 +325,8 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
       await _localNotificationService.scheduleReminder(
         id: reminder.id,
-        title: 'Reminder',
-        body: 'Reminder for ${reminder.entityType}',
+        title: title,
+        body: body,
         scheduledAt: reminder.remindAt.toLocal(),
       );
 
@@ -302,6 +338,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         ),
       );
       await reloadReminders();
+      return ReminderActionResult.successResult;
     } catch (error, stackTrace) {
       AppErrorLogger.logHandled(
         scope: 'notifications.scheduleReminder',
@@ -331,10 +368,59 @@ class NotificationsCubit extends Cubit<NotificationsState> {
             error: 'Network unavailable. Reminder queued.',
           ),
         );
-        return;
+        return const ReminderActionResult(
+          success: true,
+          message: 'Reminder will sync when your connection returns.',
+        );
       }
       emit(state.copyWith(isLoading: false, error: '$error'));
+      return ReminderActionResult.failure('Unable to save the reminder.');
     }
+  }
+
+  Future<ReminderActionResult> ensureReminder({
+    required String notificationType,
+    required String entityType,
+    required int entityId,
+    required DateTime remindAt,
+    required String payloadJson,
+    required String title,
+    required String body,
+  }) async {
+    final permissionStatus = await requestSystemPermissionIfNeeded();
+    if (!permissionStatus.isGranted) {
+      final message = switch (permissionStatus) {
+        NotificationPermissionStatus.notDetermined =>
+          'Allow notifications to receive reminders on this device.',
+        NotificationPermissionStatus.denied =>
+          'Notifications are blocked. Open system settings to enable reminders.',
+        NotificationPermissionStatus.permanentlyDenied =>
+          'Notifications are disabled in system settings. Re-enable them there to get reminders.',
+        NotificationPermissionStatus.granted => null,
+      };
+      return ReminderActionResult.failure(message!);
+    }
+
+    if (!isPreferenceEnabled(notificationType)) {
+      final enabled = await setPreference(
+        notificationType: notificationType,
+        enabled: true,
+      );
+      if (!enabled) {
+        return ReminderActionResult.failure(
+          'Unable to enable reminders right now. Please try again.',
+        );
+      }
+    }
+
+    return scheduleReminder(
+      entityType: entityType,
+      entityId: entityId,
+      remindAt: remindAt,
+      payloadJson: payloadJson,
+      title: title,
+      body: body,
+    );
   }
 
   Future<void> _registerPushToken({
@@ -388,6 +474,37 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       }
       emit(state.copyWith(isLoading: false, error: '$error'));
     }
+  }
+
+  Future<String?> _registerPushTokenIfNeeded({
+    required NotificationPermissionStatus permissionStatus,
+  }) async {
+    if (!permissionStatus.isGranted) {
+      return null;
+    }
+
+    await _replayQueuedOperations();
+    final token = await _ensureStablePushToken();
+    if (token == state.lastRegisteredPushToken) {
+      return token;
+    }
+
+    await _registerPushToken(
+      token: token,
+      platform: _platformName(),
+      showLoadingState: false,
+    );
+    return token;
+  }
+
+  Future<NotificationPermissionStatus> requestSystemPermissionIfNeeded() async {
+    final permissionStatus = await _localNotificationService
+        .getPermissionStatus();
+    emit(state.copyWith(permissionStatus: permissionStatus));
+    if (permissionStatus == NotificationPermissionStatus.notDetermined) {
+      return requestSystemPermission();
+    }
+    return permissionStatus;
   }
 
   Future<String> _ensureStablePushToken() async {

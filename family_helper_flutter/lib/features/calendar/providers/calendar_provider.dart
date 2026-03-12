@@ -105,7 +105,7 @@ class CalendarCubit extends Cubit<CalendarState> {
     }
   }
 
-  Future<void> createEvent({
+  Future<CalendarEventDto?> createEvent({
     required String title,
     required DateTime startsAt,
     required DateTime endsAt,
@@ -114,14 +114,14 @@ class CalendarCubit extends Cubit<CalendarState> {
     final familyId = _familySelectionCubit.state;
     if (familyId == null) {
       emit(state.copyWith(error: 'Family is not selected'));
-      return;
+      return null;
     }
 
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
       final timezone =
           _authCubit.state.profile?.timezone ?? AppDefaults.defaultTimezone;
-      await _repository.upsertEvent(
+      final event = await _repository.upsertEvent(
         clientOperationId: OperationId.next(),
         familyId: familyId,
         title: title,
@@ -131,6 +131,7 @@ class CalendarCubit extends Cubit<CalendarState> {
         rrule: rrule,
       );
       await reload();
+      return event;
     } catch (error, stackTrace) {
       AppErrorLogger.logHandled(
         scope: 'calendar.createEvent',
@@ -139,6 +140,7 @@ class CalendarCubit extends Cubit<CalendarState> {
         context: {'familyId': familyId},
       );
       emit(state.copyWith(isLoading: false, error: '$error'));
+      return null;
     }
   }
 

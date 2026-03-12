@@ -15,10 +15,12 @@ class FamilyScreen extends StatefulWidget {
 }
 
 class _FamilyScreenState extends State<FamilyScreen> {
-  final _familyTitleController = TextEditingController();
+  final _createFamilyTitleController = TextEditingController();
+  final _renameFamilyTitleController = TextEditingController();
   final _inviteEmailController = TextEditingController();
   final _inviteCodeController = TextEditingController();
   int? _selectedNewOwnerProfileId;
+  String? _seededFamilyTitle;
 
   @override
   void initState() {
@@ -41,7 +43,8 @@ class _FamilyScreenState extends State<FamilyScreen> {
 
   @override
   void dispose() {
-    _familyTitleController.dispose();
+    _createFamilyTitleController.dispose();
+    _renameFamilyTitleController.dispose();
     _inviteEmailController.dispose();
     _inviteCodeController.dispose();
     super.dispose();
@@ -75,6 +78,16 @@ class _FamilyScreenState extends State<FamilyScreen> {
               hasFamily &&
               currentProfileId != null &&
               currentProfileId == state.family?.ownerProfileId;
+          if (state.family != null &&
+              _seededFamilyTitle != state.family!.title) {
+            _seededFamilyTitle = state.family!.title;
+            _renameFamilyTitleController.value = TextEditingValue(
+              text: state.family!.title,
+              selection: TextSelection.collapsed(
+                offset: state.family!.title.length,
+              ),
+            );
+          }
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -85,7 +98,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
               ],
               if (!hasFamily) ...[
                 _EmptyFamilySection(
-                  familyTitleController: _familyTitleController,
+                  familyTitleController: _createFamilyTitleController,
                   inviteCodeController: _inviteCodeController,
                   isLoading: state.isLoading,
                 ),
@@ -93,6 +106,21 @@ class _FamilyScreenState extends State<FamilyScreen> {
                 _FamilySummaryCard(
                   title: state.family?.title ?? 'Family',
                   memberCount: state.members.length,
+                  canRename: isOwner,
+                  renameController: _renameFamilyTitleController,
+                  isLoading: state.isLoading,
+                  onRename: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final renamed = await context
+                        .read<FamilyMembersCubit>()
+                        .renameFamily(_renameFamilyTitleController.text);
+                    if (!mounted || renamed == null) {
+                      return;
+                    }
+                    messenger.showSnackBar(
+                      const SnackBar(content: Text('Family name updated')),
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
                 _InviteSection(
@@ -274,10 +302,18 @@ class _FamilySummaryCard extends StatelessWidget {
   const _FamilySummaryCard({
     required this.title,
     required this.memberCount,
+    required this.canRename,
+    required this.renameController,
+    required this.isLoading,
+    required this.onRename,
   });
 
   final String title;
   final int memberCount;
+  final bool canRename;
+  final TextEditingController renameController;
+  final bool isLoading;
+  final Future<void> Function() onRename;
 
   @override
   Widget build(BuildContext context) {
@@ -294,6 +330,22 @@ class _FamilySummaryCard extends StatelessWidget {
               '$memberCount $memberLabel in your family',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
+            if (canRename) ...[
+              const SizedBox(height: 16),
+              AppTextField(
+                controller: renameController,
+                label: 'Family name',
+              ),
+              const SizedBox(height: 12),
+              AppButton(
+                label: 'Save family name',
+                variant: AppButtonVariant.secondary,
+                isLoading: isLoading,
+                onPressed: () async {
+                  await onRename();
+                },
+              ),
+            ],
           ],
         ),
       ),

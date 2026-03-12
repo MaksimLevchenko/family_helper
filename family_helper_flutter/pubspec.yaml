@@ -41,6 +41,7 @@ dependencies:
   timezone: ^0.10.0
   image_picker: ^1.2.1
   image_cropper: ^11.0.0
+  url_launcher: ^6.3.1
   family_helper_client:
     path: ../family_helper_client
   serverpod_flutter: 3.2.3

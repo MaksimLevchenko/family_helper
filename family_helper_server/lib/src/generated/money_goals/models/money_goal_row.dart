@@ -24,6 +24,7 @@ abstract class MoneyGoalRow
     required this.currency,
     this.deadlineAt,
     this.reachedAt,
+    this.archivedAt,
     required this.createdByProfileId,
     required this.createdAt,
     required this.updatedAt,
@@ -41,6 +42,7 @@ abstract class MoneyGoalRow
     required String currency,
     DateTime? deadlineAt,
     DateTime? reachedAt,
+    DateTime? archivedAt,
     required int createdByProfileId,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -63,6 +65,9 @@ abstract class MoneyGoalRow
       reachedAt: jsonSerialization['reachedAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['reachedAt']),
+      archivedAt: jsonSerialization['archivedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['archivedAt']),
       createdByProfileId: jsonSerialization['createdByProfileId'] as int,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
@@ -100,6 +105,8 @@ abstract class MoneyGoalRow
 
   DateTime? reachedAt;
 
+  DateTime? archivedAt;
+
   int createdByProfileId;
 
   DateTime createdAt;
@@ -126,6 +133,7 @@ abstract class MoneyGoalRow
     String? currency,
     DateTime? deadlineAt,
     DateTime? reachedAt,
+    DateTime? archivedAt,
     int? createdByProfileId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -145,6 +153,7 @@ abstract class MoneyGoalRow
       'currency': currency,
       if (deadlineAt != null) 'deadlineAt': deadlineAt?.toJson(),
       if (reachedAt != null) 'reachedAt': reachedAt?.toJson(),
+      if (archivedAt != null) 'archivedAt': archivedAt?.toJson(),
       'createdByProfileId': createdByProfileId,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -166,6 +175,7 @@ abstract class MoneyGoalRow
       'currency': currency,
       if (deadlineAt != null) 'deadlineAt': deadlineAt?.toJson(),
       if (reachedAt != null) 'reachedAt': reachedAt?.toJson(),
+      if (archivedAt != null) 'archivedAt': archivedAt?.toJson(),
       'createdByProfileId': createdByProfileId,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -217,6 +227,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
     required String currency,
     DateTime? deadlineAt,
     DateTime? reachedAt,
+    DateTime? archivedAt,
     required int createdByProfileId,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -232,6 +243,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
          currency: currency,
          deadlineAt: deadlineAt,
          reachedAt: reachedAt,
+         archivedAt: archivedAt,
          createdByProfileId: createdByProfileId,
          createdAt: createdAt,
          updatedAt: updatedAt,
@@ -253,6 +265,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
     String? currency,
     Object? deadlineAt = _Undefined,
     Object? reachedAt = _Undefined,
+    Object? archivedAt = _Undefined,
     int? createdByProfileId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -269,6 +282,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
       currency: currency ?? this.currency,
       deadlineAt: deadlineAt is DateTime? ? deadlineAt : this.deadlineAt,
       reachedAt: reachedAt is DateTime? ? reachedAt : this.reachedAt,
+      archivedAt: archivedAt is DateTime? ? archivedAt : this.archivedAt,
       createdByProfileId: createdByProfileId ?? this.createdByProfileId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -320,6 +334,12 @@ class MoneyGoalRowUpdateTable extends _i1.UpdateTable<MoneyGoalRowTable> {
   _i1.ColumnValue<DateTime, DateTime> reachedAt(DateTime? value) =>
       _i1.ColumnValue(
         table.reachedAt,
+        value,
+      );
+
+  _i1.ColumnValue<DateTime, DateTime> archivedAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.archivedAt,
         value,
       );
 
@@ -387,6 +407,10 @@ class MoneyGoalRowTable extends _i1.Table<int?> {
       'reachedAt',
       this,
     );
+    archivedAt = _i1.ColumnDateTime(
+      'archivedAt',
+      this,
+    );
     createdByProfileId = _i1.ColumnInt(
       'createdByProfileId',
       this,
@@ -427,6 +451,8 @@ class MoneyGoalRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnDateTime reachedAt;
 
+  late final _i1.ColumnDateTime archivedAt;
+
   late final _i1.ColumnInt createdByProfileId;
 
   late final _i1.ColumnDateTime createdAt;
@@ -448,6 +474,7 @@ class MoneyGoalRowTable extends _i1.Table<int?> {
     currency,
     deadlineAt,
     reachedAt,
+    archivedAt,
     createdByProfileId,
     createdAt,
     updatedAt,

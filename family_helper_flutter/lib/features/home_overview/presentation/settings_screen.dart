@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:family_helper_client/family_helper_client.dart';
 
 import '../../../core/auth/auth_session.dart';
 import '../../../core/config/app_defaults.dart';
@@ -14,6 +13,7 @@ import '../../family_invites/providers/family_provider.dart';
 import '../../lists/providers/lists_provider.dart';
 import '../../media/providers/media_provider.dart';
 import '../../money_goals/providers/money_goals_provider.dart';
+import '../../notifications/domain/notification_models.dart';
 import '../../notifications/providers/notifications_provider.dart';
 import '../../privacy_security/providers/privacy_provider.dart';
 import '../../tasks/providers/tasks_provider.dart';
@@ -36,9 +36,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
 
       final notificationsCubit = context.read<NotificationsCubit?>();
-      if (notificationsCubit != null &&
-          notificationsCubit.state.preferences.isEmpty) {
-        notificationsCubit.loadPreferences();
+      if (notificationsCubit != null) {
+        if (notificationsCubit.state.preferences.isEmpty) {
+          notificationsCubit.loadPreferences();
+        }
+        notificationsCubit.refreshPermissionStatus();
       }
 
       final privacyCubit = context.read<PrivacyCubit?>();
@@ -207,18 +209,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   String _notificationsSummary(NotificationsState state) {
-    NotificationPreferenceDto? taskPreference;
-    for (final preference in state.preferences) {
-      if (preference.notificationType == AppDefaults.defaultNotificationType) {
-        taskPreference = preference;
-        break;
-      }
-    }
-    final permission = state.localNotificationsEnabled
-        ? 'Allowed'
-        : 'Not enabled';
-    final taskReminders = taskPreference?.enabled == true ? 'On' : 'Off';
-    return '$permission • Task reminders $taskReminders';
+    final taskReminders =
+        state.preferences.any(
+          (preference) =>
+              preference.notificationType == AppDefaults.taskNotificationType &&
+              preference.enabled,
+        )
+        ? 'On'
+        : 'Off';
+    final calendarReminders =
+        state.preferences.any(
+          (preference) =>
+              preference.notificationType ==
+                  AppDefaults.calendarNotificationType &&
+              preference.enabled,
+        )
+        ? 'On'
+        : 'Off';
+    return '${state.permissionStatus.summaryLabel} • Task $taskReminders • Calendar $calendarReminders';
   }
 
   String _privacySummary({
@@ -228,30 +236,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final analytics = profileState.profile?.analyticsOptIn == true
         ? 'Analytics on'
         : 'Analytics off';
-    final exportJob = privacyState.lastExportJob;
-    final deletion = privacyState.accountDeletion;
-    if (deletion != null && deletion.status != 'cancelled') {
-      return '$analytics • Deletion ${_statusLabel(deletion.status)}';
+    if (privacyState.hasActiveDeletionRequest) {
+      return '$analytics • Deletion scheduled';
     }
-    if (exportJob != null) {
-      final exportLabel = exportJob.signedUrl == null
-          ? 'Export ${_statusLabel(exportJob.status)}'
-          : 'Export ready';
-      return '$analytics • $exportLabel';
+    if (privacyState.canDownloadExport) {
+      return '$analytics • Export ready';
+    }
+    if (privacyState.isExportExpired) {
+      return '$analytics • Export expired';
+    }
+    if (privacyState.lastExportJob?.status == 'failed') {
+      return '$analytics • Export failed';
+    }
+    if (privacyState.lastExportJob != null) {
+      return '$analytics • Preparing export';
     }
     return '$analytics • No active requests';
-  }
-
-  String _statusLabel(String status) {
-    return switch (status) {
-      'requested' => 'requested',
-      'pending' => 'pending',
-      'processing' => 'processing',
-      'scheduled' => 'scheduled',
-      'completed' => 'completed',
-      'cancelled' => 'cancelled',
-      _ => status,
-    };
   }
 
   static String _themeModeLabel(ThemeMode mode) {

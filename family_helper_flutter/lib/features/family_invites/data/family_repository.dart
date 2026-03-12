@@ -25,6 +25,18 @@ class FamilyRepository {
     return _apiClient.client.family.getFamily(familyId: familyId);
   }
 
+  Future<FamilyDto> renameFamily({
+    required int familyId,
+    required String clientOperationId,
+    required String title,
+  }) {
+    return _apiClient.client.family.renameFamily(
+      familyId: familyId,
+      clientOperationId: clientOperationId,
+      title: title,
+    );
+  }
+
   Future<FamilyInviteDto> createInvite({
     required int familyId,
     required String clientOperationId,

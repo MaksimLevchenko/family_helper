@@ -72,6 +72,8 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
       localNotificationService: getIt(),
       offlineQueueManager: getIt(),
     );
+    _notificationsCubit.refreshPermissionStatus();
+    _notificationsCubit.loadPreferences();
     _mediaCubit = MediaCubit(
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,

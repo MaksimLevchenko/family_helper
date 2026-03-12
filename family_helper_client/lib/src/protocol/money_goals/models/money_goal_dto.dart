@@ -23,6 +23,7 @@ abstract class MoneyGoalDto implements _i1.SerializableModel {
     required this.currency,
     this.deadlineAt,
     this.reachedAt,
+    this.archivedAt,
     required this.updatedAt,
     required this.version,
   });
@@ -37,6 +38,7 @@ abstract class MoneyGoalDto implements _i1.SerializableModel {
     required String currency,
     DateTime? deadlineAt,
     DateTime? reachedAt,
+    DateTime? archivedAt,
     required DateTime updatedAt,
     required int version,
   }) = _MoneyGoalDtoImpl;
@@ -56,6 +58,9 @@ abstract class MoneyGoalDto implements _i1.SerializableModel {
       reachedAt: jsonSerialization['reachedAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['reachedAt']),
+      archivedAt: jsonSerialization['archivedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['archivedAt']),
       updatedAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['updatedAt'],
       ),
@@ -81,6 +86,8 @@ abstract class MoneyGoalDto implements _i1.SerializableModel {
 
   DateTime? reachedAt;
 
+  DateTime? archivedAt;
+
   DateTime updatedAt;
 
   int version;
@@ -98,6 +105,7 @@ abstract class MoneyGoalDto implements _i1.SerializableModel {
     String? currency,
     DateTime? deadlineAt,
     DateTime? reachedAt,
+    DateTime? archivedAt,
     DateTime? updatedAt,
     int? version,
   });
@@ -114,6 +122,7 @@ abstract class MoneyGoalDto implements _i1.SerializableModel {
       'currency': currency,
       if (deadlineAt != null) 'deadlineAt': deadlineAt?.toJson(),
       if (reachedAt != null) 'reachedAt': reachedAt?.toJson(),
+      if (archivedAt != null) 'archivedAt': archivedAt?.toJson(),
       'updatedAt': updatedAt.toJson(),
       'version': version,
     };
@@ -138,6 +147,7 @@ class _MoneyGoalDtoImpl extends MoneyGoalDto {
     required String currency,
     DateTime? deadlineAt,
     DateTime? reachedAt,
+    DateTime? archivedAt,
     required DateTime updatedAt,
     required int version,
   }) : super._(
@@ -150,6 +160,7 @@ class _MoneyGoalDtoImpl extends MoneyGoalDto {
          currency: currency,
          deadlineAt: deadlineAt,
          reachedAt: reachedAt,
+         archivedAt: archivedAt,
          updatedAt: updatedAt,
          version: version,
        );
@@ -168,6 +179,7 @@ class _MoneyGoalDtoImpl extends MoneyGoalDto {
     String? currency,
     Object? deadlineAt = _Undefined,
     Object? reachedAt = _Undefined,
+    Object? archivedAt = _Undefined,
     DateTime? updatedAt,
     int? version,
   }) {
@@ -181,6 +193,7 @@ class _MoneyGoalDtoImpl extends MoneyGoalDto {
       currency: currency ?? this.currency,
       deadlineAt: deadlineAt is DateTime? ? deadlineAt : this.deadlineAt,
       reachedAt: reachedAt is DateTime? ? reachedAt : this.reachedAt,
+      archivedAt: archivedAt is DateTime? ? archivedAt : this.archivedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       version: version ?? this.version,
     );

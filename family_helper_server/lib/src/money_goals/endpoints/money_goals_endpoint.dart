@@ -53,6 +53,68 @@ class MoneyGoalsEndpoint extends Endpoint {
     );
   }
 
+  Future<MoneyContributionDto> withdrawFunds(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+    required int goalId,
+    required int amountCents,
+    String currency = 'RUB',
+    String? note,
+  }) {
+    return service.withdrawFunds(
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      goalId: goalId,
+      amountCents: amountCents,
+      currency: currency,
+      note: note,
+    );
+  }
+
+  Future<MoneyGoalDto> archiveGoal(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+    required int goalId,
+  }) {
+    return service.archiveGoal(
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      goalId: goalId,
+    );
+  }
+
+  Future<OperationResult> deleteGoal(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+    required int goalId,
+  }) {
+    return service.deleteGoal(
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      goalId: goalId,
+    );
+  }
+
+  Future<List<MoneyGoalHistoryEntryDto>> listGoalHistory(
+    Session session, {
+    required int familyId,
+    required int goalId,
+    int limit = 50,
+  }) {
+    return service.listGoalHistory(
+      session,
+      familyId: familyId,
+      goalId: goalId,
+      limit: limit,
+    );
+  }
+
   Future<List<MoneyGoalDto>> listGoals(
     Session session, {
     required int familyId,

@@ -4,6 +4,7 @@ import 'package:family_helper_client/family_helper_client.dart';
 
 import '../../../core/config/app_defaults.dart';
 import '../../../ui_kit/ui_kit.dart';
+import '../domain/notification_models.dart';
 import '../providers/notifications_provider.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -18,7 +19,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<NotificationsCubit>().loadPreferences();
+      final cubit = context.read<NotificationsCubit>();
+      cubit.refreshPermissionStatus();
+      cubit.loadPreferences();
     });
   }
 
@@ -28,15 +31,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       appBar: AppBar(title: const Text('Notifications')),
       body: BlocBuilder<NotificationsCubit, NotificationsState>(
         builder: (context, state) {
-          NotificationPreferenceDto? taskPreference;
-          for (final preference in state.preferences) {
-            if (preference.notificationType ==
-                AppDefaults.defaultNotificationType) {
-              taskPreference = preference;
-              break;
-            }
-          }
-          final taskRemindersEnabled = taskPreference?.enabled ?? false;
+          final taskRemindersEnabled = _preferenceEnabled(
+            state.preferences,
+            AppDefaults.taskNotificationType,
+          );
+          final calendarRemindersEnabled = _preferenceEnabled(
+            state.preferences,
+            AppDefaults.calendarNotificationType,
+          );
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -45,60 +47,109 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 AppBanner(text: state.error!, isError: true),
                 const SizedBox(height: 12),
               ],
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'System notifications',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        state.localNotificationsEnabled
-                            ? 'Notifications are enabled for this device.'
-                            : 'Enable notifications to receive family reminders.',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 12),
-                      AppButton(
-                        label: state.localNotificationsEnabled
-                            ? 'Notifications enabled'
-                            : 'Enable notifications',
-                        isLoading: state.isLoading,
-                        onPressed: () async {
-                          await context
-                              .read<NotificationsCubit>()
-                              .initializeLocalReminders();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              _PermissionCard(state: state),
               const SizedBox(height: 16),
               Card(
                 child: SwitchListTile(
                   value: taskRemindersEnabled,
                   onChanged: (value) async {
                     await context.read<NotificationsCubit>().setPreference(
-                      notificationType: AppDefaults.defaultNotificationType,
+                      notificationType: AppDefaults.taskNotificationType,
                       enabled: value,
                     );
                   },
                   title: const Text('Task reminders'),
                   subtitle: Text(
-                    taskRemindersEnabled
-                        ? 'You will receive reminders for upcoming tasks.'
-                        : 'Task reminders are currently turned off.',
+                    state.permissionStatus.isGranted
+                        ? (taskRemindersEnabled
+                              ? 'You will receive reminders for upcoming tasks.'
+                              : 'Task reminders are currently turned off.')
+                        : 'Turn on device notifications to receive task reminders.',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: SwitchListTile(
+                  value: calendarRemindersEnabled,
+                  onChanged: (value) async {
+                    await context.read<NotificationsCubit>().setPreference(
+                      notificationType: AppDefaults.calendarNotificationType,
+                      enabled: value,
+                    );
+                  },
+                  title: const Text('Calendar reminders'),
+                  subtitle: Text(
+                    state.permissionStatus.isGranted
+                        ? (calendarRemindersEnabled
+                              ? 'You will receive reminders for upcoming events.'
+                              : 'Calendar reminders are currently turned off.')
+                        : 'Turn on device notifications to receive calendar reminders.',
                   ),
                 ),
               ),
             ],
           );
         },
+      ),
+    );
+  }
+
+  bool _preferenceEnabled(
+    List<NotificationPreferenceDto> preferences,
+    String notificationType,
+  ) {
+    return preferences.any(
+      (preference) =>
+          preference.notificationType == notificationType && preference.enabled,
+    );
+  }
+}
+
+class _PermissionCard extends StatelessWidget {
+  const _PermissionCard({required this.state});
+
+  final NotificationsState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final showAction =
+        state.permissionStatus != NotificationPermissionStatus.granted;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'System notifications',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              state.permissionStatus.description,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            if (showAction)
+              AppButton(
+                label: state.permissionStatus.actionLabel,
+                isLoading: state.isLoading,
+                onPressed: () async {
+                  final cubit = context.read<NotificationsCubit>();
+                  if (state.permissionStatus ==
+                      NotificationPermissionStatus.notDetermined) {
+                    await cubit.requestSystemPermission();
+                  } else {
+                    await cubit.openSystemNotificationSettings();
+                  }
+                },
+              )
+            else
+              const Text('Notifications enabled'),
+          ],
+        ),
       ),
     );
   }

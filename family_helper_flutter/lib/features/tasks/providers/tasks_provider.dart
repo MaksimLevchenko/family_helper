@@ -95,7 +95,7 @@ class TasksCubit extends Cubit<TasksState> {
     }
   }
 
-  Future<void> createTask({
+  Future<TaskDto?> createTask({
     required String title,
     required bool isPersonal,
     DateTime? dueAt,
@@ -104,13 +104,13 @@ class TasksCubit extends Cubit<TasksState> {
     final familyId = _familySelectionCubit.state;
     if (familyId == null) {
       emit(state.copyWith(error: 'Family is not selected'));
-      return;
+      return null;
     }
 
     emit(state.copyWith(isLoading: true, clearError: true));
 
     try {
-      await _repository.upsertTask(
+      final task = await _repository.upsertTask(
         clientOperationId: OperationId.next(),
         familyId: familyId,
         title: title,
@@ -126,6 +126,7 @@ class TasksCubit extends Cubit<TasksState> {
       );
 
       await reload();
+      return task;
     } catch (error, stackTrace) {
       AppErrorLogger.logHandled(
         scope: 'tasks.createTask',
@@ -134,6 +135,7 @@ class TasksCubit extends Cubit<TasksState> {
         context: {'familyId': familyId},
       );
       emit(state.copyWith(isLoading: false, error: '$error'));
+      return null;
     }
   }
 

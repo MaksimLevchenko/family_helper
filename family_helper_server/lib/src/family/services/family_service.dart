@@ -191,6 +191,120 @@ class FamilyService {
     return _findFamily(session, familyId);
   }
 
+  Future<FamilyDto> renameFamily(
+    Session session, {
+    required int familyId,
+    required String clientOperationId,
+    required String title,
+  }) async {
+    final authUserId = authContext.requireAuthUserId(session).uuid;
+    final normalizedTitle = title.trim();
+    if (normalizedTitle.isEmpty) {
+      throw AccessDeniedException(message: 'Family title cannot be empty.');
+    }
+
+    return session.db.transaction((transaction) async {
+      final actorProfileId = await rbac.ensureFamilyRole(
+        session,
+        familyId: familyId,
+        minRole: 'owner',
+        transaction: transaction,
+      );
+
+      final isFresh = await idempotency.tryBegin(
+        session,
+        actorAuthUserId: authUserId,
+        action: 'family.rename',
+        clientOperationId: clientOperationId,
+        transaction: transaction,
+      );
+
+      if (!isFresh) {
+        final binding = await idempotency.getBinding(
+          session,
+          actorAuthUserId: authUserId,
+          action: 'family.rename',
+          clientOperationId: clientOperationId,
+          transaction: transaction,
+        );
+        if (binding?.resourceType == 'family') {
+          return _findFamily(
+            session,
+            binding!.resourceId,
+            transaction: transaction,
+          );
+        }
+        return _findFamily(session, familyId, transaction: transaction);
+      }
+
+      final family = await FamilyRow.db.findById(
+        session,
+        familyId,
+        transaction: transaction,
+      );
+      if (family == null || family.deletedAt != null) {
+        throw FileNotFoundException(message: 'Family not found.');
+      }
+
+      final now = clock.nowUtc();
+      final updated = await FamilyRow.db.updateRow(
+        session,
+        family.copyWith(
+          title: normalizedTitle,
+          updatedAt: now,
+          version: family.version + 1,
+        ),
+        transaction: transaction,
+      );
+
+      await idempotency.bindResource(
+        session,
+        actorAuthUserId: authUserId,
+        action: 'family.rename',
+        clientOperationId: clientOperationId,
+        resourceType: 'family',
+        resourceId: familyId,
+        transaction: transaction,
+      );
+
+      await changeFeed.appendChange(
+        session,
+        feature: 'family',
+        entityType: 'family',
+        entityId: familyId,
+        operation: 'renamed',
+        familyId: familyId,
+        version: updated.version,
+        payload: {'title': updated.title},
+        transaction: transaction,
+      );
+
+      await audit.append(
+        session,
+        familyId: familyId,
+        actorProfileId: actorProfileId,
+        action: 'family.rename',
+        payload: {'familyId': familyId, 'title': updated.title},
+        transaction: transaction,
+      );
+
+      await realtime.publish(
+        session,
+        familyId: familyId,
+        event: FamilyRealtimeEvent(
+          familyId: familyId,
+          feature: 'family',
+          entityType: 'family',
+          entityId: familyId,
+          eventType: 'family.updated',
+          changedAt: now,
+        ),
+      );
+
+      return _mapFamily(updated);
+    });
+  }
+
   Future<FamilyInviteDto> createInvite(
     Session session, {
     required int familyId,

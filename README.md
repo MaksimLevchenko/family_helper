@@ -43,6 +43,7 @@ flutter run
 
 ### Client
 - Optional `SERVER_URL` via `--dart-define`
+- In Flutter debug on Android emulator, loopback addresses are remapped to `10.0.2.2`
 
 ## MinIO Example (docker-compose snippet)
 ```yaml

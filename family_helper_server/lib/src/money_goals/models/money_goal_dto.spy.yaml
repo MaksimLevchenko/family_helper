@@ -9,5 +9,6 @@ fields:
   currency: String
   deadlineAt: DateTime?
   reachedAt: DateTime?
+  archivedAt: DateTime?
   updatedAt: DateTime
   version: int

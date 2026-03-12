@@ -23,6 +23,7 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
     required this.currency,
     this.deadlineAt,
     this.reachedAt,
+    this.archivedAt,
     required this.createdByProfileId,
     required this.createdAt,
     required this.updatedAt,
@@ -40,6 +41,7 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
     required String currency,
     DateTime? deadlineAt,
     DateTime? reachedAt,
+    DateTime? archivedAt,
     required int createdByProfileId,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -62,6 +64,9 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
       reachedAt: jsonSerialization['reachedAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['reachedAt']),
+      archivedAt: jsonSerialization['archivedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['archivedAt']),
       createdByProfileId: jsonSerialization['createdByProfileId'] as int,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
@@ -97,6 +102,8 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
 
   DateTime? reachedAt;
 
+  DateTime? archivedAt;
+
   int createdByProfileId;
 
   DateTime createdAt;
@@ -120,6 +127,7 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
     String? currency,
     DateTime? deadlineAt,
     DateTime? reachedAt,
+    DateTime? archivedAt,
     int? createdByProfileId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -139,6 +147,7 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
       'currency': currency,
       if (deadlineAt != null) 'deadlineAt': deadlineAt?.toJson(),
       if (reachedAt != null) 'reachedAt': reachedAt?.toJson(),
+      if (archivedAt != null) 'archivedAt': archivedAt?.toJson(),
       'createdByProfileId': createdByProfileId,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -166,6 +175,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
     required String currency,
     DateTime? deadlineAt,
     DateTime? reachedAt,
+    DateTime? archivedAt,
     required int createdByProfileId,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -181,6 +191,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
          currency: currency,
          deadlineAt: deadlineAt,
          reachedAt: reachedAt,
+         archivedAt: archivedAt,
          createdByProfileId: createdByProfileId,
          createdAt: createdAt,
          updatedAt: updatedAt,
@@ -202,6 +213,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
     String? currency,
     Object? deadlineAt = _Undefined,
     Object? reachedAt = _Undefined,
+    Object? archivedAt = _Undefined,
     int? createdByProfileId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -218,6 +230,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
       currency: currency ?? this.currency,
       deadlineAt: deadlineAt is DateTime? ? deadlineAt : this.deadlineAt,
       reachedAt: reachedAt is DateTime? ? reachedAt : this.reachedAt,
+      archivedAt: archivedAt is DateTime? ? archivedAt : this.archivedAt,
       createdByProfileId: createdByProfileId ?? this.createdByProfileId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/realtime/realtime_provider.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../notifications/providers/notifications_provider.dart';
 
 class HomeShellScreen extends StatefulWidget {
   const HomeShellScreen({super.key, required this.child});
@@ -14,13 +15,29 @@ class HomeShellScreen extends StatefulWidget {
   State<HomeShellScreen> createState() => _HomeShellScreenState();
 }
 
-class _HomeShellScreenState extends State<HomeShellScreen> {
+class _HomeShellScreenState extends State<HomeShellScreen>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<RealtimeCubit>().start();
+      context.read<NotificationsCubit>().refreshPermissionStatus();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      context.read<NotificationsCubit>().refreshPermissionStatus();
+    }
   }
 
   @override

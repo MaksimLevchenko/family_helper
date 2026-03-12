@@ -25,6 +25,10 @@ Optional server URL:
 flutter run --dart-define=SERVER_URL=http://<host>:8080/
 ```
 
+Debug note:
+- On Android emulator, `localhost` and `127.0.0.1` are automatically remapped to `10.0.2.2`.
+- For a physical device, keep using `--dart-define=SERVER_URL=http://<your-lan-ip>:8080/`.
+
 ## Notifications
 The app schedules local reminders on-device. No Firebase setup is required.
 

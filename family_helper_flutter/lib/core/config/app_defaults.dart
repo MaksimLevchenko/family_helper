@@ -6,8 +6,10 @@ class AppDefaults {
   static const defaultTimezone = 'UTC';
   static const defaultCurrency = 'RUB';
   static const defaultListType = 'shopping';
-  static const defaultNotificationType = 'task';
-  static const defaultReminderEntityType = 'task';
+  static const taskNotificationType = 'task';
+  static const calendarNotificationType = 'calendar';
+  static const taskReminderEntityType = 'task';
+  static const calendarReminderEntityType = 'calendar';
   static const defaultTaskPriority = 'normal';
   static const defaultTaskRecurrenceMode = 'generateOnComplete';
   static const dailyRecurrenceRrule = 'FREQ=DAILY;INTERVAL=1';

@@ -1,0 +1,10 @@
+class: MoneyGoalHistoryEntryDto
+fields:
+  id: int
+  goalId: int
+  profileId: int
+  actorDisplayName: String
+  amountCents: int
+  currency: String
+  note: String?
+  createdAt: DateTime

@@ -11,6 +11,18 @@ class MoneyGoalsRepository {
     return _apiClient.client.moneyGoals.listGoals(familyId: familyId);
   }
 
+  Future<List<MoneyGoalHistoryEntryDto>> listGoalHistory({
+    required int familyId,
+    required int goalId,
+    int limit = 50,
+  }) {
+    return _apiClient.client.moneyGoals.listGoalHistory(
+      familyId: familyId,
+      goalId: goalId,
+      limit: limit,
+    );
+  }
+
   Future<MoneyGoalDto> upsertGoal({
     required String clientOperationId,
     int? goalId,
@@ -48,6 +60,48 @@ class MoneyGoalsRepository {
       amountCents: amountCents,
       currency: currency,
       note: note,
+    );
+  }
+
+  Future<MoneyContributionDto> withdrawFunds({
+    required String clientOperationId,
+    required int familyId,
+    required int goalId,
+    required int amountCents,
+    String currency = 'RUB',
+    String? note,
+  }) {
+    return _apiClient.client.moneyGoals.withdrawFunds(
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      goalId: goalId,
+      amountCents: amountCents,
+      currency: currency,
+      note: note,
+    );
+  }
+
+  Future<MoneyGoalDto> archiveGoal({
+    required String clientOperationId,
+    required int familyId,
+    required int goalId,
+  }) {
+    return _apiClient.client.moneyGoals.archiveGoal(
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      goalId: goalId,
+    );
+  }
+
+  Future<OperationResult> deleteGoal({
+    required String clientOperationId,
+    required int familyId,
+    required int goalId,
+  }) {
+    return _apiClient.client.moneyGoals.deleteGoal(
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      goalId: goalId,
     );
   }
 }

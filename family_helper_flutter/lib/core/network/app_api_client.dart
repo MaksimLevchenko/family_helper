@@ -2,13 +2,15 @@ import 'package:family_helper_client/family_helper_client.dart';
 import 'package:serverpod_auth_core_flutter/serverpod_auth_core_flutter.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
 
+import 'server_url_resolver.dart';
+
 class AppApiClient {
   AppApiClient._(this.client);
 
   final Client client;
 
   static Future<AppApiClient> create() async {
-    final serverUrl = await getServerUrl();
+    final serverUrl = await ServerUrlResolver.resolve();
     final client = Client(serverUrl)
       ..connectivityMonitor = FlutterConnectivityMonitor()
       ..authSessionManager = FlutterAuthSessionManager();

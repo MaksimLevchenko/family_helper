@@ -27,6 +27,6 @@ HomeOverviewState computeOverview({
     openTasks: tasks.tasks.where((task) => task.status != 'completed').length,
     calendarItems: calendar.instances.length,
     listItems: lists.items.where((item) => !item.isBought).length,
-    activeGoals: goals.goals.length,
+    activeGoals: goals.activeGoals.length,
   );
 }

@@ -110,6 +110,7 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
   final OfflineQueueManager _offlineQueueManager;
   StreamSubscription<int?>? _familySub;
   static const _offlineFeature = 'family';
+  static const _actionRenameFamily = 'rename_family';
   static const _actionTransferOwnership = 'transfer_ownership';
   static const _actionLeaveFamily = 'leave_family';
 
@@ -199,6 +200,71 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
         error: error,
         stackTrace: stackTrace,
       );
+      emit(state.copyWith(isLoading: false, error: '$error'));
+      return null;
+    }
+  }
+
+  Future<FamilyDto?> renameFamily(String title) async {
+    final familyId = _familySelectionCubit.state;
+    final normalizedTitle = title.trim();
+    if (familyId == null) {
+      emit(state.copyWith(error: 'Family is not selected'));
+      return null;
+    }
+    if (normalizedTitle.isEmpty) {
+      emit(state.copyWith(error: 'Family name cannot be empty'));
+      return null;
+    }
+
+    emit(state.copyWith(isLoading: true, clearError: true));
+    final clientOperationId = OperationId.next();
+    try {
+      final family = await _repository.renameFamily(
+        familyId: familyId,
+        clientOperationId: clientOperationId,
+        title: normalizedTitle,
+      );
+      emit(
+        state.copyWith(
+          isLoading: false,
+          family: family,
+          familyId: family.id,
+          clearError: true,
+        ),
+      );
+      return family;
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'family.renameFamily',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
+      if (isOfflineRecoverableError(error)) {
+        await _offlineQueueManager.enqueue(
+          OfflineOperation(
+            id: OperationId.next(),
+            feature: _offlineFeature,
+            action: _actionRenameFamily,
+            payload: {
+              'familyId': familyId,
+              'clientOperationId': clientOperationId,
+              'title': normalizedTitle,
+            },
+            createdAt: DateTime.now().toUtc(),
+            attempt: 0,
+          ),
+        );
+        emit(
+          state.copyWith(
+            isLoading: false,
+            family: state.family?.copyWith(title: normalizedTitle),
+            error: 'Network unavailable. Family rename queued.',
+          ),
+        );
+        return state.family?.copyWith(title: normalizedTitle);
+      }
       emit(state.copyWith(isLoading: false, error: '$error'));
       return null;
     }
@@ -385,6 +451,14 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
     return _offlineQueueManager.replayWhere(
       (operation) async {
         switch (operation.action) {
+          case _actionRenameFamily:
+            await _repository.renameFamily(
+              familyId: operation.payload['familyId'] as int,
+              clientOperationId:
+                  operation.payload['clientOperationId'] as String,
+              title: operation.payload['title'] as String,
+            );
+            return;
           case _actionTransferOwnership:
             await _repository.transferOwnership(
               familyId: operation.payload['familyId'] as int,

@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/config/app_defaults.dart';
 import '../../../ui_kit/ui_kit.dart';
+import '../../notifications/domain/notification_models.dart';
+import '../../notifications/providers/notifications_provider.dart';
 import '../providers/calendar_provider.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -17,6 +21,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime? _start;
   DateTime? _end;
   bool _isRecurringDaily = false;
+  ReminderPreset _reminderPreset = ReminderPreset.none;
 
   @override
   void dispose() {
@@ -61,6 +66,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 value: _end,
                 onChanged: (value) => setState(() => _end = value),
               ),
+              const SizedBox(height: 12),
+              ReminderPresetField(
+                label: 'Reminder',
+                value: _reminderPreset,
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  setState(() => _reminderPreset = value);
+                },
+              ),
               SwitchListTile(
                 value: _isRecurringDaily,
                 onChanged: (value) => setState(() => _isRecurringDaily = value),
@@ -70,18 +86,49 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 label: 'Create event',
                 isLoading: state.isLoading,
                 onPressed: () async {
+                  final calendarCubit = context.read<CalendarCubit>();
+                  final notificationsCubit = context.read<NotificationsCubit>();
+                  final messenger = ScaffoldMessenger.of(context);
                   if (_titleController.text.trim().isEmpty ||
                       _start == null ||
                       _end == null) {
                     return;
                   }
-                  await context.read<CalendarCubit>().createEvent(
-                    title: _titleController.text.trim(),
+                  final title = _titleController.text.trim();
+                  final event = await calendarCubit.createEvent(
+                    title: title,
                     startsAt: _start!,
                     endsAt: _end!,
                     rrule: _isRecurringDaily
                         ? AppDefaults.dailyRecurrenceRrule
                         : null,
+                  );
+                  if (!mounted || event == null) {
+                    return;
+                  }
+
+                  final remindAt = _reminderPreset.scheduleAt(_start!);
+                  if (remindAt == null) {
+                    return;
+                  }
+
+                  final result = await notificationsCubit.ensureReminder(
+                    notificationType: AppDefaults.calendarNotificationType,
+                    entityType: AppDefaults.calendarReminderEntityType,
+                    entityId: event.id,
+                    remindAt: remindAt,
+                    payloadJson: jsonEncode({
+                      'eventId': event.id,
+                      'startsAt': event.startsAt.toUtc().toIso8601String(),
+                    }),
+                    title: 'Event reminder',
+                    body: title,
+                  );
+                  if (!mounted || result.message == null) {
+                    return;
+                  }
+                  messenger.showSnackBar(
+                    SnackBar(content: Text(result.message!)),
                   );
                 },
               ),

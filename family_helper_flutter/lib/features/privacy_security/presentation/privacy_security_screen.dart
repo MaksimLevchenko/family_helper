@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:family_helper_client/family_helper_client.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../ui_kit/ui_kit.dart';
 import '../../auth_profile/providers/profile_provider.dart';
@@ -52,6 +53,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
 
           final analyticsEnabled =
               profileState.profile?.analyticsOptIn ?? false;
+          final canRequestDeletion = !state.hasActiveDeletionRequest;
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -104,24 +106,35 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                         label: 'Request account deletion',
                         variant: AppButtonVariant.danger,
                         isLoading: state.isLoading,
-                        onPressed: () async {
-                          await context
-                              .read<PrivacyCubit>()
-                              .requestAccountDeletion();
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      AppButton(
-                        label: 'Cancel deletion request',
-                        variant: AppButtonVariant.secondary,
-                        onPressed: state.accountDeletion == null
+                        onPressed: !canRequestDeletion
                             ? null
                             : () async {
                                 await context
                                     .read<PrivacyCubit>()
-                                    .cancelAccountDeletion();
+                                    .requestAccountDeletion();
                               },
                       ),
+                      if (state.hasActiveDeletionRequest) ...[
+                        const SizedBox(height: 12),
+                        AppButton(
+                          label: 'Cancel deletion request',
+                          variant: AppButtonVariant.secondary,
+                          onPressed: () async {
+                            final messenger = ScaffoldMessenger.of(context);
+                            await context
+                                .read<PrivacyCubit>()
+                                .cancelAccountDeletion();
+                            if (!mounted) {
+                              return;
+                            }
+                            messenger.showSnackBar(
+                              const SnackBar(
+                                content: Text('Deletion request cancelled'),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -131,26 +144,28 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                 _StatusCard(
                   title: 'Data export',
                   subtitle: _exportSubtitle(state.lastExportJob!),
-                  actionLabel: state.lastExportJob!.signedUrl == null
+                  actionLabel: state.canDownloadExport
                       ? null
                       : 'Download export',
-                  onAction: state.lastExportJob!.signedUrl == null
+                  onAction:
+                      !state.canDownloadExport ||
+                          state.lastExportJob!.signedUrl == null
                       ? null
                       : () async {
-                          await _showDownloadDialog(
+                          await _openDownloadUrl(
                             context,
                             state.lastExportJob!.signedUrl!,
                           );
                         },
                 ),
-              if (state.accountDeletion != null) ...[
+              if (state.shouldShowDeletionCard) ...[
                 const SizedBox(height: 16),
                 _StatusCard(
                   title: 'Account deletion',
                   subtitle: _deletionSubtitle(state.accountDeletion!),
                 ),
               ],
-              if (state.lastExportJob == null && state.accountDeletion == null)
+              if (!state.hasVisiblePrivacyRequest)
                 const EmptyState(
                   title: 'No active privacy requests',
                   message:
@@ -164,36 +179,38 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
   }
 
   String _exportSubtitle(PrivacyExportJobDto exportJob) {
-    if (exportJob.signedUrl != null) {
-      final expiresAt = exportJob.expiresAt?.toLocal();
+    final expiresAt = exportJob.expiresAt?.toLocal();
+    final isExpired =
+        exportJob.expiresAt != null &&
+        exportJob.expiresAt!.isBefore(DateTime.now().toUtc());
+    if (exportJob.signedUrl != null && !isExpired) {
       final expiryLabel = expiresAt == null
           ? ''
           : ' Available until $expiresAt.';
-      return 'Your export is ready for download.$expiryLabel';
+      return 'Export ready.$expiryLabel';
     }
-    if (exportJob.completedAt != null) {
-      return 'Your export was prepared on ${exportJob.completedAt!.toLocal()}.';
+    if (isExpired) {
+      return 'Export expired. Request a new data export to generate a fresh link.';
     }
-    return 'Status: ${_statusLabel(exportJob.status)}. Requested on ${exportJob.createdAt.toLocal()}.';
+    if (exportJob.status == 'failed') {
+      return 'Export failed. Request a new data export to try again.';
+    }
+    if (exportJob.status == 'pending' || exportJob.status == 'processing') {
+      return 'Preparing export. We will make it available when it is ready.';
+    }
+    return 'Preparing export. Requested on ${exportJob.createdAt.toLocal()}.';
   }
 
   String _deletionSubtitle(AccountDeletionStatusDto deletion) {
     final scheduledAt = deletion.scheduledHardDeleteAt.toLocal();
-    if (deletion.status == 'cancelled') {
-      return 'The deletion request was cancelled.';
-    }
-    return 'Status: ${_statusLabel(deletion.status)}. Scheduled for $scheduledAt.';
-  }
-
-  String _statusLabel(String status) {
-    return switch (status) {
-      'requested' => 'Requested',
-      'pending' => 'Pending',
-      'processing' => 'Processing',
-      'scheduled' => 'Scheduled',
-      'completed' => 'Completed',
-      'cancelled' => 'Cancelled',
-      _ => status,
+    return switch (deletion.status) {
+      'requested' ||
+      'pending' ||
+      'processing' ||
+      'scheduled' => 'Deletion scheduled for $scheduledAt.',
+      'cancelled' => 'Deletion cancelled.',
+      'completed' || 'hard_deleted' => 'Deletion completed.',
+      _ => 'Deletion scheduled for $scheduledAt.',
     };
   }
 
@@ -230,6 +247,26 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
         );
       },
     );
+  }
+
+  Future<void> _openDownloadUrl(BuildContext context, String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri != null) {
+      try {
+        final launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (launched) {
+          return;
+        }
+      } catch (_) {}
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+    await _showDownloadDialog(context, url);
   }
 }
 

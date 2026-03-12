@@ -1,5 +1,6 @@
 import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
+
 import '../../core/auth/auth_context.dart';
 import '../../core/clock/clock_service.dart';
 import '../../core/idempotency/idempotency_service.dart';
@@ -87,6 +88,7 @@ class MoneyGoalsService {
             currency: currency,
             deadlineAt: deadlineAt?.toUtc(),
             reachedAt: null,
+            archivedAt: null,
             createdByProfileId: actorProfileId,
             createdAt: now,
             updatedAt: now,
@@ -115,17 +117,12 @@ class MoneyGoalsService {
         return dto;
       }
 
-      final row = await MoneyGoalRow.db.findFirstRow(
+      final row = await _lockGoalRow(
         session,
-        where: (t) =>
-            t.id.equals(goalId) &
-            t.familyId.equals(familyId) &
-            t.deletedAt.equals(null),
+        familyId: familyId,
+        goalId: goalId,
         transaction: transaction,
       );
-      if (row == null) {
-        throw FileNotFoundException(message: 'Goal not found.');
-      }
       await MoneyGoalRow.db.updateRow(
         session,
         row.copyWith(
@@ -134,6 +131,7 @@ class MoneyGoalsService {
           targetAmountCents: targetAmountCents,
           currency: currency,
           deadlineAt: deadlineAt?.toUtc(),
+          archivedAt: null,
           updatedAt: now,
           version: row.version + 1,
         ),
@@ -164,7 +162,271 @@ class MoneyGoalsService {
     required int amountCents,
     String currency = 'RUB',
     String? note,
+  }) {
+    return _changeGoalAmount(
+      session,
+      action: 'money.addContribution',
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      goalId: goalId,
+      amountCents: amountCents,
+      currency: currency,
+      note: note,
+      deltaAmountCents: amountCents,
+      operation: 'contribution_added',
+      insufficientFundsMessage: null,
+    );
+  }
+
+  Future<MoneyContributionDto> withdrawFunds(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+    required int goalId,
+    required int amountCents,
+    String currency = 'RUB',
+    String? note,
+  }) {
+    return _changeGoalAmount(
+      session,
+      action: 'money.withdrawFunds',
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      goalId: goalId,
+      amountCents: amountCents,
+      currency: currency,
+      note: note,
+      deltaAmountCents: -amountCents,
+      operation: 'funds_withdrawn',
+      insufficientFundsMessage:
+          'Cannot withdraw more than the current goal balance.',
+    );
+  }
+
+  Future<MoneyGoalDto> archiveGoal(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+    required int goalId,
   }) async {
+    final authUserId = authContext.requireAuthUserId(session).uuid;
+
+    return session.db.transaction((transaction) async {
+      await rbac.ensureFamilyRole(
+        session,
+        familyId: familyId,
+        minRole: 'member',
+        transaction: transaction,
+      );
+
+      final isFresh = await idempotency.tryBegin(
+        session,
+        actorAuthUserId: authUserId,
+        action: 'money.archiveGoal',
+        clientOperationId: clientOperationId,
+        transaction: transaction,
+      );
+      if (!isFresh) {
+        return _findGoal(session, goalId, transaction: transaction);
+      }
+
+      final row = await _lockGoalRow(
+        session,
+        familyId: familyId,
+        goalId: goalId,
+        transaction: transaction,
+      );
+      if (row.archivedAt != null) {
+        return _mapGoal(row);
+      }
+
+      final now = clock.nowUtc();
+      await MoneyGoalRow.db.updateRow(
+        session,
+        row.copyWith(
+          archivedAt: now,
+          reachedAt: row.reachedAt ?? now,
+          updatedAt: now,
+          version: row.version + 1,
+        ),
+        transaction: transaction,
+      );
+
+      final updatedGoal = await _findGoal(
+        session,
+        goalId,
+        transaction: transaction,
+      );
+      await _emitGoalChange(
+        session,
+        familyId: familyId,
+        goalId: goalId,
+        operation: 'archived',
+        transaction: transaction,
+      );
+      return updatedGoal;
+    });
+  }
+
+  Future<OperationResult> deleteGoal(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+    required int goalId,
+  }) async {
+    final authUserId = authContext.requireAuthUserId(session).uuid;
+
+    return session.db.transaction((transaction) async {
+      await rbac.ensureFamilyRole(
+        session,
+        familyId: familyId,
+        minRole: 'member',
+        transaction: transaction,
+      );
+
+      final isFresh = await idempotency.tryBegin(
+        session,
+        actorAuthUserId: authUserId,
+        action: 'money.deleteGoal',
+        clientOperationId: clientOperationId,
+        transaction: transaction,
+      );
+      if (!isFresh) {
+        return OperationResult(success: true, message: 'Already deleted');
+      }
+
+      final row = await _lockGoalRowOrNull(
+        session,
+        familyId: familyId,
+        goalId: goalId,
+        transaction: transaction,
+      );
+      if (row == null) {
+        return OperationResult(success: true, message: 'Already deleted');
+      }
+
+      final now = clock.nowUtc();
+      await MoneyGoalRow.db.updateRow(
+        session,
+        row.copyWith(
+          deletedAt: now,
+          updatedAt: now,
+          version: row.version + 1,
+        ),
+        transaction: transaction,
+      );
+
+      await _emitGoalChange(
+        session,
+        familyId: familyId,
+        goalId: goalId,
+        operation: 'deleted',
+        transaction: transaction,
+      );
+
+      return OperationResult(success: true, message: 'Goal deleted');
+    });
+  }
+
+  Future<List<MoneyGoalDto>> listGoals(
+    Session session, {
+    required int familyId,
+  }) async {
+    await rbac.ensureFamilyRole(session, familyId: familyId, minRole: 'member');
+
+    final rows = await MoneyGoalRow.db.find(
+      session,
+      where: (t) => t.familyId.equals(familyId) & t.deletedAt.equals(null),
+    );
+    rows.sort((left, right) {
+      final leftArchived = left.archivedAt != null;
+      final rightArchived = right.archivedAt != null;
+      if (leftArchived != rightArchived) {
+        return leftArchived ? 1 : -1;
+      }
+      return right.updatedAt.compareTo(left.updatedAt);
+    });
+
+    return rows.map(_mapGoal).toList();
+  }
+
+  Future<List<MoneyGoalHistoryEntryDto>> listGoalHistory(
+    Session session, {
+    required int familyId,
+    required int goalId,
+    int limit = 50,
+  }) async {
+    await rbac.ensureFamilyRole(session, familyId: familyId, minRole: 'member');
+
+    final goal = await _lockGoalRowOrNull(
+      session,
+      familyId: familyId,
+      goalId: goalId,
+    );
+    if (goal == null) {
+      throw FileNotFoundException(message: 'Goal not found.');
+    }
+
+    final rows = await MoneyContributionRow.db.find(
+      session,
+      where: (t) => t.goalId.equals(goalId) & t.revokedAt.equals(null),
+      limit: limit,
+      orderBy: (t) => t.createdAt,
+      orderDescending: true,
+    );
+    final profileIds = rows.map((row) => row.profileId).toSet();
+    final profiles = profileIds.isEmpty
+        ? <AppProfileRow>[]
+        : await AppProfileRow.db.find(
+            session,
+            where: (t) => t.id.inSet(profileIds),
+          );
+    final profilesById = {for (final profile in profiles) profile.id!: profile};
+
+    return rows
+        .map(
+          (row) => _mapHistoryEntry(
+            row,
+            profilesById[row.profileId],
+          ),
+        )
+        .toList();
+  }
+
+  Future<MoneyGoalDto> _findGoal(
+    Session session,
+    int goalId, {
+    Transaction? transaction,
+  }) async {
+    final row = await MoneyGoalRow.db.findFirstRow(
+      session,
+      where: (t) => t.id.equals(goalId) & t.deletedAt.equals(null),
+      transaction: transaction,
+    );
+    return _mapGoal(row!);
+  }
+
+  Future<MoneyContributionDto> _changeGoalAmount(
+    Session session, {
+    required String action,
+    required String clientOperationId,
+    required int familyId,
+    required int goalId,
+    required int amountCents,
+    required String currency,
+    required String? note,
+    required int deltaAmountCents,
+    required String operation,
+    required String? insufficientFundsMessage,
+  }) async {
+    if (amountCents <= 0) {
+      throw ArgumentError.value(
+        amountCents,
+        'amountCents',
+        'Amount must be greater than zero.',
+      );
+    }
+
     final authUserId = authContext.requireAuthUserId(session).uuid;
 
     return session.db.transaction((transaction) async {
@@ -175,36 +437,24 @@ class MoneyGoalsService {
         transaction: transaction,
       );
 
-      final started = await idempotency.tryBegin(
+      final isFresh = await idempotency.tryBegin(
         session,
         actorAuthUserId: authUserId,
-        action: 'money.addContribution',
+        action: action,
         clientOperationId: clientOperationId,
         transaction: transaction,
       );
 
-      await session.db.unsafeQuery(
-        'SELECT "id" FROM "money_goal" WHERE "id" = @goalId AND "familyId" = @familyId AND "deletedAt" IS NULL FOR UPDATE',
-        transaction: transaction,
-        parameters: QueryParameters.named({
-          'goalId': goalId,
-          'familyId': familyId,
-        }),
-      );
-      final goalRow = await MoneyGoalRow.db.findFirstRow(
+      final goalRow = await _lockGoalRow(
         session,
-        where: (t) =>
-            t.id.equals(goalId) &
-            t.familyId.equals(familyId) &
-            t.deletedAt.equals(null),
+        familyId: familyId,
+        goalId: goalId,
         transaction: transaction,
       );
-      if (goalRow == null) {
-        throw FileNotFoundException(message: 'Goal not found.');
+      if (goalRow.archivedAt != null) {
+        throw StateError('Archived goals cannot be changed.');
       }
-
-      final goal = _mapGoal(goalRow);
-      if (goal.currency != currency) {
+      if (goalRow.currency != currency) {
         throw ArgumentError.value(
           currency,
           'currency',
@@ -212,18 +462,25 @@ class MoneyGoalsService {
         );
       }
 
-      if (!started) {
-        final existing = await MoneyContributionRow.db.findFirstRow(
+      if (!isFresh) {
+        final existing = await _findContributionByOperationId(
           session,
-          where: (t) =>
-              t.goalId.equals(goalId) &
-              t.clientOperationId.equals(clientOperationId),
+          goalId: goalId,
+          clientOperationId: clientOperationId,
           transaction: transaction,
         );
-
         if (existing != null) {
           return _mapContribution(existing);
         }
+      }
+
+      final nextAmount = goalRow.currentAmountCents + deltaAmountCents;
+      if (insufficientFundsMessage != null && nextAmount < 0) {
+        throw ArgumentError.value(
+          amountCents,
+          'amountCents',
+          insufficientFundsMessage,
+        );
       }
 
       final now = clock.nowUtc();
@@ -234,7 +491,7 @@ class MoneyGoalsService {
           MoneyContributionRow(
             goalId: goalId,
             profileId: actorProfileId,
-            amountCents: amountCents,
+            amountCents: deltaAmountCents,
             currency: currency,
             note: note,
             clientOperationId: clientOperationId,
@@ -244,11 +501,10 @@ class MoneyGoalsService {
           transaction: transaction,
         );
       } on DatabaseInsertRowException {
-        final existing = await MoneyContributionRow.db.findFirstRow(
+        final existing = await _findContributionByOperationId(
           session,
-          where: (t) =>
-              t.goalId.equals(goalId) &
-              t.clientOperationId.equals(clientOperationId),
+          goalId: goalId,
+          clientOperationId: clientOperationId,
           transaction: transaction,
         );
         if (existing != null) {
@@ -259,11 +515,10 @@ class MoneyGoalsService {
         if (error.code != '23505') {
           rethrow;
         }
-        final existing = await MoneyContributionRow.db.findFirstRow(
+        final existing = await _findContributionByOperationId(
           session,
-          where: (t) =>
-              t.goalId.equals(goalId) &
-              t.clientOperationId.equals(clientOperationId),
+          goalId: goalId,
+          clientOperationId: clientOperationId,
           transaction: transaction,
         );
         if (existing != null) {
@@ -271,13 +526,10 @@ class MoneyGoalsService {
         }
         rethrow;
       }
-      final contribution = _mapContribution(contributionRow);
 
-      final nextAmount = goalRow.currentAmountCents + amountCents;
-      final nextReachedAt =
-          goalRow.reachedAt == null && nextAmount >= goalRow.targetAmountCents
-          ? now
-          : goalRow.reachedAt;
+      final nextReachedAt = nextAmount >= goalRow.targetAmountCents
+          ? (goalRow.reachedAt ?? now)
+          : null;
       await MoneyGoalRow.db.updateRow(
         session,
         goalRow.copyWith(
@@ -293,41 +545,70 @@ class MoneyGoalsService {
         session,
         familyId: familyId,
         goalId: goalId,
-        operation: 'contribution_added',
+        operation: operation,
         transaction: transaction,
       );
 
-      return contribution;
+      return _mapContribution(contributionRow);
     });
   }
 
-  Future<List<MoneyGoalDto>> listGoals(
+  Future<MoneyGoalRow> _lockGoalRow(
     Session session, {
     required int familyId,
-  }) async {
-    await rbac.ensureFamilyRole(session, familyId: familyId, minRole: 'member');
-
-    final rows = await MoneyGoalRow.db.find(
-      session,
-      where: (t) => t.familyId.equals(familyId) & t.deletedAt.equals(null),
-      orderBy: (t) => t.id,
-      orderDescending: true,
-    );
-
-    return rows.map(_mapGoal).toList();
-  }
-
-  Future<MoneyGoalDto> _findGoal(
-    Session session,
-    int goalId, {
+    required int goalId,
     Transaction? transaction,
   }) async {
-    final row = await MoneyGoalRow.db.findById(
+    await session.db.unsafeQuery(
+      'SELECT "id" FROM "money_goal" WHERE "id" = @goalId AND "familyId" = @familyId AND "deletedAt" IS NULL FOR UPDATE',
+      transaction: transaction,
+      parameters: QueryParameters.named({
+        'goalId': goalId,
+        'familyId': familyId,
+      }),
+    );
+
+    final row = await _lockGoalRowOrNull(
       session,
-      goalId,
+      familyId: familyId,
+      goalId: goalId,
       transaction: transaction,
     );
-    return _mapGoal(row!);
+    if (row == null) {
+      throw FileNotFoundException(message: 'Goal not found.');
+    }
+    return row;
+  }
+
+  Future<MoneyGoalRow?> _lockGoalRowOrNull(
+    Session session, {
+    required int familyId,
+    required int goalId,
+    Transaction? transaction,
+  }) {
+    return MoneyGoalRow.db.findFirstRow(
+      session,
+      where: (t) =>
+          t.id.equals(goalId) &
+          t.familyId.equals(familyId) &
+          t.deletedAt.equals(null),
+      transaction: transaction,
+    );
+  }
+
+  Future<MoneyContributionRow?> _findContributionByOperationId(
+    Session session, {
+    required int goalId,
+    required String clientOperationId,
+    Transaction? transaction,
+  }) {
+    return MoneyContributionRow.db.findFirstRow(
+      session,
+      where: (t) =>
+          t.goalId.equals(goalId) &
+          t.clientOperationId.equals(clientOperationId),
+      transaction: transaction,
+    );
   }
 
   Future<void> _emitGoalChange(
@@ -356,9 +637,13 @@ class MoneyGoalsService {
         feature: 'money_goals',
         entityType: 'goal',
         entityId: goalId,
-        eventType: operation == 'contribution_added'
-            ? 'contribution_added'
-            : 'money_goal.updated',
+        eventType: switch (operation) {
+          'contribution_added' => 'money_goal.contribution_added',
+          'funds_withdrawn' => 'money_goal.funds_withdrawn',
+          'deleted' => 'money_goal.deleted',
+          'archived' => 'money_goal.archived',
+          _ => 'money_goal.updated',
+        },
         changedAt: clock.nowUtc(),
       ),
     );
@@ -375,6 +660,7 @@ class MoneyGoalsService {
       currency: row.currency,
       deadlineAt: row.deadlineAt,
       reachedAt: row.reachedAt,
+      archivedAt: row.archivedAt,
       updatedAt: row.updatedAt,
       version: row.version,
     );
@@ -390,6 +676,22 @@ class MoneyGoalsService {
       note: row.note,
       createdAt: row.createdAt,
       revokedAt: row.revokedAt,
+    );
+  }
+
+  MoneyGoalHistoryEntryDto _mapHistoryEntry(
+    MoneyContributionRow row,
+    AppProfileRow? profile,
+  ) {
+    return MoneyGoalHistoryEntryDto(
+      id: row.id!,
+      goalId: row.goalId,
+      profileId: row.profileId,
+      actorDisplayName: profile?.displayName ?? 'User #${row.profileId}',
+      amountCents: row.amountCents,
+      currency: row.currency,
+      note: row.note,
+      createdAt: row.createdAt,
     );
   }
 }
