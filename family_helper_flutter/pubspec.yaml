@@ -45,6 +45,7 @@ dependencies:
     path: ../family_helper_client
   serverpod_flutter: 3.2.3
   serverpod_auth_core_flutter: 3.2.3
+  serverpod_auth_idp_client: 3.2.3
   serverpod_auth_idp_flutter: 3.2.3
 
 dev_dependencies:

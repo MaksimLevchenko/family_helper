@@ -42,6 +42,10 @@ class NotificationsEndpoint extends Endpoint {
     );
   }
 
+  Future<List<NotificationPreferenceDto>> listPreferences(Session session) {
+    return service.listPreferences(session);
+  }
+
   Future<ReminderDto> scheduleReminder(
     Session session, {
     required String clientOperationId,

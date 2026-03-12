@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:family_helper_server/src/generated/protocol.dart';
 import 'package:family_helper_server/src/auth/email_code_dispatcher.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
@@ -150,6 +151,57 @@ void main() {
             password: 'Password456!',
           );
           expect(auth.token, isNotEmpty);
+        },
+      );
+
+      test(
+        'duplicate registration reports explicit app exception',
+        () async {
+          final fakeSender = _FakeEmailCodeSender();
+          final previousDispatcher = EmailCodeDispatcher.instance;
+          EmailCodeDispatcher.instance = EmailCodeDispatcher(
+            sender: fakeSender,
+          );
+          addTearDown(() {
+            EmailCodeDispatcher.instance = previousDispatcher;
+          });
+          await _initializeAuthServices(sessionBuilder);
+
+          final email =
+              'duplicate_${DateTime.now().microsecondsSinceEpoch}@family-helper.test';
+
+          final accountRequestId = await endpoints.emailIdp.startRegistration(
+            sessionBuilder,
+            email: email,
+          );
+          final registrationCode = await _waitForCode(
+            () async => fakeSender.registrationCode(email),
+          );
+          final registrationToken = await endpoints.emailIdp
+              .verifyRegistrationCode(
+                sessionBuilder,
+                accountRequestId: accountRequestId,
+                verificationCode: registrationCode,
+              );
+          await endpoints.emailIdp.finishRegistration(
+            sessionBuilder,
+            registrationToken: registrationToken,
+            password: 'Password123!',
+          );
+
+          await expectLater(
+            () => endpoints.emailIdp.startRegistration(
+              sessionBuilder,
+              email: email,
+            ),
+            throwsA(
+              isA<AuthRegistrationException>().having(
+                (error) => error.reason,
+                'reason',
+                AuthRegistrationExceptionReason.emailAlreadyRegistered,
+              ),
+            ),
+          );
         },
       );
     },

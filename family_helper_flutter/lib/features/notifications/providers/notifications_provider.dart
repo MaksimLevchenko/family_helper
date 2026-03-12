@@ -18,6 +18,7 @@ class NotificationsState {
   const NotificationsState({
     required this.isLoading,
     required this.reminders,
+    required this.preferences,
     required this.localNotificationsEnabled,
     this.lastRegisteredPushToken,
     this.error,
@@ -25,6 +26,7 @@ class NotificationsState {
 
   final bool isLoading;
   final List<ReminderDto> reminders;
+  final List<NotificationPreferenceDto> preferences;
   final bool localNotificationsEnabled;
   final String? lastRegisteredPushToken;
   final String? error;
@@ -33,6 +35,7 @@ class NotificationsState {
     return const NotificationsState(
       isLoading: false,
       reminders: [],
+      preferences: [],
       localNotificationsEnabled: false,
     );
   }
@@ -40,6 +43,7 @@ class NotificationsState {
   NotificationsState copyWith({
     bool? isLoading,
     List<ReminderDto>? reminders,
+    List<NotificationPreferenceDto>? preferences,
     bool? localNotificationsEnabled,
     String? lastRegisteredPushToken,
     String? error,
@@ -48,6 +52,7 @@ class NotificationsState {
     return NotificationsState(
       isLoading: isLoading ?? this.isLoading,
       reminders: reminders ?? this.reminders,
+      preferences: preferences ?? this.preferences,
       localNotificationsEnabled:
           localNotificationsEnabled ?? this.localNotificationsEnabled,
       lastRegisteredPushToken:
@@ -86,7 +91,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   static const _actionScheduleReminder = 'schedule_reminder';
 
   Future<void> _handleFamilyChanged(int? familyId) async {
-    reset();
+    reset(preserveAccountSettings: true);
     if (familyId == null) {
       return;
     }
@@ -94,13 +99,39 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     await reloadReminders();
   }
 
-  void reset() {
+  void reset({bool preserveAccountSettings = false}) {
     emit(
       NotificationsState.initial().copyWith(
-        localNotificationsEnabled: state.localNotificationsEnabled,
-        lastRegisteredPushToken: state.lastRegisteredPushToken,
+        preferences: preserveAccountSettings ? state.preferences : const [],
+        localNotificationsEnabled: preserveAccountSettings
+            ? state.localNotificationsEnabled
+            : false,
+        lastRegisteredPushToken: preserveAccountSettings
+            ? state.lastRegisteredPushToken
+            : null,
       ),
     );
+  }
+
+  Future<void> loadPreferences() async {
+    emit(state.copyWith(isLoading: true, clearError: true));
+    try {
+      final preferences = await _repository.listPreferences();
+      emit(
+        state.copyWith(
+          isLoading: false,
+          preferences: preferences,
+          clearError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'notifications.loadPreferences',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      emit(state.copyWith(isLoading: false, error: '$error'));
+    }
   }
 
   Future<void> initializeLocalReminders() async {
@@ -188,14 +219,20 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     emit(state.copyWith(isLoading: true, clearError: true));
     final clientOperationId = OperationId.next();
     try {
-      await _repository.upsertPreference(
+      final preference = await _repository.upsertPreference(
         clientOperationId: clientOperationId,
         notificationType: notificationType,
         enabled: enabled,
         quietHoursStart: quietHoursStart,
         quietHoursEnd: quietHoursEnd,
       );
-      emit(state.copyWith(isLoading: false, clearError: true));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          preferences: _mergePreference(state.preferences, preference),
+          clearError: true,
+        ),
+      );
     } catch (error, stackTrace) {
       AppErrorLogger.logHandled(
         scope: 'notifications.setPreference',
@@ -438,6 +475,25 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       case TargetPlatform.fuchsia:
         return 'fuchsia';
     }
+  }
+
+  List<NotificationPreferenceDto> _mergePreference(
+    List<NotificationPreferenceDto> current,
+    NotificationPreferenceDto updated,
+  ) {
+    final next = [...current];
+    final index = next.indexWhere(
+      (preference) => preference.notificationType == updated.notificationType,
+    );
+    if (index == -1) {
+      next.add(updated);
+    } else {
+      next[index] = updated;
+    }
+    next.sort((left, right) {
+      return left.notificationType.compareTo(right.notificationType);
+    });
+    return next;
   }
 
   @override

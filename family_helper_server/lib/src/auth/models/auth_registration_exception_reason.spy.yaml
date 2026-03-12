@@ -1,0 +1,9 @@
+### The reason for why the app-specific registration request was rejected.
+enum: AuthRegistrationExceptionReason
+serialized: byName
+default: unknown
+values:
+  ### Exception to be thrown when the email is already registered.
+  - emailAlreadyRegistered
+  ### Unknown error occurred.
+  - unknown

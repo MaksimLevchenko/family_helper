@@ -4,12 +4,34 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
 import '../core/security/security_event_service.dart';
+import '../generated/protocol.dart';
 
 class EmailIdpEndpoint extends EmailIdpBaseEndpoint {
   EmailIdpEndpoint({SecurityEventService? securityEventService})
-    : securityEventService = securityEventService ?? const SecurityEventService();
+    : securityEventService =
+          securityEventService ?? const SecurityEventService();
 
   final SecurityEventService securityEventService;
+
+  @override
+  Future<UuidValue> startRegistration(
+    Session session, {
+    required String email,
+  }) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    final existingAccount = await EmailAccount.db.findFirstRow(
+      session,
+      where: (t) => t.email.equals(normalizedEmail),
+    );
+
+    if (existingAccount != null) {
+      throw AuthRegistrationException(
+        reason: AuthRegistrationExceptionReason.emailAlreadyRegistered,
+      );
+    }
+
+    return super.startRegistration(session, email: email);
+  }
 
   @override
   Future<AuthSuccess> login(

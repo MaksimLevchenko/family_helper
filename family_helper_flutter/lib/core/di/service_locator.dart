@@ -14,7 +14,7 @@ Future<void> setupServiceLocator() async {
 
   await registerAppServices(getIt);
   registerRepositories(getIt);
-  registerGlobalState(getIt);
+  await registerGlobalState(getIt);
 }
 
 Future<void> resetServiceLocator() async {

@@ -183,6 +183,14 @@ class FamilyService {
         .toList();
   }
 
+  Future<FamilyDto> getFamily(
+    Session session, {
+    required int familyId,
+  }) async {
+    await rbac.ensureFamilyRole(session, familyId: familyId, minRole: 'member');
+    return _findFamily(session, familyId);
+  }
+
   Future<FamilyInviteDto> createInvite(
     Session session, {
     required int familyId,

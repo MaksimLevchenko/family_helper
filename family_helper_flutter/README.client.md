@@ -52,11 +52,10 @@ Current behavior:
 - Goals
 - Settings:
   - Profile
-  - Family & invites
+  - Family
   - Notifications
-  - Media
-  - Privacy & security
-  - Theme switch
+  - Privacy
+  - Appearance
 
 ## Tests
 Run:

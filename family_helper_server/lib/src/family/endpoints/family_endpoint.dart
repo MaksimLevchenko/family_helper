@@ -4,7 +4,8 @@ import '../../generated/protocol.dart';
 import '../services/family_service.dart';
 
 class FamilyEndpoint extends Endpoint {
-  FamilyEndpoint({FamilyService? service}) : service = service ?? FamilyService();
+  FamilyEndpoint({FamilyService? service})
+    : service = service ?? FamilyService();
 
   final FamilyService service;
 
@@ -25,6 +26,13 @@ class FamilyEndpoint extends Endpoint {
     required int familyId,
   }) {
     return service.listMembers(session, familyId: familyId);
+  }
+
+  Future<FamilyDto> getFamily(
+    Session session, {
+    required int familyId,
+  }) {
+    return service.getFamily(session, familyId: familyId);
   }
 
   Future<FamilyInviteDto> createInvite(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:family_helper_client/family_helper_client.dart';
 
 import '../../../core/config/app_defaults.dart';
 import '../../../ui_kit/ui_kit.dart';
@@ -13,15 +14,12 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  DateTime? _remindAt;
-  final _entityIdController = TextEditingController(text: '1');
-  final _pushTokenController = TextEditingController();
-
   @override
-  void dispose() {
-    _entityIdController.dispose();
-    _pushTokenController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NotificationsCubit>().loadPreferences();
+    });
   }
 
   @override
@@ -30,10 +28,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       appBar: AppBar(title: const Text('Notifications')),
       body: BlocBuilder<NotificationsCubit, NotificationsState>(
         builder: (context, state) {
-          final pushToken = state.lastRegisteredPushToken;
-          if (pushToken != null && _pushTokenController.text != pushToken) {
-            _pushTokenController.text = pushToken;
+          NotificationPreferenceDto? taskPreference;
+          for (final preference in state.preferences) {
+            if (preference.notificationType ==
+                AppDefaults.defaultNotificationType) {
+              taskPreference = preference;
+              break;
+            }
           }
+          final taskRemindersEnabled = taskPreference?.enabled ?? false;
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -42,101 +45,57 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 AppBanner(text: state.error!, isError: true),
                 const SizedBox(height: 12),
               ],
-              AppButton(
-                label: state.localNotificationsEnabled
-                    ? 'Local notifications are enabled'
-                    : 'Enable local notifications',
-                isLoading: state.isLoading,
-                onPressed: () async {
-                  await context
-                      .read<NotificationsCubit>()
-                      .initializeLocalReminders();
-                },
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                controller: _pushTokenController,
-                label: 'Push token',
-                hint: 'Auto-generated on initialization',
-              ),
-              const SizedBox(height: 12),
-              AppButton(
-                label: 'Register push token',
-                variant: AppButtonVariant.secondary,
-                onPressed: () async {
-                  final token = _pushTokenController.text.trim();
-                  if (token.isEmpty) {
-                    return;
-                  }
-                  await context.read<NotificationsCubit>().registerPushToken(
-                    token: token,
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              AppButton(
-                label: 'Enable task notifications',
-                onPressed: () async {
-                  await context.read<NotificationsCubit>().setPreference(
-                    notificationType: AppDefaults.defaultNotificationType,
-                    enabled: true,
-                  );
-                },
-                variant: AppButtonVariant.secondary,
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                controller: _entityIdController,
-                label: 'Entity ID',
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 12),
-              DateTimePickerField(
-                label: 'Remind at',
-                value: _remindAt,
-                onChanged: (value) => setState(() => _remindAt = value),
-              ),
-              const SizedBox(height: 12),
-              AppButton(
-                label: 'Reload reminders',
-                variant: AppButtonVariant.secondary,
-                onPressed: () async {
-                  await context.read<NotificationsCubit>().reloadReminders();
-                },
-              ),
-              const SizedBox(height: 12),
-              AppButton(
-                label: 'Schedule reminder',
-                onPressed: () async {
-                  final remindAt = _remindAt;
-                  final entityId = int.tryParse(
-                    _entityIdController.text.trim(),
-                  );
-                  if (remindAt == null || entityId == null) {
-                    return;
-                  }
-                  await context.read<NotificationsCubit>().scheduleReminder(
-                    entityType: AppDefaults.defaultReminderEntityType,
-                    entityId: entityId,
-                    remindAt: remindAt,
-                    payloadJson: '{"entityId":$entityId}',
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              if (state.reminders.isEmpty)
-                const EmptyState(
-                  title: 'No reminders',
-                  message: 'No active reminders for the selected family.',
-                )
-              else
-                ...state.reminders.map(
-                  (reminder) => AppTile(
-                    title: 'Reminder #${reminder.id}',
-                    subtitle:
-                        '${reminder.entityType}:${reminder.entityId} at ${reminder.remindAt.toLocal()} (${reminder.status})',
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'System notifications',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        state.localNotificationsEnabled
+                            ? 'Notifications are enabled for this device.'
+                            : 'Enable notifications to receive family reminders.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      AppButton(
+                        label: state.localNotificationsEnabled
+                            ? 'Notifications enabled'
+                            : 'Enable notifications',
+                        isLoading: state.isLoading,
+                        onPressed: () async {
+                          await context
+                              .read<NotificationsCubit>()
+                              .initializeLocalReminders();
+                        },
+                      ),
+                    ],
                   ),
                 ),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                child: SwitchListTile(
+                  value: taskRemindersEnabled,
+                  onChanged: (value) async {
+                    await context.read<NotificationsCubit>().setPreference(
+                      notificationType: AppDefaults.defaultNotificationType,
+                      enabled: value,
+                    );
+                  },
+                  title: const Text('Task reminders'),
+                  subtitle: Text(
+                    taskRemindersEnabled
+                        ? 'You will receive reminders for upcoming tasks.'
+                        : 'Task reminders are currently turned off.',
+                  ),
+                ),
+              ),
             ],
           );
         },

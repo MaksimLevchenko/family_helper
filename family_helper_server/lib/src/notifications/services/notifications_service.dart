@@ -145,6 +145,18 @@ class NotificationsService {
     });
   }
 
+  Future<List<NotificationPreferenceDto>> listPreferences(
+    Session session,
+  ) async {
+    final profileId = await authContext.ensureProfileId(session);
+    final rows = await NotificationPreferenceRow.db.find(
+      session,
+      where: (t) => t.profileId.equals(profileId),
+      orderBy: (t) => t.notificationType,
+    );
+    return rows.map(_mapPreference).toList();
+  }
+
   Future<ReminderDto> scheduleReminder(
     Session session, {
     required String clientOperationId,

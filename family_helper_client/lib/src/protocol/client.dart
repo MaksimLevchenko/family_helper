@@ -70,6 +70,14 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   String get name => 'emailIdp';
 
   @override
+  _i3.Future<_i2.UuidValue> startRegistration({required String email}) =>
+      caller.callServerEndpoint<_i2.UuidValue>(
+        'emailIdp',
+        'startRegistration',
+        {'email': email},
+      );
+
+  @override
   _i3.Future<_i4.AuthSuccess> login({
     required String email,
     required String password,
@@ -81,24 +89,6 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
       'password': password,
     },
   );
-
-  /// Starts the registration for a new user account with an email-based login
-  /// associated to it.
-  ///
-  /// Upon successful completion of this method, an email will have been
-  /// sent to [email] with a verification link, which the user must open to
-  /// complete the registration.
-  ///
-  /// Always returns a account request ID, which can be used to complete the
-  /// registration. If the email is already registered, the returned ID will not
-  /// be valid.
-  @override
-  _i3.Future<_i2.UuidValue> startRegistration({required String email}) =>
-      caller.callServerEndpoint<_i2.UuidValue>(
-        'emailIdp',
-        'startRegistration',
-        {'email': email},
-      );
 
   /// Verifies an account request code and returns a token
   /// that can be used to complete the account creation.
@@ -399,6 +389,13 @@ class EndpointFamily extends _i2.EndpointRef {
       caller.callServerEndpoint<List<_i10.FamilyMemberDto>>(
         'family',
         'listMembers',
+        {'familyId': familyId},
+      );
+
+  _i3.Future<_i9.FamilyDto> getFamily({required int familyId}) =>
+      caller.callServerEndpoint<_i9.FamilyDto>(
+        'family',
+        'getFamily',
         {'familyId': familyId},
       );
 
@@ -737,6 +734,13 @@ class EndpointNotifications extends _i2.EndpointRef {
       'quietHoursEnd': quietHoursEnd,
     },
   );
+
+  _i3.Future<List<_i19.NotificationPreferenceDto>> listPreferences() =>
+      caller.callServerEndpoint<List<_i19.NotificationPreferenceDto>>(
+        'notifications',
+        'listPreferences',
+        {},
+      );
 
   _i3.Future<_i20.ReminderDto> scheduleReminder({
     required String clientOperationId,

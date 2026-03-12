@@ -131,6 +131,41 @@ class MediaCubit extends Cubit<MediaState> {
     }
   }
 
+  Future<int?> uploadAvatar() async {
+    emit(state.copyWith(isLoading: true, clearError: true));
+
+    try {
+      final media = await _repository.pickCropUpload(familyId: null);
+      if (media == null) {
+        emit(state.copyWith(isLoading: false));
+        return null;
+      }
+
+      final signedUrl = await _repository.signedGetUrl(media.id);
+      emit(
+        state.copyWith(
+          isLoading: false,
+          lastMediaId: media.id,
+          lastSignedUrl: signedUrl,
+          clearError: true,
+        ),
+      );
+      return media.id;
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'media.uploadAvatar',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      emit(state.copyWith(isLoading: false, error: '$error'));
+      return null;
+    }
+  }
+
+  Future<String> loadSignedUrl(int mediaId) {
+    return _repository.signedGetUrl(mediaId);
+  }
+
   Future<void> softDelete(int mediaId) async {
     emit(state.copyWith(isLoading: true, clearError: true));
     final clientOperationId = OperationId.next();

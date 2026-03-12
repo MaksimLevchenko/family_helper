@@ -1,0 +1,5 @@
+### Exception to be thrown if app-specific registration fails before the
+### standard Serverpod email flow can proceed.
+exception: AuthRegistrationException
+fields:
+  reason: AuthRegistrationExceptionReason

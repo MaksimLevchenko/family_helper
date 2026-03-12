@@ -17,7 +17,6 @@ class AppRoutes {
   static const profile = '/home/settings/profile';
   static const family = '/home/settings/family';
   static const localReminders = '/home/settings/local-reminders';
-  static const media = '/home/settings/media';
   static const privacy = '/home/settings/privacy';
 
   static const tabLocations = <String>[

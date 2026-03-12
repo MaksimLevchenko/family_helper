@@ -21,6 +21,10 @@ class FamilyRepository {
     return _apiClient.client.family.listMembers(familyId: familyId);
   }
 
+  Future<FamilyDto> getFamily({required int familyId}) {
+    return _apiClient.client.family.getFamily(familyId: familyId);
+  }
+
   Future<FamilyInviteDto> createInvite({
     required int familyId,
     required String clientOperationId,

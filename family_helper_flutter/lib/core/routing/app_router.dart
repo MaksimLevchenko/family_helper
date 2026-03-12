@@ -13,7 +13,6 @@ import '../../features/home_overview/presentation/home_shell_screen.dart';
 import '../../features/home_overview/presentation/home_overview_screen.dart';
 import '../../features/home_overview/presentation/settings_screen.dart';
 import '../../features/lists/presentation/lists_screen.dart';
-import '../../features/media/presentation/media_screen.dart';
 import '../../features/money_goals/presentation/money_goals_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/privacy_security/presentation/privacy_security_screen.dart';
@@ -103,10 +102,6 @@ GoRouter createAppRouter(AuthCubit authCubit) {
               GoRoute(
                 path: 'local-reminders',
                 builder: (context, state) => const NotificationsScreen(),
-              ),
-              GoRoute(
-                path: 'media',
-                builder: (context, state) => const MediaScreen(),
               ),
               GoRoute(
                 path: 'privacy',

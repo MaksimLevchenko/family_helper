@@ -35,6 +35,10 @@ class NotificationsRepository {
     );
   }
 
+  Future<List<NotificationPreferenceDto>> listPreferences() {
+    return _apiClient.client.notifications.listPreferences();
+  }
+
   Future<ReminderDto> scheduleReminder({
     required String clientOperationId,
     required int familyId,

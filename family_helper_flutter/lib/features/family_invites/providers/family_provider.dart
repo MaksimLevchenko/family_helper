@@ -51,6 +51,7 @@ class FamilyMembersState {
     required this.isLoading,
     required this.members,
     required this.familyId,
+    this.family,
     this.lastInviteCode,
     this.error,
   });
@@ -58,6 +59,7 @@ class FamilyMembersState {
   final bool isLoading;
   final List<FamilyMemberDto> members;
   final int? familyId;
+  final FamilyDto? family;
   final String? lastInviteCode;
   final String? error;
 
@@ -73,6 +75,7 @@ class FamilyMembersState {
     bool? isLoading,
     List<FamilyMemberDto>? members,
     int? familyId,
+    FamilyDto? family,
     String? lastInviteCode,
     String? error,
     bool clearError = false,
@@ -81,6 +84,7 @@ class FamilyMembersState {
       isLoading: isLoading ?? this.isLoading,
       members: members ?? this.members,
       familyId: familyId ?? this.familyId,
+      family: family ?? this.family,
       lastInviteCode: lastInviteCode ?? this.lastInviteCode,
       error: clearError ? null : (error ?? this.error),
     );
@@ -130,6 +134,7 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
           isLoading: false,
           members: const [],
           familyId: null,
+          family: null,
           lastInviteCode: state.lastInviteCode,
         ),
       );
@@ -146,12 +151,14 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
 
     try {
       await _replayQueuedOperations();
+      final family = await _repository.getFamily(familyId: familyId);
       final members = await _repository.listMembers(familyId: familyId);
       emit(
         state.copyWith(
           isLoading: false,
           members: members,
           familyId: familyId,
+          family: family,
           clearError: true,
         ),
       );
@@ -179,6 +186,7 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
       emit(
         state.copyWith(
           isLoading: false,
+          family: family,
           familyId: family.id,
           members: members,
           clearError: true,
@@ -248,11 +256,13 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
         tokenOrCode: tokenOrCode,
       );
       await _familySelectionCubit.setFamilyId(member.familyId);
+      final family = await _repository.getFamily(familyId: member.familyId);
       final members = await _repository.listMembers(familyId: member.familyId);
       emit(
         state.copyWith(
           isLoading: false,
           familyId: member.familyId,
+          family: family,
           members: members,
           clearError: true,
         ),

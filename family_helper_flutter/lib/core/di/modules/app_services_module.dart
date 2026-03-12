@@ -13,7 +13,7 @@ Future<void> registerAppServices(GetIt getIt) async {
   getIt.registerSingleton<AppApiClient>(apiClient);
   getIt.registerSingleton<OfflineQueueManager>(offlineQueueManager);
 
-  getIt.registerLazySingleton<RealtimeSubscriptionManager>(
+  getIt.registerLazySingleton<RealtimeSubscriptionDriver>(
     () => RealtimeSubscriptionManager(getIt()),
   );
   getIt.registerLazySingleton<LocalNotificationService>(
