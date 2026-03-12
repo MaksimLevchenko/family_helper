@@ -65,7 +65,7 @@ class AuthCubit extends Cubit<AuthSessionState> {
       _apiClient.client.auth.authInfoListenable.removeListener(onAuthChanged);
     };
 
-    await _onAuthChanged();
+    await _initializeSession();
   }
 
   Future<void> signIn({required String email, required String password}) async {
@@ -201,6 +201,16 @@ class AuthCubit extends Cubit<AuthSessionState> {
         error: error,
         stackTrace: stackTrace,
       );
+      if (_apiClient.client.auth.isAuthenticated) {
+        emit(
+          state.copyWith(
+            isInitializing: false,
+            isAuthenticated: true,
+            error: '$error',
+          ),
+        );
+        return;
+      }
       emit(
         AuthSessionState(
           isInitializing: false,
@@ -223,6 +233,40 @@ class AuthCubit extends Cubit<AuthSessionState> {
     }
 
     await refreshProfile();
+  }
+
+  Future<void> _initializeSession() async {
+    if (!_apiClient.client.auth.isAuthenticated) {
+      emit(
+        const AuthSessionState(
+          isInitializing: false,
+          isAuthenticated: false,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await _apiClient.client.auth.validateAuthentication(
+        timeout: _apiClient.client.connectionTimeout,
+      );
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'auth.validateAuthentication',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      emit(
+        state.copyWith(
+          isInitializing: false,
+          isAuthenticated: _apiClient.client.auth.isAuthenticated,
+          error: '$error',
+        ),
+      );
+      return;
+    }
+
+    await _onAuthChanged();
   }
 
   @override

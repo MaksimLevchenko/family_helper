@@ -305,6 +305,83 @@ void main() {
       await cubit.close();
     });
 
+    testWidgets('shows show more when history has more than five entries', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 1500);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      final cubit = _TestMoneyGoalsCubit(
+        MoneyGoalsState.initial(
+          hasSelectedFamily: true,
+        ).copyWith(
+          goals: [
+            _goal(id: 1, title: 'Emergency fund', currentAmountCents: 25000),
+          ],
+          history: [
+            _history(
+              id: 1,
+              goalId: 1,
+              actorDisplayName: 'Alex 1',
+              amountCents: 1000,
+            ),
+            _history(
+              id: 2,
+              goalId: 1,
+              actorDisplayName: 'Alex 2',
+              amountCents: 2000,
+            ),
+            _history(
+              id: 3,
+              goalId: 1,
+              actorDisplayName: 'Alex 3',
+              amountCents: 3000,
+            ),
+            _history(
+              id: 4,
+              goalId: 1,
+              actorDisplayName: 'Alex 4',
+              amountCents: 4000,
+            ),
+            _history(
+              id: 5,
+              goalId: 1,
+              actorDisplayName: 'Alex 5',
+              amountCents: 5000,
+            ),
+            _history(
+              id: 6,
+              goalId: 1,
+              actorDisplayName: 'Alex 6',
+              amountCents: 6000,
+            ),
+          ],
+          currentGoalId: 1,
+        ),
+      );
+
+      await tester.pumpWidget(buildSubject(cubit));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('goal-detail-tab-history')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Show more'), findsOneWidget);
+      expect(find.text('Alex 5 added 50.00 RUB'), findsOneWidget);
+      expect(find.text('Alex 6 added 60.00 RUB'), findsNothing);
+
+      await tester.tap(find.byKey(const Key('goal-history-show-more-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Show less'), findsOneWidget);
+      expect(find.text('Alex 6 added 60.00 RUB'), findsOneWidget);
+
+      await cubit.close();
+    });
+
     testWidgets('opens create flow and validates amount input', (tester) async {
       setNarrowSurface(tester);
       final cubit = _TestMoneyGoalsCubit(
@@ -400,6 +477,47 @@ void main() {
       expect(find.text('Archive'), findsOneWidget);
       expect(find.text('Vacation'), findsOneWidget);
       expect(find.text('Archived'), findsOneWidget);
+
+      await cubit.close();
+    });
+
+    testWidgets('shows show more when goals list has more than five items', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 2200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      final cubit = _TestMoneyGoalsCubit(
+        MoneyGoalsState.initial(
+          hasSelectedFamily: true,
+        ).copyWith(
+          goals: [
+            _goal(id: 1, title: 'Goal 1'),
+            _goal(id: 2, title: 'Goal 2'),
+            _goal(id: 3, title: 'Goal 3'),
+            _goal(id: 4, title: 'Goal 4'),
+            _goal(id: 5, title: 'Goal 5'),
+            _goal(id: 6, title: 'Goal 6'),
+          ],
+          currentGoalId: 1,
+        ),
+      );
+
+      await tester.pumpWidget(buildSubject(cubit));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Show more'), findsOneWidget);
+      expect(find.text('Goal 5'), findsOneWidget);
+      expect(find.text('Goal 6'), findsNothing);
+
+      await tester.tap(find.byKey(const Key('goal-list-show-more-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Show less'), findsOneWidget);
+      expect(find.text('Goal 6'), findsOneWidget);
 
       await cubit.close();
     });

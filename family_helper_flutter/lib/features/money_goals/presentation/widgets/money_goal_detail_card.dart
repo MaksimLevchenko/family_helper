@@ -421,7 +421,7 @@ class _OverviewTab extends StatelessWidget {
   }
 }
 
-class _HistoryTab extends StatelessWidget {
+class _HistoryTab extends StatefulWidget {
   const _HistoryTab({
     super.key,
     required this.history,
@@ -432,7 +432,28 @@ class _HistoryTab extends StatelessWidget {
   final bool isLoading;
 
   @override
+  State<_HistoryTab> createState() => _HistoryTabState();
+}
+
+class _HistoryTabState extends State<_HistoryTab> {
+  static const _collapsedItemCount = 5;
+  bool _isExpanded = false;
+
+  @override
+  void didUpdateWidget(covariant _HistoryTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.history != widget.history) {
+      _isExpanded = false;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final visibleHistory =
+        _isExpanded || widget.history.length <= _collapsedItemCount
+        ? widget.history
+        : widget.history.take(_collapsedItemCount).toList();
+
     return Container(
       key: const Key('money-goal-history-section'),
       width: double.infinity,
@@ -449,12 +470,12 @@ class _HistoryTab extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 10),
-          if (isLoading)
+          if (widget.isLoading)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 20),
               child: Center(child: CircularProgressIndicator()),
             )
-          else if (history.isEmpty)
+          else if (widget.history.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(
@@ -465,9 +486,25 @@ class _HistoryTab extends StatelessWidget {
           else
             Column(
               children: [
-                for (var index = 0; index < history.length; index++) ...[
-                  _GoalHistoryItem(entry: history[index]),
-                  if (index != history.length - 1) const SizedBox(height: 8),
+                for (var index = 0; index < visibleHistory.length; index++) ...[
+                  _GoalHistoryItem(entry: visibleHistory[index]),
+                  if (index != visibleHistory.length - 1)
+                    const SizedBox(height: 8),
+                ],
+                if (widget.history.length > _collapsedItemCount) ...[
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      key: const Key('goal-history-show-more-button'),
+                      onPressed: () {
+                        setState(() {
+                          _isExpanded = !_isExpanded;
+                        });
+                      },
+                      child: Text(_isExpanded ? 'Show less' : 'Show more'),
+                    ),
+                  ),
                 ],
               ],
             ),

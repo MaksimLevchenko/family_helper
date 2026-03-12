@@ -243,10 +243,12 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
             message: 'No active goals. Archived goals stay below.',
           )
         else
-          ..._buildGoalListItems(
-            context,
-            activeGoals,
-            state.currentGoalId,
+          _ExpandableGoalList(
+            goals: activeGoals,
+            currentGoalId: state.currentGoalId,
+            onSelectGoal: (goalId) {
+              context.read<MoneyGoalsCubit>().setCurrentGoal(goalId);
+            },
           ),
         if (archivedGoals.isNotEmpty) ...[
           const SizedBox(height: 16),
@@ -256,31 +258,16 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
                 '${archivedGoals.length} goal${archivedGoals.length == 1 ? '' : 's'}',
           ),
           const SizedBox(height: 8),
-          ..._buildGoalListItems(
-            context,
-            archivedGoals,
-            state.currentGoalId,
+          _ExpandableGoalList(
+            goals: archivedGoals,
+            currentGoalId: state.currentGoalId,
+            onSelectGoal: (goalId) {
+              context.read<MoneyGoalsCubit>().setCurrentGoal(goalId);
+            },
           ),
         ],
       ],
     );
-  }
-
-  List<Widget> _buildGoalListItems(
-    BuildContext context,
-    List<MoneyGoalDto> goals,
-    int? currentGoalId,
-  ) {
-    return [
-      for (final goal in goals) ...[
-        MoneyGoalListItem(
-          goal: goal,
-          isSelected: goal.id == currentGoalId,
-          onTap: () => context.read<MoneyGoalsCubit>().setCurrentGoal(goal.id),
-        ),
-        const SizedBox(height: 8),
-      ],
-    ]..removeLast();
   }
 
   Future<void> _showCreateGoalOverlay(
@@ -494,10 +481,10 @@ class _GoalsSidebar extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 6),
-                ..._sidebarItems(
-                  activeGoals,
-                  state.currentGoalId,
-                  onSelectGoal,
+                _ExpandableGoalList(
+                  goals: activeGoals,
+                  currentGoalId: state.currentGoalId,
+                  onSelectGoal: onSelectGoal,
                 ),
               ],
               if (archivedGoals.isNotEmpty) ...[
@@ -507,10 +494,10 @@ class _GoalsSidebar extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 6),
-                ..._sidebarItems(
-                  archivedGoals,
-                  state.currentGoalId,
-                  onSelectGoal,
+                _ExpandableGoalList(
+                  goals: archivedGoals,
+                  currentGoalId: state.currentGoalId,
+                  onSelectGoal: onSelectGoal,
                 ),
               ],
             ],
@@ -519,22 +506,107 @@ class _GoalsSidebar extends StatelessWidget {
       ],
     );
   }
+}
 
-  List<Widget> _sidebarItems(
-    List<MoneyGoalDto> goals,
-    int? currentGoalId,
-    ValueChanged<int> onSelectGoal,
-  ) {
-    return [
-      for (final goal in goals) ...[
-        MoneyGoalListItem(
-          goal: goal,
-          isSelected: goal.id == currentGoalId,
-          onTap: () => onSelectGoal(goal.id),
-        ),
-        const SizedBox(height: 8),
+class _ExpandableGoalList extends StatefulWidget {
+  const _ExpandableGoalList({
+    required this.goals,
+    required this.currentGoalId,
+    required this.onSelectGoal,
+  });
+
+  final List<MoneyGoalDto> goals;
+  final int? currentGoalId;
+  final ValueChanged<int> onSelectGoal;
+
+  @override
+  State<_ExpandableGoalList> createState() => _ExpandableGoalListState();
+}
+
+class _ExpandableGoalListState extends State<_ExpandableGoalList> {
+  static const _collapsedGoalCount = 5;
+  bool _isExpanded = false;
+
+  @override
+  void didUpdateWidget(covariant _ExpandableGoalList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.goals != widget.goals &&
+        widget.goals.length <= _collapsedGoalCount) {
+      _isExpanded = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleGoals = _isExpanded
+        ? widget.goals
+        : _collapsedGoals(
+            widget.goals,
+            currentGoalId: widget.currentGoalId,
+          );
+
+    return Column(
+      children: [
+        for (var index = 0; index < visibleGoals.length; index++) ...[
+          MoneyGoalListItem(
+            goal: visibleGoals[index],
+            isSelected: visibleGoals[index].id == widget.currentGoalId,
+            onTap: () => widget.onSelectGoal(visibleGoals[index].id),
+          ),
+          if (index != visibleGoals.length - 1) const SizedBox(height: 8),
+        ],
+        if (widget.goals.length > _collapsedGoalCount) ...[
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              key: Key(
+                _isExpanded
+                    ? 'goal-list-show-less-button'
+                    : 'goal-list-show-more-button',
+              ),
+              onPressed: () {
+                setState(() {
+                  _isExpanded = !_isExpanded;
+                });
+              },
+              child: Text(_isExpanded ? 'Show less' : 'Show more'),
+            ),
+          ),
+        ],
       ],
-    ]..removeLast();
+    );
+  }
+
+  List<MoneyGoalDto> _collapsedGoals(
+    List<MoneyGoalDto> goals, {
+    required int? currentGoalId,
+  }) {
+    if (goals.length <= _collapsedGoalCount) {
+      return goals;
+    }
+
+    final firstGoals = goals.take(_collapsedGoalCount).toList();
+    if (currentGoalId == null ||
+        firstGoals.any((goal) => goal.id == currentGoalId)) {
+      return firstGoals;
+    }
+
+    MoneyGoalDto? selectedGoal;
+    for (final goal in goals) {
+      if (goal.id == currentGoalId) {
+        selectedGoal = goal;
+        break;
+      }
+    }
+    if (selectedGoal == null) {
+      return firstGoals;
+    }
+
+    return [
+      ...firstGoals.take(_collapsedGoalCount - 1),
+      selectedGoal,
+    ];
   }
 }
 

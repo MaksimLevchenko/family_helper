@@ -15,7 +15,7 @@ class AppApiClient {
       ..connectivityMonitor = FlutterConnectivityMonitor()
       ..authSessionManager = FlutterAuthSessionManager();
 
-    await client.auth.initialize();
+    await client.auth.restore();
     return AppApiClient._(client);
   }
 
