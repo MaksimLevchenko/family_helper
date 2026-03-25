@@ -15,32 +15,32 @@ import 'features/family_invites/providers/family_provider.dart';
 import 'ui_kit/startup_loading_screen.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  FlutterError.onError = (details) {
-    FlutterError.presentError(details);
-    AppErrorLogger.logUnhandled(
-      scope: 'flutter.framework',
-      error: details.exception,
-      stackTrace: details.stack ?? StackTrace.current,
-      context: {
-        'library': details.library,
-        'context': details.context?.toDescription(),
-      },
-    );
-  };
-
-  PlatformDispatcher.instance.onError = (error, stackTrace) {
-    AppErrorLogger.logUnhandled(
-      scope: 'flutter.platformDispatcher',
-      error: error,
-      stackTrace: stackTrace,
-    );
-    return false;
-  };
-
   runZonedGuarded(
     () {
+      WidgetsFlutterBinding.ensureInitialized();
+
+      FlutterError.onError = (details) {
+        FlutterError.presentError(details);
+        AppErrorLogger.logUnhandled(
+          scope: 'flutter.framework',
+          error: details.exception,
+          stackTrace: details.stack ?? StackTrace.current,
+          context: {
+            'library': details.library,
+            'context': details.context?.toDescription(),
+          },
+        );
+      };
+
+      PlatformDispatcher.instance.onError = (error, stackTrace) {
+        AppErrorLogger.logUnhandled(
+          scope: 'flutter.platformDispatcher',
+          error: error,
+          stackTrace: stackTrace,
+        );
+        return false;
+      };
+
       runApp(const FamilyHelperBootstrapApp());
     },
     (error, stackTrace) {
@@ -124,7 +124,14 @@ class _BootstrapShell extends StatelessWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
-      home: child,
+      onGenerateInitialRoutes: (initialRoute) {
+        return [
+          MaterialPageRoute<void>(
+            builder: (context) => child,
+            settings: RouteSettings(name: initialRoute),
+          ),
+        ];
+      },
     );
   }
 }

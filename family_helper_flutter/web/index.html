@@ -18,21 +18,193 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Family Helper keeps your family organized.">
+  <meta name="theme-color" content="#13605A">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="family_helper_flutter">
+  <meta name="apple-mobile-web-app-title" content="Family Helper">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>family_helper_flutter</title>
+  <title>Family Helper</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --fh-bg-top: #f3fffc;
+      --fh-bg-mid: #ddf7f1;
+      --fh-bg-bottom: #b7e6dd;
+      --fh-card: rgba(255, 255, 255, 0.58);
+      --fh-card-border: rgba(255, 255, 255, 0.35);
+      --fh-primary: #13605a;
+      --fh-primary-soft: rgba(19, 96, 90, 0.14);
+      --fh-text: #163432;
+      --fh-text-muted: #52706d;
+      --fh-orb: rgba(19, 96, 90, 0.12);
+      --fh-shadow: rgba(0, 0, 0, 0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fh-bg-top: #062a2a;
+        --fh-bg-mid: #0b3e3c;
+        --fh-bg-bottom: #13605a;
+        --fh-card: rgba(0, 0, 0, 0.16);
+        --fh-card-border: rgba(255, 255, 255, 0.18);
+        --fh-primary: #83d7c6;
+        --fh-primary-soft: rgba(131, 215, 198, 0.14);
+        --fh-text: #effcf8;
+        --fh-text-muted: #c3e4dd;
+        --fh-orb: rgba(255, 255, 255, 0.08);
+        --fh-shadow: rgba(0, 0, 0, 0.18);
+      }
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--fh-bg-mid);
+    }
+
+    body {
+      overflow: hidden;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    #startup-splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(135deg, var(--fh-bg-top), var(--fh-bg-mid), var(--fh-bg-bottom));
+      transition: opacity 180ms ease-out, visibility 180ms ease-out;
+      z-index: 9999;
+    }
+
+    #startup-splash.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .startup-orb {
+      position: absolute;
+      border-radius: 999px;
+      background: var(--fh-orb);
+      pointer-events: none;
+    }
+
+    .startup-orb.top {
+      top: -72px;
+      right: -48px;
+      width: 220px;
+      height: 220px;
+    }
+
+    .startup-orb.bottom {
+      left: -60px;
+      bottom: -110px;
+      width: 260px;
+      height: 260px;
+    }
+
+    .startup-card {
+      position: relative;
+      width: min(360px, calc(100vw - 48px));
+      box-sizing: border-box;
+      padding: 32px 28px;
+      border-radius: 28px;
+      border: 1px solid var(--fh-card-border);
+      background: var(--fh-card);
+      box-shadow: 0 18px 32px var(--fh-shadow);
+      backdrop-filter: blur(16px);
+      text-align: center;
+    }
+
+    .startup-badge {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 24px;
+      border-radius: 24px;
+      background: var(--fh-primary-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--fh-primary);
+      font-size: 36px;
+      line-height: 1;
+    }
+
+    .startup-title {
+      margin: 0;
+      color: var(--fh-text);
+      font-size: clamp(28px, 5vw, 34px);
+      font-weight: 800;
+      letter-spacing: -0.4px;
+    }
+
+    .startup-message {
+      margin: 10px 0 24px;
+      color: var(--fh-text-muted);
+      font-size: 16px;
+      line-height: 1.45;
+    }
+
+    .startup-spinner {
+      width: 28px;
+      height: 28px;
+      margin: 0 auto;
+      border-radius: 50%;
+      border: 3px solid rgba(19, 96, 90, 0.18);
+      border-top-color: var(--fh-primary);
+      animation: startup-spin 0.9s linear infinite;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .startup-spinner {
+        border-color: rgba(131, 215, 198, 0.18);
+        border-top-color: var(--fh-primary);
+      }
+    }
+
+    @keyframes startup-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 <body>
+  <div id="startup-splash" aria-hidden="true">
+    <div class="startup-orb top"></div>
+    <div class="startup-orb bottom"></div>
+    <div class="startup-card">
+      <div class="startup-badge">♥</div>
+      <h1 class="startup-title">Family Helper</h1>
+      <p class="startup-message">Preparing your space...</p>
+      <div class="startup-spinner"></div>
+    </div>
+  </div>
+  <script>
+    window.addEventListener("flutter-first-frame", function () {
+      const splash = document.getElementById("startup-splash");
+      if (!splash) {
+        return;
+      }
+
+      splash.classList.add("is-hidden");
+      window.setTimeout(function () {
+        splash.remove();
+      }, 220);
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

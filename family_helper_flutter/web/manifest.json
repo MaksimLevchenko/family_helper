@@ -1,11 +1,11 @@
 {
-    "name": "family_helper_flutter",
-    "short_name": "family_helper_flutter",
+    "name": "Family Helper",
+    "short_name": "Family Helper",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#DDF7F1",
+    "theme_color": "#13605A",
+    "description": "Family Helper keeps your family organized.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
