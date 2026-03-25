@@ -12,36 +12,36 @@ import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
 import 'features/family_invites/providers/family_provider.dart';
+import 'ui_kit/startup_loading_screen.dart';
 
-Future<void> main() async {
-  await runZonedGuarded(
-    () async {
-      WidgetsFlutterBinding.ensureInitialized();
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
 
-      FlutterError.onError = (details) {
-        FlutterError.presentError(details);
-        AppErrorLogger.logUnhandled(
-          scope: 'flutter.framework',
-          error: details.exception,
-          stackTrace: details.stack ?? StackTrace.current,
-          context: {
-            'library': details.library,
-            'context': details.context?.toDescription(),
-          },
-        );
-      };
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    AppErrorLogger.logUnhandled(
+      scope: 'flutter.framework',
+      error: details.exception,
+      stackTrace: details.stack ?? StackTrace.current,
+      context: {
+        'library': details.library,
+        'context': details.context?.toDescription(),
+      },
+    );
+  };
 
-      PlatformDispatcher.instance.onError = (error, stackTrace) {
-        AppErrorLogger.logUnhandled(
-          scope: 'flutter.platformDispatcher',
-          error: error,
-          stackTrace: stackTrace,
-        );
-        return false;
-      };
+  PlatformDispatcher.instance.onError = (error, stackTrace) {
+    AppErrorLogger.logUnhandled(
+      scope: 'flutter.platformDispatcher',
+      error: error,
+      stackTrace: stackTrace,
+    );
+    return false;
+  };
 
-      await setupServiceLocator();
-      runApp(const FamilyHelperApp());
+  runZonedGuarded(
+    () {
+      runApp(const FamilyHelperBootstrapApp());
     },
     (error, stackTrace) {
       AppErrorLogger.logUnhandled(
@@ -51,6 +51,82 @@ Future<void> main() async {
       );
     },
   );
+}
+
+class FamilyHelperBootstrapApp extends StatefulWidget {
+  const FamilyHelperBootstrapApp({super.key});
+
+  @override
+  State<FamilyHelperBootstrapApp> createState() =>
+      _FamilyHelperBootstrapAppState();
+}
+
+class _FamilyHelperBootstrapAppState extends State<FamilyHelperBootstrapApp> {
+  late final Future<void> _bootstrapFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _bootstrapFuture = _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    try {
+      await setupServiceLocator();
+    } catch (error, stackTrace) {
+      AppErrorLogger.logUnhandled(
+        scope: 'app.bootstrap',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _bootstrapFuture,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const _BootstrapShell(
+            child: StartupLoadingScreen(
+              title: 'Family Helper',
+              message: 'Unable to start the app.',
+              isLoading: false,
+            ),
+          );
+        }
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const _BootstrapShell(
+            child: StartupLoadingScreen(
+              title: 'Family Helper',
+              message: 'Preparing your space...',
+            ),
+          );
+        }
+        return const FamilyHelperApp();
+      },
+    );
+  }
+}
+
+class _BootstrapShell extends StatelessWidget {
+  const _BootstrapShell({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Family Helper',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.system,
+      home: child,
+    );
+  }
 }
 
 class FamilyHelperApp extends StatefulWidget {
