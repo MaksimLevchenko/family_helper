@@ -5,7 +5,7 @@ import '../../core/auth/auth_context.dart';
 import '../../core/clock/clock_service.dart';
 import '../../core/idempotency/idempotency_service.dart';
 import '../../core/rbac/ensure_family_role_service.dart';
-import '../../core/storage/minio_storage_service.dart';
+import '../../core/storage/private_media_storage_service.dart';
 import '../../core/sync/change_feed_service.dart';
 import '../../generated/protocol.dart';
 
@@ -15,15 +15,15 @@ class MediaService {
     this.clock = const ClockService(),
     this.idempotency = const IdempotencyService(),
     this.rbac = const EnsureFamilyRoleService(),
-    MinioStorageService? storage,
+    PrivateMediaStorageService? storage,
     this.changeFeed = const ChangeFeedService(),
-  }) : storage = storage ?? MinioStorageService();
+  }) : storage = storage ?? PrivateMediaStorageService();
 
   final AuthContext authContext;
   final ClockService clock;
   final IdempotencyService idempotency;
   final EnsureFamilyRoleService rbac;
-  final MinioStorageService storage;
+  final PrivateMediaStorageService storage;
   final ChangeFeedService changeFeed;
 
   Future<UploadSessionDto> createUploadSession(
@@ -91,8 +91,9 @@ class MediaService {
           return UploadSessionDto(
             mediaId: existing.id!,
             objectKey: existing.objectKey,
-            uploadUrl: await storage.presignedPutUrl(
-              existing.objectKey,
+            uploadUrl: await storage.createDirectUploadUrl(
+              session,
+              path: existing.objectKey,
             ),
             expiresAt: existing.uploadExpiresAt!,
           );
@@ -108,7 +109,7 @@ class MediaService {
           familyId: familyId,
           uploadedByProfileId: profileId,
           objectKey: objectKey,
-          bucket: storage.bucket,
+          bucket: PrivateMediaStorageService.storageId,
           mimeType: mimeType,
           sizeBytes: sizeBytes,
           status: 'uploading',
@@ -125,7 +126,10 @@ class MediaService {
       return UploadSessionDto(
         mediaId: row.id!,
         objectKey: row.objectKey,
-        uploadUrl: await storage.presignedPutUrl(row.objectKey),
+        uploadUrl: await storage.createDirectUploadUrl(
+          session,
+          path: row.objectKey,
+        ),
         expiresAt: row.uploadExpiresAt!,
       );
     });
@@ -138,6 +142,7 @@ class MediaService {
     String? thumbnailKey,
   }) async {
     final authUserId = authContext.requireAuthUserId(session).uuid;
+    final storage = this.storage.forSession(session);
 
     return session.db.transaction((transaction) async {
       final isFresh = await idempotency.tryBegin(
@@ -178,6 +183,13 @@ class MediaService {
       final expiresAt = current.uploadExpiresAt;
       if (expiresAt != null && expiresAt.isBefore(now)) {
         throw AccessDeniedException(message: 'Upload session has expired.');
+      }
+      final isUploaded = await storage.verifyUpload(
+        session,
+        path: current.objectKey,
+      );
+      if (!isUploaded) {
+        throw AccessDeniedException(message: 'Upload was not completed.');
       }
       await MediaObjectRow.db.updateRow(
         session,
@@ -269,7 +281,11 @@ class MediaService {
       );
     }
 
-    return storage.presignedGetUrl(row.objectKey);
+    return storage.createSignedDownloadUrl(
+      session,
+      path: row.objectKey,
+      mimeType: row.mimeType,
+    );
   }
 
   Future<OperationResult> softDelete(

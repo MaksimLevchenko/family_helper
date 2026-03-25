@@ -11,6 +11,7 @@ import 'core/logging/app_error_logger.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
+import 'features/family_invites/providers/family_provider.dart';
 
 Future<void> main() async {
   await runZonedGuarded(
@@ -61,15 +62,19 @@ class FamilyHelperApp extends StatefulWidget {
 
 class _FamilyHelperAppState extends State<FamilyHelperApp> {
   late final GoRouter _router;
+  late final FamilySelectionCubit _familySelectionCubit;
 
   @override
   void initState() {
     super.initState();
-    _router = createAppRouter(getIt<AuthCubit>());
+    _familySelectionCubit = FamilySelectionCubit();
+    _familySelectionCubit.bootstrap();
+    _router = createAppRouter(getIt<AuthCubit>(), _familySelectionCubit);
   }
 
   @override
   void dispose() {
+    unawaited(_familySelectionCubit.close());
     unawaited(resetServiceLocator());
     super.dispose();
   }
@@ -80,6 +85,7 @@ class _FamilyHelperAppState extends State<FamilyHelperApp> {
       providers: [
         BlocProvider<ThemeCubit>.value(value: getIt<ThemeCubit>()),
         BlocProvider<AuthCubit>.value(value: getIt<AuthCubit>()),
+        BlocProvider<FamilySelectionCubit>.value(value: _familySelectionCubit),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(
         builder: (context, themeMode) {

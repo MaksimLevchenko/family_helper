@@ -25,26 +25,34 @@ class IdempotencyService {
     required String clientOperationId,
     Transaction? transaction,
   }) async {
-    try {
-      await insertIdempotencyKey(
-        session,
-        row: IdempotencyKeyRow(
-          actorAuthUserId: actorAuthUserId,
-          action: action,
-          clientOperationId: clientOperationId,
-          resourceType: null,
-          resourceId: null,
-          createdAt: clock.nowUtc(),
-        ),
-        transaction: transaction,
-      );
-      return true;
-    } on DatabaseQueryException catch (error) {
-      if (error.code == '23505') {
-        return false;
-      }
-      rethrow;
-    }
+    final result = await session.db.unsafeQuery(
+      '''
+      INSERT INTO "idempotency_key" (
+        "actorAuthUserId",
+        "action",
+        "clientOperationId",
+        "resourceType",
+        "resourceId",
+        "createdAt"
+      ) VALUES (
+        ${EscapedExpression(actorAuthUserId)},
+        ${EscapedExpression(action)},
+        ${EscapedExpression(clientOperationId)},
+        ${EscapedExpression(null)},
+        ${EscapedExpression(null)},
+        ${EscapedExpression(clock.nowUtc())}
+      )
+      ON CONFLICT (
+        "actorAuthUserId",
+        "action",
+        "clientOperationId"
+      ) DO NOTHING
+      RETURNING "id"
+      ''',
+      transaction: transaction,
+    );
+
+    return result.isNotEmpty;
   }
 
   Future<void> insertIdempotencyKey(

@@ -24,7 +24,9 @@ void registerRepositories(GetIt getIt) {
     () => NotificationsRepository(getIt()),
   );
   getIt.registerLazySingleton<MediaRepository>(() => MediaRepository(getIt()));
-  getIt.registerLazySingleton<PrivacyRepository>(() => PrivacyRepository(getIt()));
+  getIt.registerLazySingleton<PrivacyRepositoryContract>(
+    () => PrivacyRepository(getIt()),
+  );
   getIt.registerLazySingleton<ProfileRepositoryContract>(
     () => ProfileRepository(getIt()),
   );

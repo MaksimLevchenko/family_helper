@@ -6,29 +6,31 @@ import 'package:serverpod/serverpod.dart';
 import '../../core/auth/auth_context.dart';
 import '../../core/clock/clock_service.dart';
 import '../../core/idempotency/idempotency_service.dart';
-import '../../core/storage/minio_storage_service.dart';
+import '../../core/storage/private_media_storage_service.dart';
 import '../../generated/protocol.dart';
+import '../../workers/future_call_registry.dart';
 
 class PrivacyService {
   PrivacyService({
     this.authContext = const AuthContext(),
     this.clock = const ClockService(),
     this.idempotency = const IdempotencyService(),
-    MinioStorageService? storage,
-  }) : storage = storage ?? MinioStorageService();
+    PrivateMediaStorageService? storage,
+  }) : storage = storage ?? PrivateMediaStorageService();
 
   final AuthContext authContext;
   final ClockService clock;
   final IdempotencyService idempotency;
-  final MinioStorageService storage;
+  final PrivateMediaStorageService storage;
 
   Future<PrivacyExportJobDto> requestExport(
     Session session, {
     required String clientOperationId,
   }) async {
     final authUserId = authContext.requireAuthUserId(session).uuid;
+    var shouldScheduleImmediateProcessing = false;
 
-    return session.db.transaction((transaction) async {
+    final job = await session.db.transaction((transaction) async {
       final profileId = await authContext.ensureProfileId(
         session,
         transaction: transaction,
@@ -69,9 +71,18 @@ class PrivacyService {
         ),
         transaction: transaction,
       );
+      shouldScheduleImmediateProcessing = true;
 
       return _mapExport(row);
     });
+
+    if (shouldScheduleImmediateProcessing) {
+      await FutureCallRegistry.schedulePrivacyExportNow(
+        session.server.serverpod,
+      );
+    }
+
+    return job;
   }
 
   Future<AccountDeletionStatusDto> requestAccountDeletion(
@@ -219,13 +230,18 @@ class PrivacyService {
           objectKey: objectKey,
         );
         final bytes = Uint8List.fromList(utf8.encode(jsonEncode(payload)));
-        await storageClient.uploadBytes(
-          objectKey,
-          bytes,
-          contentType: 'application/json',
+        await storageClient.storeBytes(
+          session,
+          path: objectKey,
+          bytes: bytes,
         );
-        final signedUrl = await storageClient.presignedGetUrl(objectKey);
         final expiresAt = clock.nowUtc().add(const Duration(hours: 24));
+        final signedUrl = storageClient.createSignedDownloadUrl(
+          session,
+          path: objectKey,
+          mimeType: 'application/json',
+          expiresAt: expiresAt,
+        );
 
         await PrivacyExportJobRow.db.updateById(
           session,
@@ -239,7 +255,14 @@ class PrivacyService {
         );
 
         processed += 1;
-      } catch (_) {
+      } catch (error, stackTrace) {
+        session.log(
+          'privacy export job failed '
+          '(jobId=$id, profileId=$profileId, objectKey=$objectKey)',
+          level: LogLevel.error,
+          exception: error,
+          stackTrace: stackTrace,
+        );
         await PrivacyExportJobRow.db.updateById(
           session,
           id,

@@ -15,7 +15,6 @@ class ServerUrlResolver {
     );
   }
 
-  @visibleForTesting
   static String normalize(
     String serverUrl, {
     required TargetPlatform platform,

@@ -42,7 +42,7 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
   @override
   void initState() {
     super.initState();
-    _familySelectionCubit = FamilySelectionCubit();
+    _familySelectionCubit = context.read<FamilySelectionCubit>();
     _syncCubit = SyncCubit(getIt());
     _familyMembersCubit = FamilyMembersCubit(
       repository: getIt(),
@@ -111,8 +111,6 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
         await Future.wait(reloads);
       },
     );
-
-    _familySelectionCubit.bootstrap();
   }
 
   @override
@@ -128,7 +126,6 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
     _calendarCubit.close();
     _familyMembersCubit.close();
     _syncCubit.close();
-    _familySelectionCubit.close();
     super.dispose();
   }
 
@@ -136,9 +133,6 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<FamilySelectionCubit>.value(
-          value: _familySelectionCubit,
-        ),
         BlocProvider<SyncCubit>.value(value: _syncCubit),
         BlocProvider<FamilyMembersCubit>.value(
           value: _familyMembersCubit,

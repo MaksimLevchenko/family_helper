@@ -2,18 +2,18 @@ import 'package:family_helper_server/src/workers/future_call_registry.dart';
 import 'package:serverpod/serverpod.dart';
 
 import '../core/clock/clock_service.dart';
-import '../core/storage/minio_storage_service.dart';
+import '../core/storage/private_media_storage_service.dart';
 import '../generated/protocol.dart';
 
 class MediaCleanupCall extends FutureCall<MediaCleanupPayload> {
   MediaCleanupCall({
     ClockService? clock,
-    MinioStorageService? storage,
+    PrivateMediaStorageService? storage,
   }) : clock = clock ?? const ClockService(),
-       storage = storage ?? MinioStorageService();
+       storage = storage ?? PrivateMediaStorageService();
 
   final ClockService clock;
-  final MinioStorageService storage;
+  final PrivateMediaStorageService storage;
 
   @override
   Future<void> invoke(Session session, MediaCleanupPayload? object) async {
@@ -26,7 +26,7 @@ class MediaCleanupCall extends FutureCall<MediaCleanupPayload> {
       final storageClient = storage.forSession(session);
       for (final row in expired) {
         try {
-          await storageClient.deleteObject(row.objectKey);
+          await storageClient.deleteObject(session, path: row.objectKey);
         } catch (_) {
           // Ignore missing objects and continue cleaning database state.
         }

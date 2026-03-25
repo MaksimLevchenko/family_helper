@@ -8,6 +8,7 @@ import '../../features/auth_profile/presentation/registration_flow_screens.dart'
 import '../../features/auth_profile/presentation/sign_in_screen.dart';
 import '../../features/auth_profile/presentation/profile_screen.dart';
 import '../../features/calendar/presentation/calendar_screen.dart';
+import '../../features/family_invites/providers/family_provider.dart';
 import '../../features/family_invites/presentation/family_screen.dart';
 import '../../features/home_overview/presentation/home_shell_screen.dart';
 import '../../features/home_overview/presentation/home_overview_screen.dart';
@@ -21,8 +22,14 @@ import '../../ui_kit/loading_state.dart';
 import '../auth/auth_session.dart';
 import 'app_routes.dart';
 
-GoRouter createAppRouter(AuthCubit authCubit) {
-  final refresh = _StreamRefreshNotifier(authCubit.stream);
+GoRouter createAppRouter(
+  AuthCubit authCubit,
+  FamilySelectionCubit familySelectionCubit,
+) {
+  final refresh = _StreamRefreshNotifier([
+    authCubit.stream,
+    familySelectionCubit.stream,
+  ]);
 
   return GoRouter(
     initialLocation: AppRoutes.loading,
@@ -113,12 +120,20 @@ GoRouter createAppRouter(AuthCubit authCubit) {
       ),
     ],
     redirect: (context, state) {
-      return redirectForAuthState(authCubit.state, state.matchedLocation);
+      return redirectForAuthState(
+        authCubit.state,
+        state.matchedLocation,
+        hasSelectedFamily: familySelectionCubit.state != null,
+      );
     },
   );
 }
 
-String? redirectForAuthState(AuthSessionState auth, String matchedLocation) {
+String? redirectForAuthState(
+  AuthSessionState auth,
+  String matchedLocation, {
+  required bool hasSelectedFamily,
+}) {
   final isLoading = matchedLocation == AppRoutes.loading;
   final isSignIn = matchedLocation == AppRoutes.signIn;
   final isRegistration = matchedLocation.startsWith('/register/');
@@ -144,21 +159,31 @@ String? redirectForAuthState(AuthSessionState auth, String matchedLocation) {
   if (isAuthenticated && !isHome) {
     return AppRoutes.overview;
   }
+  if (!hasSelectedFamily &&
+      AppRoutes.isFamilyRestrictedLocation(matchedLocation)) {
+    return AppRoutes.overview;
+  }
   return null;
 }
 
 class _StreamRefreshNotifier extends ChangeNotifier {
-  _StreamRefreshNotifier(Stream<dynamic> stream) {
-    _subscription = stream.listen((_) {
-      notifyListeners();
-    });
+  _StreamRefreshNotifier(List<Stream<dynamic>> streams) {
+    _subscriptions = streams
+        .map(
+          (stream) => stream.listen((_) {
+            notifyListeners();
+          }),
+        )
+        .toList();
   }
 
-  late final StreamSubscription<dynamic> _subscription;
+  late final List<StreamSubscription<dynamic>> _subscriptions;
 
   @override
   void dispose() {
-    _subscription.cancel();
+    for (final subscription in _subscriptions) {
+      subscription.cancel();
+    }
     super.dispose();
   }
 }

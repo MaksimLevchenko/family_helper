@@ -32,32 +32,12 @@ flutter run
 - DB and Serverpod configs in `family_helper_server/config/*.yaml`
 - Copy `family_helper_server/config/passwords.yaml.example` to `family_helper_server/config/passwords.yaml`
 - `FAMILY_MEMBER_LIMIT` (default `2`)
-- MinIO vars:
-  - `MINIO_ENDPOINT`
-  - `MINIO_BUCKET`
-  - `MINIO_SECRET_KEY`
-  - `MINIO_PUBLIC_BASE_URL` (optional)
-  - `MINIO_USE_SSL` (optional, default `false`)
-  - `SIGN_URL_TTL` (optional, default `900`)
-  - `MINIO_FORCE_REAL_IN_TEST` (optional, default `false`; forces real MinIO in test mode)
+- `mediaUrlSignSecret` in `family_helper_server/config/passwords.yaml`
+- `SIGN_URL_TTL` (optional, default `900`)
 
 ### Client
 - Optional `SERVER_URL` via `--dart-define`
 - In Flutter debug on Android emulator, loopback addresses are remapped to `10.0.2.2`
-
-## MinIO Example (docker-compose snippet)
-```yaml
-services:
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: minio123
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-```
 
 ## Local docker-compose secrets
 Set `family_helper_server/.env` from `family_helper_server/.env.example` before running:
@@ -74,10 +54,27 @@ cp .env.example .env
 4. Create task with `generateOnComplete`, complete it, verify next task appears once.
 5. Create shopping list, toggle bought, reorder items.
 6. Create money goal, add contributions, verify aggregate.
-7. Upload media via presigned flow, complete upload, open signed URL.
+7. Upload media, complete upload, and open the signed private download URL.
 8. Set notification preference, schedule reminder, process due reminders.
 9. Request privacy export and account deletion.
 10. Toggle theme and verify UI; test offline queue replay.
+
+## WSL Analyzer Compatibility
+If WSL tools are launched after `flutter pub get` last ran on Windows,
+`.dart_tool/package_config.json` may contain package URIs like
+`file:///D:/PubCache/...`. Linux then tries to read those as
+`/D:/PubCache/...` and package resolution fails.
+
+To keep the Windows setup unchanged and still let WSL resolve the same cache,
+create a one-time drive alias:
+
+```bash
+cd /mnt/d/GUAP/family_helper
+./tool/wsl_enable_windows_drive_aliases.sh d
+```
+
+This creates `/D:` as a symlink to `/mnt/d`, so WSL can read the existing
+Windows `D:\PubCache` without regenerating the Windows package config.
 
 ## Docs
 - Server setup: `family_helper_server/README.server.md`

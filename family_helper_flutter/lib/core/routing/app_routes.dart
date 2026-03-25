@@ -19,7 +19,7 @@ class AppRoutes {
   static const localReminders = '/home/settings/local-reminders';
   static const privacy = '/home/settings/privacy';
 
-  static const tabLocations = <String>[
+  static const _fullTabLocations = <String>[
     overview,
     calendar,
     tasks,
@@ -28,19 +28,41 @@ class AppRoutes {
     settings,
   ];
 
-  static int bottomNavIndexFor(String location) {
-    if (location == calendar) return 1;
-    if (location == tasks) return 2;
-    if (location == lists) return 3;
-    if (location == goals) return 4;
-    if (location.startsWith(settings)) return 5;
-    return 0;
+  static const _minimalTabLocations = <String>[overview, settings];
+
+  static bool isFamilyRestrictedLocation(String location) {
+    return location == calendar ||
+        location == tasks ||
+        location == lists ||
+        location == goals;
   }
 
-  static String locationForTabIndex(int index) {
+  static int bottomNavIndexFor(String location, {required bool hasFamily}) {
+    final tabLocation = _tabLocationForLocation(location);
+    final tabLocations = _tabLocationsFor(hasFamily: hasFamily);
+    final index = tabLocations.indexOf(tabLocation);
+    return index == -1 ? 0 : index;
+  }
+
+  static String locationForTabIndex(int index, {required bool hasFamily}) {
+    final tabLocations = _tabLocationsFor(hasFamily: hasFamily);
     if (index < 0 || index >= tabLocations.length) {
       return overview;
     }
     return tabLocations[index];
+  }
+
+  static List<String> _tabLocationsFor({required bool hasFamily}) {
+    return hasFamily ? _fullTabLocations : _minimalTabLocations;
+  }
+
+  static String _tabLocationForLocation(String location) {
+    if (location.startsWith(settings)) {
+      return settings;
+    }
+    if (_fullTabLocations.contains(location)) {
+      return location;
+    }
+    return overview;
   }
 }

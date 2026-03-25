@@ -68,6 +68,15 @@ final class FutureCallRegistry {
     );
   }
 
+  static Future<void> schedulePrivacyExportNow(Serverpod pod) {
+    return _scheduleUnique(
+      pod,
+      callName: FutureCallNames.privacyExport,
+      delay: Duration.zero,
+      identifier: FutureCallNames.privacyExportIdentifier,
+    );
+  }
+
   static Future<void> scheduleAccountDeletion(Serverpod pod) {
     return _scheduleUnique(
       pod,

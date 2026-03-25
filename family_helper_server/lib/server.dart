@@ -9,6 +9,7 @@ import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
 import 'src/workers/future_call_registry.dart';
 import 'src/web/routes/app_config_route.dart';
+import 'src/web/routes/private_media_route.dart';
 import 'src/web/routes/root.dart';
 
 /// The starting point of the Serverpod server.
@@ -50,6 +51,7 @@ void run(List<String> args) async {
     AppConfigRoute(apiConfig: pod.config.apiServer),
     '/app/assets/assets/config.json',
   );
+  pod.webServer.addRoute(PrivateMediaRoute(), '/private-media');
 
   // Checks if the flutter web app has been built and serves it if it has.
   final appDir = Directory(Uri(path: 'web/app').toFilePath());

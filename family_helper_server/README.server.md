@@ -4,21 +4,15 @@
 - Serverpod 3.2.3
 - PostgreSQL
 - Serverpod auth (email + JWT refresh)
-- MinIO/S3 signed URLs
+- Serverpod database-backed file storage + signed private URLs
 - FutureCall workers for reminders/media cleanup/privacy
 
 ## Environment
 Create `config/passwords.yaml` from `config/passwords.yaml.example`, then set env:
 
 - `FAMILY_MEMBER_LIMIT` (default `2`)
-- MinIO settings in `config/passwords.yaml`:
-  - `minioEndpoint`
-  - `minioBucket`
-  - `minioAccessKey`
-  - `minioSecretKey`
-  - `minioPublicBaseUrl`
-  - `minioUseSsl`
-  - `minioSignUrlTtl`
+- Media signing settings in `config/passwords.yaml`:
+  - `mediaUrlSignSecret`
 - SMTP settings for email verification / password reset (optional in `development` / `test`):
   - `smtpHost`
   - `smtpPort`
@@ -28,19 +22,13 @@ Create `config/passwords.yaml` from `config/passwords.yaml.example`, then set en
   - `smtpFromName`
   - `smtpUseSsl`
   - `smtpAllowInsecure`
-- Optional for test runs:
-  - `MINIO_FORCE_REAL_IN_TEST=true` to disable mock storage fallback in `test` mode
+- Optional:
+  - `SIGN_URL_TTL` (default `900`) to change private download URL TTL in seconds
 
 Recommended local values:
 
 ```bash
-minioEndpoint: 'localhost:9000'
-minioBucket: 'family-helper'
-minioAccessKey: 'replace-me'
-minioSecretKey: 'replace-me'
-minioPublicBaseUrl: 'http://localhost:9000'
-minioUseSsl: 'false'
-minioSignUrlTtl: '900'
+mediaUrlSignSecret: 'replace-me'
 ```
 
 ## Local Infra
@@ -56,15 +44,8 @@ Before running compose, create `.env`:
 cp .env.example .env
 ```
 
-This starts Postgres, Redis, and MinIO using values from `.env`.
-It also starts MinIO on:
-- API: `http://localhost:9000`
-- Console: `http://localhost:9001`
-
-`minio_init` bootstraps:
-- bucket `${MINIO_BUCKET}` (default `family-helper`)
-- CORS for local web origins
-- private bucket for presigned upload/download flows
+This starts Postgres and Redis using values from `.env`.
+This starts Postgres and Redis for the API. Uploaded media bytes are stored in Postgres through Serverpod's built-in cloud storage tables.
 
 ## Migrations
 Migrations are in `migrations/` and include:
@@ -105,8 +86,6 @@ dart bin/main.dart --apply-repair-migration
 ```bash
 dart bin/main.dart
 ```
-
-MinIO root user/password for Docker bootstrap are read from `.env` by `docker compose`.
 
 ## Generate Protocol / Endpoints
 ```bash

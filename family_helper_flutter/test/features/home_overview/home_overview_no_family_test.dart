@@ -1,4 +1,5 @@
 import 'package:family_helper_client/family_helper_client.dart';
+import 'package:family_helper_flutter/core/routing/app_routes.dart';
 import 'package:family_helper_flutter/core/theme/app_theme.dart';
 import 'package:family_helper_flutter/features/calendar/providers/calendar_provider.dart';
 import 'package:family_helper_flutter/features/family_invites/providers/family_provider.dart';
@@ -11,9 +12,10 @@ import 'package:family_helper_flutter/features/tasks/providers/tasks_provider.da
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 class _TasksCubitStub extends Cubit<TasksState> implements TasksCubit {
-  _TasksCubitStub() : super(TasksState.initial());
+  _TasksCubitStub(super.initialState);
 
   @override
   Future<void> complete(TaskDto task) async {}
@@ -34,7 +36,7 @@ class _TasksCubitStub extends Cubit<TasksState> implements TasksCubit {
 }
 
 class _CalendarCubitStub extends Cubit<CalendarState> implements CalendarCubit {
-  _CalendarCubitStub() : super(CalendarState.initial());
+  _CalendarCubitStub(super.initialState);
 
   @override
   Future<void> cancelOccurrence(CalendarInstanceDto instance) async {}
@@ -55,7 +57,7 @@ class _CalendarCubitStub extends Cubit<CalendarState> implements CalendarCubit {
 }
 
 class _ListsCubitStub extends Cubit<ListsState> implements ListsCubit {
-  _ListsCubitStub() : super(ListsState.initial());
+  _ListsCubitStub(super.initialState);
 
   @override
   Future<void> addItem({
@@ -86,7 +88,7 @@ class _ListsCubitStub extends Cubit<ListsState> implements ListsCubit {
 
 class _MoneyGoalsCubitStub extends Cubit<MoneyGoalsState>
     implements MoneyGoalsCubit {
-  _MoneyGoalsCubitStub() : super(MoneyGoalsState.initial());
+  _MoneyGoalsCubitStub(super.initialState);
 
   @override
   Future<bool> addContribution({
@@ -121,8 +123,9 @@ class _MoneyGoalsCubitStub extends Cubit<MoneyGoalsState>
   Future<void> reload() async {}
 
   @override
-  void reset({bool hasSelectedFamily = false}) =>
-      emit(MoneyGoalsState.initial(hasSelectedFamily: hasSelectedFamily));
+  void reset({bool hasSelectedFamily = false}) {
+    emit(MoneyGoalsState.initial(hasSelectedFamily: hasSelectedFamily));
+  }
 
   @override
   void setCurrentGoal(int goalId) {}
@@ -138,9 +141,6 @@ class _MoneyGoalsCubitStub extends Cubit<MoneyGoalsState>
 class _NotificationsCubitStub extends Cubit<NotificationsState>
     implements NotificationsCubit {
   _NotificationsCubitStub(super.initialState);
-
-  bool requestedPermission = false;
-  bool openedSystemSettings = false;
 
   @override
   Future<ReminderActionResult> ensureReminder({
@@ -160,17 +160,10 @@ class _NotificationsCubitStub extends Cubit<NotificationsState>
   Future<void> loadPreferences() async {}
 
   @override
-  Future<bool> openSystemNotificationSettings() async {
-    openedSystemSettings = true;
-    return true;
-  }
+  Future<bool> openSystemNotificationSettings() async => true;
 
   @override
   Future<NotificationPermissionStatus> requestSystemPermission() async {
-    requestedPermission = true;
-    emit(
-      state.copyWith(permissionStatus: NotificationPermissionStatus.granted),
-    );
     return state.permissionStatus;
   }
 
@@ -224,73 +217,108 @@ class _TestFamilySelectionCubit extends FamilySelectionCubit {
   Future<void> bootstrap() async {}
 }
 
-Widget _buildSubject(
-  _NotificationsCubitStub notificationsCubit, {
+Widget _buildSubject({
   required int? familyId,
+  required TasksState tasksState,
+  required CalendarState calendarState,
+  required ListsState listsState,
+  required MoneyGoalsState moneyGoalsState,
 }) {
+  final router = GoRouter(
+    initialLocation: AppRoutes.overview,
+    routes: [
+      GoRoute(
+        path: AppRoutes.overview,
+        builder: (context, state) => const HomeOverviewScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.family,
+        builder: (context, state) =>
+            const Scaffold(body: Text('Family settings page')),
+      ),
+    ],
+  );
+
   return MultiBlocProvider(
     providers: [
       BlocProvider<FamilySelectionCubit>(
         create: (_) => _TestFamilySelectionCubit(familyId),
       ),
-      BlocProvider<TasksCubit>.value(value: _TasksCubitStub()),
-      BlocProvider<CalendarCubit>.value(value: _CalendarCubitStub()),
-      BlocProvider<ListsCubit>.value(value: _ListsCubitStub()),
-      BlocProvider<MoneyGoalsCubit>.value(value: _MoneyGoalsCubitStub()),
-      BlocProvider<NotificationsCubit>.value(value: notificationsCubit),
+      BlocProvider<TasksCubit>(create: (_) => _TasksCubitStub(tasksState)),
+      BlocProvider<CalendarCubit>(
+        create: (_) => _CalendarCubitStub(calendarState),
+      ),
+      BlocProvider<ListsCubit>(create: (_) => _ListsCubitStub(listsState)),
+      BlocProvider<MoneyGoalsCubit>(
+        create: (_) => _MoneyGoalsCubitStub(moneyGoalsState),
+      ),
+      BlocProvider<NotificationsCubit>(
+        create: (_) => _NotificationsCubitStub(NotificationsState.initial()),
+      ),
     ],
-    child: MaterialApp(
+    child: MaterialApp.router(
       theme: AppTheme.light(),
-      home: const HomeOverviewScreen(),
+      routerConfig: router,
     ),
   );
 }
 
 void main() {
-  testWidgets(
-    'HomeOverviewScreen shows permission card before notifications are allowed',
-    (
-      tester,
-    ) async {
-      final notificationsCubit = _NotificationsCubitStub(
-        NotificationsState.initial().copyWith(
-          permissionStatus: NotificationPermissionStatus.notDetermined,
-        ),
-      );
+  testWidgets('shows empty state and CTA when no family is selected', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildSubject(
+        familyId: null,
+        tasksState: TasksState.initial(),
+        calendarState: const CalendarState(isLoading: false, instances: []),
+        listsState: const ListsState(isLoading: false, items: []),
+        moneyGoalsState: MoneyGoalsState.initial(hasSelectedFamily: false),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      await tester.pumpWidget(_buildSubject(notificationsCubit, familyId: 42));
-      await tester.pumpAndSettle();
+    expect(find.text('No family yet'), findsOneWidget);
+    expect(find.text('Add family'), findsOneWidget);
+    expect(find.text('Open tasks'), findsNothing);
+    expect(find.text('Stay on top of family reminders'), findsNothing);
+  });
 
-      expect(find.text('Stay on top of family reminders'), findsOneWidget);
-      expect(find.text('Allow notifications'), findsOneWidget);
+  testWidgets('opens family settings from the no-family CTA', (tester) async {
+    await tester.pumpWidget(
+      _buildSubject(
+        familyId: null,
+        tasksState: TasksState.initial(),
+        calendarState: CalendarState.initial(),
+        listsState: ListsState.initial(),
+        moneyGoalsState: MoneyGoalsState.initial(hasSelectedFamily: false),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Allow notifications'));
-      await tester.pump();
+    await tester.tap(find.text('Add family'));
+    await tester.pumpAndSettle();
 
-      expect(notificationsCubit.requestedPermission, isTrue);
+    expect(find.text('Family settings page'), findsOneWidget);
+  });
 
-      await notificationsCubit.close();
-    },
-  );
+  testWidgets('shows overview content when a family is selected', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildSubject(
+        familyId: 42,
+        tasksState: TasksState.initial(),
+        calendarState: const CalendarState(isLoading: false, instances: []),
+        listsState: const ListsState(isLoading: false, items: []),
+        moneyGoalsState: MoneyGoalsState.initial(
+          hasSelectedFamily: true,
+        ).copyWith(isInitialLoading: false),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-  testWidgets(
-    'HomeOverviewScreen hides permission card when notifications are granted',
-    (
-      tester,
-    ) async {
-      final notificationsCubit = _NotificationsCubitStub(
-        NotificationsState.initial().copyWith(
-          permissionStatus: NotificationPermissionStatus.granted,
-        ),
-      );
-
-      await tester.pumpWidget(_buildSubject(notificationsCubit, familyId: 42));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Stay on top of family reminders'), findsNothing);
-      expect(find.text('Allow notifications'), findsNothing);
-
-      await notificationsCubit.close();
-    },
-  );
+    expect(find.text('Open tasks'), findsOneWidget);
+    expect(find.text('No family yet'), findsNothing);
+  });
 }

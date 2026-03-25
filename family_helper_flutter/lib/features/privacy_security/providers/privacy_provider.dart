@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -64,19 +66,30 @@ class PrivacyState {
 
 class PrivacyCubit extends Cubit<PrivacyState> {
   PrivacyCubit({
-    required PrivacyRepository repository,
+    required PrivacyRepositoryContract repository,
     required OfflineQueueManager offlineQueueManager,
+    Duration exportStatusPollInterval = const Duration(seconds: 3),
+    Duration exportStatusPollingTimeout = const Duration(seconds: 60),
+    Future<void> Function(Duration duration)? delay,
   }) : _repository = repository,
        _offlineQueueManager = offlineQueueManager,
+       _exportStatusPollInterval = exportStatusPollInterval,
+       _exportStatusPollingTimeout = exportStatusPollingTimeout,
+       _delay = delay ?? Future<void>.delayed,
        super(const PrivacyState());
 
-  final PrivacyRepository _repository;
+  final PrivacyRepositoryContract _repository;
   final OfflineQueueManager _offlineQueueManager;
+  final Duration _exportStatusPollInterval;
+  final Duration _exportStatusPollingTimeout;
+  final Future<void> Function(Duration duration) _delay;
   static const _offlineFeature = 'privacy';
   static const _actionRequestExport = 'request_export';
   static const _actionRequestAccountDeletion = 'request_account_deletion';
+  int _exportPollGeneration = 0;
 
   void reset() {
+    _exportPollGeneration++;
     emit(const PrivacyState());
   }
 
@@ -117,6 +130,7 @@ class PrivacyCubit extends Cubit<PrivacyState> {
           clearError: true,
         ),
       );
+      unawaited(_pollExportStatus(jobId: job.id));
     } catch (error, stackTrace) {
       AppErrorLogger.logHandled(
         scope: 'privacy.requestExport',
@@ -234,5 +248,76 @@ class PrivacyCubit extends Cubit<PrivacyState> {
       },
       canProcess: (operation) => operation.feature == _offlineFeature,
     );
+  }
+
+  Future<void> _pollExportStatus({required int jobId}) async {
+    final generation = ++_exportPollGeneration;
+    final deadline = DateTime.now().toUtc().add(_exportStatusPollingTimeout);
+
+    while (!isClosed &&
+        generation == _exportPollGeneration &&
+        DateTime.now().toUtc().isBefore(deadline)) {
+      await _delay(_exportStatusPollInterval);
+      if (isClosed || generation != _exportPollGeneration) {
+        return;
+      }
+
+      try {
+        final status = await _repository.getStatus();
+        if (isClosed || generation != _exportPollGeneration) {
+          return;
+        }
+
+        final latestJob = status.lastExportJob;
+        emit(
+          state.copyWith(
+            lastExportJob: latestJob,
+            accountDeletion: status.accountDeletion,
+            clearError: true,
+          ),
+        );
+
+        if (latestJob == null) {
+          continue;
+        }
+        if (latestJob.id != jobId) {
+          return;
+        }
+        if (_isTerminalExportStatus(latestJob.status)) {
+          return;
+        }
+      } catch (error, stackTrace) {
+        AppErrorLogger.logHandled(
+          scope: 'privacy.pollExportStatus',
+          error: error,
+          stackTrace: stackTrace,
+        );
+        if (isClosed || generation != _exportPollGeneration) {
+          return;
+        }
+        emit(state.copyWith(error: '$error'));
+        return;
+      }
+    }
+
+    if (isClosed || generation != _exportPollGeneration) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        error: 'Export is still processing. Check back in a moment.',
+      ),
+    );
+  }
+
+  bool _isTerminalExportStatus(String status) {
+    return status == 'ready' || status == 'failed';
+  }
+
+  @override
+  Future<void> close() {
+    _exportPollGeneration++;
+    return super.close();
   }
 }

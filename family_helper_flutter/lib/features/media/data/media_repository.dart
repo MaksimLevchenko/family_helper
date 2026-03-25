@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/logging/app_error_logger.dart';
 import '../../../core/network/app_api_client.dart';
+import '../../../core/network/server_url_resolver.dart';
 import '../../../core/utils/operation_id.dart';
 
 class MediaRepository {
@@ -32,17 +33,26 @@ class MediaRepository {
       sizeBytes: sizeBytes,
       objectPrefix: familyId == null ? 'avatars' : 'attachments',
     );
+    final normalizedUploadUrl = ServerUrlResolver.normalize(
+      uploadSession.uploadUrl,
+      platform: defaultTargetPlatform,
+    );
 
     try {
-      await _dio.put(
-        uploadSession.uploadUrl,
+      final response = await _dio.post<dynamic>(
+        normalizedUploadUrl,
         data: bytes,
         options: Options(
-          headers: {'Content-Type': mimeType},
+          headers: {'Content-Type': 'application/octet-stream'},
+          responseType: ResponseType.plain,
         ),
       );
+      final responseBody = response.data?.toString().trim().toLowerCase();
+      if (response.statusCode != 200 || responseBody != 'true') {
+        throw Exception('Upload endpoint rejected the binary payload.');
+      }
     } catch (error, stackTrace) {
-      final uploadUri = Uri.tryParse(uploadSession.uploadUrl);
+      final uploadUri = Uri.tryParse(normalizedUploadUrl);
       AppErrorLogger.logHandled(
         scope: 'media.putUpload',
         error: error,
@@ -58,7 +68,7 @@ class MediaRepository {
         throw Exception(
           'Web upload failed at network layer. '
           'Check that storage URL is reachable from browser and CORS allows '
-          'PUT/OPTIONS from ${Uri.base.origin}. '
+          'POST/OPTIONS from ${Uri.base.origin}. '
           'uploadHost=${uploadUri?.host ?? 'unknown'}',
         );
       }
@@ -74,8 +84,14 @@ class MediaRepository {
     return media;
   }
 
-  Future<String> signedGetUrl(int mediaId) {
-    return _apiClient.client.media.signedGetUrl(mediaId: mediaId);
+  Future<String> signedGetUrl(int mediaId) async {
+    final signedUrl = await _apiClient.client.media.signedGetUrl(
+      mediaId: mediaId,
+    );
+    return ServerUrlResolver.normalize(
+      signedUrl,
+      platform: defaultTargetPlatform,
+    );
   }
 
   Future<List<MediaObjectDto>> listMedia({int? familyId, int limit = 100}) {

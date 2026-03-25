@@ -145,8 +145,8 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                   title: 'Data export',
                   subtitle: _exportSubtitle(state.lastExportJob!),
                   actionLabel: state.canDownloadExport
-                      ? null
-                      : 'Download export',
+                      ? 'Download export'
+                      : null,
                   onAction:
                       !state.canDownloadExport ||
                           state.lastExportJob!.signedUrl == null
