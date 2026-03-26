@@ -1,7 +1,11 @@
 class: CalendarInstanceDto
 fields:
   eventId: int
+  occurrenceKeyStart: DateTime
   occurrenceStart: DateTime
   occurrenceEnd: DateTime
   title: String
   cancelled: bool
+  isRecurring: bool
+  isException: bool
+  reminderOffsetMinutes: int?

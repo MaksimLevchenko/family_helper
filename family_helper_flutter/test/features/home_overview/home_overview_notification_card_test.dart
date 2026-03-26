@@ -1,5 +1,6 @@
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:family_helper_flutter/core/theme/app_theme.dart';
+import 'package:family_helper_flutter/features/calendar/domain/calendar_event_form.dart';
 import 'package:family_helper_flutter/features/calendar/providers/calendar_provider.dart';
 import 'package:family_helper_flutter/features/family_invites/providers/family_provider.dart';
 import 'package:family_helper_flutter/features/home_overview/presentation/home_overview_screen.dart';
@@ -37,21 +38,50 @@ class _CalendarCubitStub extends Cubit<CalendarState> implements CalendarCubit {
   _CalendarCubitStub() : super(CalendarState.initial());
 
   @override
-  Future<void> cancelOccurrence(CalendarInstanceDto instance) async {}
+  List<CalendarInstanceDto> agendaForDay(DateTime day) => const [];
 
   @override
-  Future<CalendarEventDto?> createEvent({
-    required String title,
-    required DateTime startsAt,
-    required DateTime endsAt,
-    String? rrule,
-  }) async => null;
+  Future<void> deleteOccurrence(CalendarInstanceDto instance) async {}
+
+  @override
+  Future<void> deleteSeries({
+    required CalendarInstanceDto instance,
+    required CalendarMutationScope scope,
+  }) async {}
+
+  @override
+  Map<DateTime, List<CalendarInstanceDto>> eventsByDay() => const {};
+
+  @override
+  Future<CalendarEventDto> loadEvent(int eventId) async {
+    throw UnimplementedError();
+  }
 
   @override
   Future<void> reload() async {}
 
   @override
   void reset() => emit(CalendarState.initial());
+
+  @override
+  Future<CalendarEventDto?> saveSeries({
+    required CalendarEventForm form,
+    int? eventId,
+    CalendarMutationScope scope = CalendarMutationScope.all,
+    DateTime? anchorOccurrenceStart,
+  }) async => null;
+
+  @override
+  Future<void> saveOccurrence({
+    required CalendarInstanceDto instance,
+    required CalendarEventForm form,
+  }) async {}
+
+  @override
+  void selectDay(DateTime day) {}
+
+  @override
+  Future<void> setVisibleMonth(DateTime month) async {}
 }
 
 class _ListsCubitStub extends Cubit<ListsState> implements ListsCubit {

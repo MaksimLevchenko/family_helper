@@ -4,6 +4,7 @@ import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../../core/auth/auth_session.dart';
 import '../../../core/logging/app_error_logger.dart';
 import '../../../core/offline/offline_error_classifier.dart';
 import '../../../core/offline/offline_operation.dart';
@@ -14,10 +15,29 @@ import '../data/family_repository.dart';
 const _familyIdStorageKey = 'current_family_id';
 
 class FamilySelectionCubit extends Cubit<int?> {
-  FamilySelectionCubit() : super(null);
+  FamilySelectionCubit({
+    FamilyRepository? repository,
+    AuthCubit? authCubit,
+    FlutterSecureStorage? storage,
+    Future<FamilyDto?> Function()? loadCurrentFamily,
+    Stream<AuthSessionState>? authStates,
+    AuthSessionState? Function()? authStateProvider,
+  }) : _repository = repository,
+       _authCubit = authCubit,
+       _storage = storage ?? const FlutterSecureStorage(),
+       _loadCurrentFamily = loadCurrentFamily,
+       _authStates = authStates,
+       _authStateProvider = authStateProvider,
+       super(null);
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final FamilyRepository? _repository;
+  final AuthCubit? _authCubit;
+  final FlutterSecureStorage _storage;
+  final Future<FamilyDto?> Function()? _loadCurrentFamily;
+  final Stream<AuthSessionState>? _authStates;
+  final AuthSessionState? Function()? _authStateProvider;
   bool _bootstrapped = false;
+  StreamSubscription<AuthSessionState>? _authSub;
 
   Future<void> bootstrap() async {
     if (_bootstrapped) {
@@ -25,6 +45,14 @@ class FamilySelectionCubit extends Cubit<int?> {
     }
     _bootstrapped = true;
     await _restore();
+    _authSub = _resolvedAuthStates?.listen((auth) {
+      unawaited(_handleAuthState(auth));
+    });
+
+    final authState = _currentAuthState();
+    if (authState != null) {
+      await _handleAuthState(authState);
+    }
   }
 
   Future<void> _restore() async {
@@ -43,6 +71,60 @@ class FamilySelectionCubit extends Cubit<int?> {
   Future<void> clear() async {
     emit(null);
     await _storage.delete(key: _familyIdStorageKey);
+  }
+
+  Stream<AuthSessionState>? get _resolvedAuthStates =>
+      _authStates ?? _authCubit?.stream;
+
+  AuthSessionState? _currentAuthState() =>
+      _authStateProvider?.call() ?? _authCubit?.state;
+
+  Future<void> _handleAuthState(AuthSessionState auth) async {
+    if (auth.isInitializing) {
+      return;
+    }
+
+    if (!auth.isAuthenticated) {
+      if (state != null) {
+        emit(null);
+      }
+      return;
+    }
+
+    final loadCurrentFamily =
+        _loadCurrentFamily ?? _repository?.getCurrentFamily;
+    if (loadCurrentFamily == null) {
+      return;
+    }
+
+    try {
+      final family = await loadCurrentFamily();
+      if (family == null) {
+        if (state != null) {
+          emit(null);
+        }
+        await _storage.delete(key: _familyIdStorageKey);
+        return;
+      }
+
+      if (state != family.id) {
+        emit(family.id);
+      }
+      await _storage.write(key: _familyIdStorageKey, value: '${family.id}');
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'family.restoreCurrentFamily',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'hasCachedFamilyId': state != null},
+      );
+    }
+  }
+
+  @override
+  Future<void> close() async {
+    await _authSub?.cancel();
+    return super.close();
   }
 }
 

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -163,6 +165,45 @@ class LocalNotificationService {
     );
   }
 
+  Future<void> cancelReminder(int id) async {
+    await initialize();
+    await _plugin.cancel(id);
+  }
+
+  Future<void> syncReminderSet({
+    required String namespace,
+    required List<LocalReminderSchedule> reminders,
+  }) async {
+    await initialize();
+
+    final storageKey = 'scheduled_reminders_$namespace';
+    final raw = await _storage.read(key: storageKey);
+    final previousIds = raw == null
+        ? <int>{}
+        : (jsonDecode(raw) as List<dynamic>)
+              .map((value) => value as int)
+              .toSet();
+    final nextIds = reminders.map((reminder) => reminder.id).toSet();
+
+    for (final staleId in previousIds.difference(nextIds)) {
+      await _plugin.cancel(staleId);
+    }
+
+    for (final reminder in reminders) {
+      await scheduleReminder(
+        id: reminder.id,
+        title: reminder.title,
+        body: reminder.body,
+        scheduledAt: reminder.scheduledAt,
+      );
+    }
+
+    await _storage.write(
+      key: storageKey,
+      value: jsonEncode(nextIds.toList()..sort()),
+    );
+  }
+
   Future<NotificationPermissionStatus> _getAndroidPermissionStatus() async {
     final state = await _permissionChannel.invokeMapMethod<String, dynamic>(
       'getNotificationPermissionStatus',
@@ -234,4 +275,18 @@ class LocalNotificationService {
       _ => NotificationPermissionStatus.notDetermined,
     };
   }
+}
+
+class LocalReminderSchedule {
+  const LocalReminderSchedule({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.scheduledAt,
+  });
+
+  final int id;
+  final String title;
+  final String body;
+  final DateTime scheduledAt;
 }

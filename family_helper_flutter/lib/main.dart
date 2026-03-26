@@ -11,6 +11,7 @@ import 'core/logging/app_error_logger.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
+import 'features/family_invites/data/family_repository.dart';
 import 'features/family_invites/providers/family_provider.dart';
 import 'ui_kit/startup_loading_screen.dart';
 
@@ -150,7 +151,10 @@ class _FamilyHelperAppState extends State<FamilyHelperApp> {
   @override
   void initState() {
     super.initState();
-    _familySelectionCubit = FamilySelectionCubit();
+    _familySelectionCubit = FamilySelectionCubit(
+      repository: getIt<FamilyRepository>(),
+      authCubit: getIt<AuthCubit>(),
+    );
     _familySelectionCubit.bootstrap();
     _router = createAppRouter(getIt<AuthCubit>(), _familySelectionCubit);
   }

@@ -381,6 +381,31 @@ class Endpoints extends _i1.EndpointDispatch {
       name: 'calendar',
       endpoint: endpoints['calendar']!,
       methodConnectors: {
+        'getEvent': _i1.MethodConnector(
+          name: 'getEvent',
+          params: {
+            'familyId': _i1.ParameterDescription(
+              name: 'familyId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'eventId': _i1.ParameterDescription(
+              name: 'eventId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendar'] as _i5.CalendarEndpoint).getEvent(
+                    session,
+                    familyId: params['familyId'],
+                    eventId: params['eventId'],
+                  ),
+        ),
         'upsertEvent': _i1.MethodConnector(
           name: 'upsertEvent',
           params: {
@@ -429,6 +454,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String?>(),
               nullable: true,
             ),
+            'reminderOffsetMinutes': _i1.ParameterDescription(
+              name: 'reminderOffsetMinutes',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
             'colorKey': _i1.ParameterDescription(
               name: 'colorKey',
               type: _i1.getType<String?>(),
@@ -437,6 +467,16 @@ class Endpoints extends _i1.EndpointDispatch {
             'category': _i1.ParameterDescription(
               name: 'category',
               type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'scope': _i1.ParameterDescription(
+              name: 'scope',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'anchorOccurrenceStart': _i1.ParameterDescription(
+              name: 'anchorOccurrenceStart',
+              type: _i1.getType<DateTime?>(),
               nullable: true,
             ),
           },
@@ -456,8 +496,11 @@ class Endpoints extends _i1.EndpointDispatch {
                     endsAt: params['endsAt'],
                     timezone: params['timezone'],
                     rrule: params['rrule'],
+                    reminderOffsetMinutes: params['reminderOffsetMinutes'],
                     colorKey: params['colorKey'],
                     category: params['category'],
+                    scope: params['scope'],
+                    anchorOccurrenceStart: params['anchorOccurrenceStart'],
                   ),
         ),
         'upsertOverride': _i1.MethodConnector(
@@ -478,14 +521,9 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<int>(),
               nullable: false,
             ),
-            'occurrenceStart': _i1.ParameterDescription(
-              name: 'occurrenceStart',
+            'occurrenceKeyStart': _i1.ParameterDescription(
+              name: 'occurrenceKeyStart',
               type: _i1.getType<DateTime>(),
-              nullable: false,
-            ),
-            'scope': _i1.ParameterDescription(
-              name: 'scope',
-              type: _i1.getType<String>(),
               nullable: false,
             ),
             'overrideTitle': _i1.ParameterDescription(
@@ -503,6 +541,16 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<DateTime?>(),
               nullable: true,
             ),
+            'overrideReminderOffsetMinutes': _i1.ParameterDescription(
+              name: 'overrideReminderOffsetMinutes',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
+            'overrideReminderCleared': _i1.ParameterDescription(
+              name: 'overrideReminderCleared',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
             'cancelled': _i1.ParameterDescription(
               name: 'cancelled',
               type: _i1.getType<bool>(),
@@ -519,12 +567,57 @@ class Endpoints extends _i1.EndpointDispatch {
                     clientOperationId: params['clientOperationId'],
                     familyId: params['familyId'],
                     eventId: params['eventId'],
-                    occurrenceStart: params['occurrenceStart'],
-                    scope: params['scope'],
+                    occurrenceKeyStart: params['occurrenceKeyStart'],
                     overrideTitle: params['overrideTitle'],
                     overrideStartsAt: params['overrideStartsAt'],
                     overrideEndsAt: params['overrideEndsAt'],
+                    overrideReminderOffsetMinutes:
+                        params['overrideReminderOffsetMinutes'],
+                    overrideReminderCleared: params['overrideReminderCleared'],
                     cancelled: params['cancelled'],
+                  ),
+        ),
+        'deleteEvent': _i1.MethodConnector(
+          name: 'deleteEvent',
+          params: {
+            'clientOperationId': _i1.ParameterDescription(
+              name: 'clientOperationId',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'familyId': _i1.ParameterDescription(
+              name: 'familyId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'eventId': _i1.ParameterDescription(
+              name: 'eventId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'scope': _i1.ParameterDescription(
+              name: 'scope',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'anchorOccurrenceStart': _i1.ParameterDescription(
+              name: 'anchorOccurrenceStart',
+              type: _i1.getType<DateTime?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendar'] as _i5.CalendarEndpoint).deleteEvent(
+                    session,
+                    clientOperationId: params['clientOperationId'],
+                    familyId: params['familyId'],
+                    eventId: params['eventId'],
+                    scope: params['scope'],
+                    anchorOccurrenceStart: params['anchorOccurrenceStart'],
                   ),
         ),
         'listInstances': _i1.MethodConnector(
@@ -607,6 +700,16 @@ class Endpoints extends _i1.EndpointDispatch {
                     session,
                     familyId: params['familyId'],
                   ),
+        ),
+        'getCurrentFamily': _i1.MethodConnector(
+          name: 'getCurrentFamily',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['family'] as _i6.FamilyEndpoint)
+                  .getCurrentFamily(session),
         ),
         'getFamily': _i1.MethodConnector(
           name: 'getFamily',

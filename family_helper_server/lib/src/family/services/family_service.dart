@@ -183,6 +183,28 @@ class FamilyService {
         .toList();
   }
 
+  Future<FamilyDto?> getCurrentFamily(Session session) async {
+    final profileId = await authContext.ensureProfileId(session);
+
+    final activeMembership = await FamilyMemberRow.db.findFirstRow(
+      session,
+      where: (t) =>
+          t.profileId.equals(profileId) &
+          t.deletedAt.equals(null) &
+          t.status.equals('active'),
+      orderByList: (t) => [
+        Order(column: t.updatedAt, orderDescending: true),
+        Order(column: t.id, orderDescending: true),
+      ],
+    );
+
+    if (activeMembership == null) {
+      return null;
+    }
+
+    return _findFamily(session, activeMembership.familyId);
+  }
+
   Future<FamilyDto> getFamily(
     Session session, {
     required int familyId,

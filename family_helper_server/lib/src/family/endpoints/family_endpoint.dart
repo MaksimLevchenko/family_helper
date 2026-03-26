@@ -28,6 +28,10 @@ class FamilyEndpoint extends Endpoint {
     return service.listMembers(session, familyId: familyId);
   }
 
+  Future<FamilyDto?> getCurrentFamily(Session session) {
+    return service.getCurrentFamily(session);
+  }
+
   Future<FamilyDto> getFamily(
     Session session, {
     required int familyId,

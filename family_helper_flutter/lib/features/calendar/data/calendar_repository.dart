@@ -7,6 +7,16 @@ class CalendarRepository {
 
   final AppApiClient _apiClient;
 
+  Future<CalendarEventDto> getEvent({
+    required int familyId,
+    required int eventId,
+  }) {
+    return _apiClient.client.calendar.getEvent(
+      familyId: familyId,
+      eventId: eventId,
+    );
+  }
+
   Future<CalendarEventDto> upsertEvent({
     required String clientOperationId,
     int? eventId,
@@ -17,8 +27,11 @@ class CalendarRepository {
     required String timezone,
     String? description,
     String? rrule,
+    int? reminderOffsetMinutes,
     String? colorKey,
     String? category,
+    String scope = 'all',
+    DateTime? anchorOccurrenceStart,
   }) {
     return _apiClient.client.calendar.upsertEvent(
       clientOperationId: clientOperationId,
@@ -30,8 +43,53 @@ class CalendarRepository {
       endsAt: endsAt,
       timezone: timezone,
       rrule: rrule,
+      reminderOffsetMinutes: reminderOffsetMinutes,
       colorKey: colorKey,
       category: category,
+      scope: scope,
+      anchorOccurrenceStart: anchorOccurrenceStart,
+    );
+  }
+
+  Future<OperationResult> upsertOccurrence({
+    required String clientOperationId,
+    required int familyId,
+    required int eventId,
+    required DateTime occurrenceKeyStart,
+    String? overrideTitle,
+    DateTime? overrideStartsAt,
+    DateTime? overrideEndsAt,
+    int? overrideReminderOffsetMinutes,
+    bool overrideReminderCleared = false,
+    bool cancelled = false,
+  }) {
+    return _apiClient.client.calendar.upsertOverride(
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      eventId: eventId,
+      occurrenceKeyStart: occurrenceKeyStart,
+      overrideTitle: overrideTitle,
+      overrideStartsAt: overrideStartsAt,
+      overrideEndsAt: overrideEndsAt,
+      overrideReminderOffsetMinutes: overrideReminderOffsetMinutes,
+      overrideReminderCleared: overrideReminderCleared,
+      cancelled: cancelled,
+    );
+  }
+
+  Future<OperationResult> deleteEvent({
+    required String clientOperationId,
+    required int familyId,
+    required int eventId,
+    required String scope,
+    DateTime? anchorOccurrenceStart,
+  }) {
+    return _apiClient.client.calendar.deleteEvent(
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      eventId: eventId,
+      scope: scope,
+      anchorOccurrenceStart: anchorOccurrenceStart,
     );
   }
 
@@ -44,22 +102,6 @@ class CalendarRepository {
       familyId: familyId,
       rangeStart: rangeStart,
       rangeEnd: rangeEnd,
-    );
-  }
-
-  Future<OperationResult> cancelOccurrence({
-    required String clientOperationId,
-    required int familyId,
-    required int eventId,
-    required DateTime occurrenceStart,
-  }) {
-    return _apiClient.client.calendar.upsertOverride(
-      clientOperationId: clientOperationId,
-      familyId: familyId,
-      eventId: eventId,
-      occurrenceStart: occurrenceStart,
-      scope: 'one',
-      cancelled: true,
     );
   }
 }

@@ -21,6 +21,7 @@ void main() {
         startsAt: DateTime.utc(2026, 3, 10, 18, 0),
         endsAt: DateTime.utc(2026, 3, 10, 19, 0),
         timezone: 'UTC',
+        scope: 'all',
       );
       final second = await endpoints.calendar.upsertEvent(
         owner,
@@ -30,6 +31,7 @@ void main() {
         startsAt: DateTime.utc(2026, 3, 11, 18, 0),
         endsAt: DateTime.utc(2026, 3, 11, 19, 0),
         timezone: 'Europe/Moscow',
+        scope: 'all',
       );
 
       expect(second.id, first.id);

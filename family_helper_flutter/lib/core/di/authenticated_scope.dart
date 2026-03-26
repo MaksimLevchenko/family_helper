@@ -53,6 +53,8 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,
       authCubit: getIt<AuthCubit>(),
+      notificationsRepository: getIt(),
+      localNotificationService: getIt(),
     );
     _tasksCubit = TasksCubit(
       repository: getIt(),

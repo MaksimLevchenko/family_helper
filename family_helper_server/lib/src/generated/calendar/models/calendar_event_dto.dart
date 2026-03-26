@@ -23,6 +23,7 @@ abstract class CalendarEventDto
     required this.startsAt,
     required this.endsAt,
     this.rrule,
+    this.reminderOffsetMinutes,
     this.colorKey,
     this.category,
     required this.createdByProfileId,
@@ -39,6 +40,7 @@ abstract class CalendarEventDto
     required DateTime startsAt,
     required DateTime endsAt,
     String? rrule,
+    int? reminderOffsetMinutes,
     String? colorKey,
     String? category,
     required int createdByProfileId,
@@ -58,6 +60,7 @@ abstract class CalendarEventDto
       ),
       endsAt: _i1.DateTimeJsonExtension.fromJson(jsonSerialization['endsAt']),
       rrule: jsonSerialization['rrule'] as String?,
+      reminderOffsetMinutes: jsonSerialization['reminderOffsetMinutes'] as int?,
       colorKey: jsonSerialization['colorKey'] as String?,
       category: jsonSerialization['category'] as String?,
       createdByProfileId: jsonSerialization['createdByProfileId'] as int,
@@ -84,6 +87,8 @@ abstract class CalendarEventDto
 
   String? rrule;
 
+  int? reminderOffsetMinutes;
+
   String? colorKey;
 
   String? category;
@@ -106,6 +111,7 @@ abstract class CalendarEventDto
     DateTime? startsAt,
     DateTime? endsAt,
     String? rrule,
+    int? reminderOffsetMinutes,
     String? colorKey,
     String? category,
     int? createdByProfileId,
@@ -124,6 +130,8 @@ abstract class CalendarEventDto
       'startsAt': startsAt.toJson(),
       'endsAt': endsAt.toJson(),
       if (rrule != null) 'rrule': rrule,
+      if (reminderOffsetMinutes != null)
+        'reminderOffsetMinutes': reminderOffsetMinutes,
       if (colorKey != null) 'colorKey': colorKey,
       if (category != null) 'category': category,
       'createdByProfileId': createdByProfileId,
@@ -144,6 +152,8 @@ abstract class CalendarEventDto
       'startsAt': startsAt.toJson(),
       'endsAt': endsAt.toJson(),
       if (rrule != null) 'rrule': rrule,
+      if (reminderOffsetMinutes != null)
+        'reminderOffsetMinutes': reminderOffsetMinutes,
       if (colorKey != null) 'colorKey': colorKey,
       if (category != null) 'category': category,
       'createdByProfileId': createdByProfileId,
@@ -170,6 +180,7 @@ class _CalendarEventDtoImpl extends CalendarEventDto {
     required DateTime startsAt,
     required DateTime endsAt,
     String? rrule,
+    int? reminderOffsetMinutes,
     String? colorKey,
     String? category,
     required int createdByProfileId,
@@ -184,6 +195,7 @@ class _CalendarEventDtoImpl extends CalendarEventDto {
          startsAt: startsAt,
          endsAt: endsAt,
          rrule: rrule,
+         reminderOffsetMinutes: reminderOffsetMinutes,
          colorKey: colorKey,
          category: category,
          createdByProfileId: createdByProfileId,
@@ -204,6 +216,7 @@ class _CalendarEventDtoImpl extends CalendarEventDto {
     DateTime? startsAt,
     DateTime? endsAt,
     Object? rrule = _Undefined,
+    Object? reminderOffsetMinutes = _Undefined,
     Object? colorKey = _Undefined,
     Object? category = _Undefined,
     int? createdByProfileId,
@@ -219,6 +232,9 @@ class _CalendarEventDtoImpl extends CalendarEventDto {
       startsAt: startsAt ?? this.startsAt,
       endsAt: endsAt ?? this.endsAt,
       rrule: rrule is String? ? rrule : this.rrule,
+      reminderOffsetMinutes: reminderOffsetMinutes is int?
+          ? reminderOffsetMinutes
+          : this.reminderOffsetMinutes,
       colorKey: colorKey is String? ? colorKey : this.colorKey,
       category: category is String? ? category : this.category,
       createdByProfileId: createdByProfileId ?? this.createdByProfileId,

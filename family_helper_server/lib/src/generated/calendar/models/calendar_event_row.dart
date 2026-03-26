@@ -23,6 +23,7 @@ abstract class CalendarEventRow
     required this.startsAt,
     required this.endsAt,
     this.rrule,
+    this.reminderOffsetMinutes,
     this.colorKey,
     this.category,
     required this.createdByProfileId,
@@ -41,6 +42,7 @@ abstract class CalendarEventRow
     required DateTime startsAt,
     required DateTime endsAt,
     String? rrule,
+    int? reminderOffsetMinutes,
     String? colorKey,
     String? category,
     required int createdByProfileId,
@@ -62,6 +64,7 @@ abstract class CalendarEventRow
       ),
       endsAt: _i1.DateTimeJsonExtension.fromJson(jsonSerialization['endsAt']),
       rrule: jsonSerialization['rrule'] as String?,
+      reminderOffsetMinutes: jsonSerialization['reminderOffsetMinutes'] as int?,
       colorKey: jsonSerialization['colorKey'] as String?,
       category: jsonSerialization['category'] as String?,
       createdByProfileId: jsonSerialization['createdByProfileId'] as int,
@@ -99,6 +102,8 @@ abstract class CalendarEventRow
 
   String? rrule;
 
+  int? reminderOffsetMinutes;
+
   String? colorKey;
 
   String? category;
@@ -128,6 +133,7 @@ abstract class CalendarEventRow
     DateTime? startsAt,
     DateTime? endsAt,
     String? rrule,
+    int? reminderOffsetMinutes,
     String? colorKey,
     String? category,
     int? createdByProfileId,
@@ -148,6 +154,8 @@ abstract class CalendarEventRow
       'startsAt': startsAt.toJson(),
       'endsAt': endsAt.toJson(),
       if (rrule != null) 'rrule': rrule,
+      if (reminderOffsetMinutes != null)
+        'reminderOffsetMinutes': reminderOffsetMinutes,
       if (colorKey != null) 'colorKey': colorKey,
       if (category != null) 'category': category,
       'createdByProfileId': createdByProfileId,
@@ -170,6 +178,8 @@ abstract class CalendarEventRow
       'startsAt': startsAt.toJson(),
       'endsAt': endsAt.toJson(),
       if (rrule != null) 'rrule': rrule,
+      if (reminderOffsetMinutes != null)
+        'reminderOffsetMinutes': reminderOffsetMinutes,
       if (colorKey != null) 'colorKey': colorKey,
       if (category != null) 'category': category,
       'createdByProfileId': createdByProfileId,
@@ -222,6 +232,7 @@ class _CalendarEventRowImpl extends CalendarEventRow {
     required DateTime startsAt,
     required DateTime endsAt,
     String? rrule,
+    int? reminderOffsetMinutes,
     String? colorKey,
     String? category,
     required int createdByProfileId,
@@ -238,6 +249,7 @@ class _CalendarEventRowImpl extends CalendarEventRow {
          startsAt: startsAt,
          endsAt: endsAt,
          rrule: rrule,
+         reminderOffsetMinutes: reminderOffsetMinutes,
          colorKey: colorKey,
          category: category,
          createdByProfileId: createdByProfileId,
@@ -260,6 +272,7 @@ class _CalendarEventRowImpl extends CalendarEventRow {
     DateTime? startsAt,
     DateTime? endsAt,
     Object? rrule = _Undefined,
+    Object? reminderOffsetMinutes = _Undefined,
     Object? colorKey = _Undefined,
     Object? category = _Undefined,
     int? createdByProfileId,
@@ -277,6 +290,9 @@ class _CalendarEventRowImpl extends CalendarEventRow {
       startsAt: startsAt ?? this.startsAt,
       endsAt: endsAt ?? this.endsAt,
       rrule: rrule is String? ? rrule : this.rrule,
+      reminderOffsetMinutes: reminderOffsetMinutes is int?
+          ? reminderOffsetMinutes
+          : this.reminderOffsetMinutes,
       colorKey: colorKey is String? ? colorKey : this.colorKey,
       category: category is String? ? category : this.category,
       createdByProfileId: createdByProfileId ?? this.createdByProfileId,
@@ -327,6 +343,12 @@ class CalendarEventRowUpdateTable
     table.rrule,
     value,
   );
+
+  _i1.ColumnValue<int, int> reminderOffsetMinutes(int? value) =>
+      _i1.ColumnValue(
+        table.reminderOffsetMinutes,
+        value,
+      );
 
   _i1.ColumnValue<String, String> colorKey(String? value) => _i1.ColumnValue(
     table.colorKey,
@@ -399,6 +421,10 @@ class CalendarEventRowTable extends _i1.Table<int?> {
       'rrule',
       this,
     );
+    reminderOffsetMinutes = _i1.ColumnInt(
+      'reminderOffsetMinutes',
+      this,
+    );
     colorKey = _i1.ColumnString(
       'colorKey',
       this,
@@ -445,6 +471,8 @@ class CalendarEventRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnString rrule;
 
+  late final _i1.ColumnInt reminderOffsetMinutes;
+
   late final _i1.ColumnString colorKey;
 
   late final _i1.ColumnString category;
@@ -469,6 +497,7 @@ class CalendarEventRowTable extends _i1.Table<int?> {
     startsAt,
     endsAt,
     rrule,
+    reminderOffsetMinutes,
     colorKey,
     category,
     createdByProfileId,

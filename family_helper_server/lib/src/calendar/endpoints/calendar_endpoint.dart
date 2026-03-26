@@ -4,9 +4,18 @@ import '../../generated/protocol.dart';
 import '../services/calendar_service.dart';
 
 class CalendarEndpoint extends Endpoint {
-  CalendarEndpoint({CalendarService? service}) : service = service ?? CalendarService();
+  CalendarEndpoint({CalendarService? service})
+    : service = service ?? CalendarService();
 
   final CalendarService service;
+
+  Future<CalendarEventDto> getEvent(
+    Session session, {
+    required int familyId,
+    required int eventId,
+  }) {
+    return service.getEvent(session, familyId: familyId, eventId: eventId);
+  }
 
   Future<CalendarEventDto> upsertEvent(
     Session session, {
@@ -19,8 +28,11 @@ class CalendarEndpoint extends Endpoint {
     required DateTime endsAt,
     required String timezone,
     String? rrule,
+    int? reminderOffsetMinutes,
     String? colorKey,
     String? category,
+    String scope = 'all',
+    DateTime? anchorOccurrenceStart,
   }) {
     return service.upsertEvent(
       session,
@@ -33,8 +45,11 @@ class CalendarEndpoint extends Endpoint {
       endsAt: endsAt,
       timezone: timezone,
       rrule: rrule,
+      reminderOffsetMinutes: reminderOffsetMinutes,
       colorKey: colorKey,
       category: category,
+      scope: scope,
+      anchorOccurrenceStart: anchorOccurrenceStart,
     );
   }
 
@@ -43,11 +58,12 @@ class CalendarEndpoint extends Endpoint {
     required String clientOperationId,
     required int familyId,
     required int eventId,
-    required DateTime occurrenceStart,
-    required String scope,
+    required DateTime occurrenceKeyStart,
     String? overrideTitle,
     DateTime? overrideStartsAt,
     DateTime? overrideEndsAt,
+    int? overrideReminderOffsetMinutes,
+    bool overrideReminderCleared = false,
     bool cancelled = false,
   }) {
     return service.upsertOverride(
@@ -55,12 +71,31 @@ class CalendarEndpoint extends Endpoint {
       clientOperationId: clientOperationId,
       familyId: familyId,
       eventId: eventId,
-      occurrenceStart: occurrenceStart,
-      scope: scope,
+      occurrenceKeyStart: occurrenceKeyStart,
       overrideTitle: overrideTitle,
       overrideStartsAt: overrideStartsAt,
       overrideEndsAt: overrideEndsAt,
+      overrideReminderOffsetMinutes: overrideReminderOffsetMinutes,
+      overrideReminderCleared: overrideReminderCleared,
       cancelled: cancelled,
+    );
+  }
+
+  Future<OperationResult> deleteEvent(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+    required int eventId,
+    String scope = 'all',
+    DateTime? anchorOccurrenceStart,
+  }) {
+    return service.deleteEvent(
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      eventId: eventId,
+      scope: scope,
+      anchorOccurrenceStart: anchorOccurrenceStart,
     );
   }
 

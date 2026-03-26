@@ -8,6 +8,7 @@ fields:
   startsAt: DateTime
   endsAt: DateTime
   rrule: String?
+  reminderOffsetMinutes: int?
   colorKey: String?
   category: String?
   createdByProfileId: int

@@ -12,12 +12,15 @@ profile:
   - me:
   - update:
 calendar:
+  - getEvent:
   - upsertEvent:
   - upsertOverride:
+  - deleteEvent:
   - listInstances:
 family:
   - createFamily:
   - listMembers:
+  - getCurrentFamily:
   - getFamily:
   - renameFamily:
   - createInvite:

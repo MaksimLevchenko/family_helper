@@ -21,6 +21,8 @@ abstract class CalendarEventOverrideRow
     this.overrideTitle,
     this.overrideStartsAt,
     this.overrideEndsAt,
+    this.overrideReminderOffsetMinutes,
+    this.overrideReminderCleared,
     required this.cancelled,
     required this.createdAt,
     required this.updatedAt,
@@ -35,6 +37,8 @@ abstract class CalendarEventOverrideRow
     String? overrideTitle,
     DateTime? overrideStartsAt,
     DateTime? overrideEndsAt,
+    int? overrideReminderOffsetMinutes,
+    bool? overrideReminderCleared,
     required bool cancelled,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -62,6 +66,10 @@ abstract class CalendarEventOverrideRow
           : _i1.DateTimeJsonExtension.fromJson(
               jsonSerialization['overrideEndsAt'],
             ),
+      overrideReminderOffsetMinutes:
+          jsonSerialization['overrideReminderOffsetMinutes'] as int?,
+      overrideReminderCleared:
+          jsonSerialization['overrideReminderCleared'] as bool?,
       cancelled: jsonSerialization['cancelled'] as bool,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
@@ -93,6 +101,10 @@ abstract class CalendarEventOverrideRow
 
   DateTime? overrideEndsAt;
 
+  int? overrideReminderOffsetMinutes;
+
+  bool? overrideReminderCleared;
+
   bool cancelled;
 
   DateTime createdAt;
@@ -116,6 +128,8 @@ abstract class CalendarEventOverrideRow
     String? overrideTitle,
     DateTime? overrideStartsAt,
     DateTime? overrideEndsAt,
+    int? overrideReminderOffsetMinutes,
+    bool? overrideReminderCleared,
     bool? cancelled,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -133,6 +147,10 @@ abstract class CalendarEventOverrideRow
       if (overrideStartsAt != null)
         'overrideStartsAt': overrideStartsAt?.toJson(),
       if (overrideEndsAt != null) 'overrideEndsAt': overrideEndsAt?.toJson(),
+      if (overrideReminderOffsetMinutes != null)
+        'overrideReminderOffsetMinutes': overrideReminderOffsetMinutes,
+      if (overrideReminderCleared != null)
+        'overrideReminderCleared': overrideReminderCleared,
       'cancelled': cancelled,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -152,6 +170,10 @@ abstract class CalendarEventOverrideRow
       if (overrideStartsAt != null)
         'overrideStartsAt': overrideStartsAt?.toJson(),
       if (overrideEndsAt != null) 'overrideEndsAt': overrideEndsAt?.toJson(),
+      if (overrideReminderOffsetMinutes != null)
+        'overrideReminderOffsetMinutes': overrideReminderOffsetMinutes,
+      if (overrideReminderCleared != null)
+        'overrideReminderCleared': overrideReminderCleared,
       'cancelled': cancelled,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -200,6 +222,8 @@ class _CalendarEventOverrideRowImpl extends CalendarEventOverrideRow {
     String? overrideTitle,
     DateTime? overrideStartsAt,
     DateTime? overrideEndsAt,
+    int? overrideReminderOffsetMinutes,
+    bool? overrideReminderCleared,
     required bool cancelled,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -212,6 +236,8 @@ class _CalendarEventOverrideRowImpl extends CalendarEventOverrideRow {
          overrideTitle: overrideTitle,
          overrideStartsAt: overrideStartsAt,
          overrideEndsAt: overrideEndsAt,
+         overrideReminderOffsetMinutes: overrideReminderOffsetMinutes,
+         overrideReminderCleared: overrideReminderCleared,
          cancelled: cancelled,
          createdAt: createdAt,
          updatedAt: updatedAt,
@@ -230,6 +256,8 @@ class _CalendarEventOverrideRowImpl extends CalendarEventOverrideRow {
     Object? overrideTitle = _Undefined,
     Object? overrideStartsAt = _Undefined,
     Object? overrideEndsAt = _Undefined,
+    Object? overrideReminderOffsetMinutes = _Undefined,
+    Object? overrideReminderCleared = _Undefined,
     bool? cancelled,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -249,6 +277,12 @@ class _CalendarEventOverrideRowImpl extends CalendarEventOverrideRow {
       overrideEndsAt: overrideEndsAt is DateTime?
           ? overrideEndsAt
           : this.overrideEndsAt,
+      overrideReminderOffsetMinutes: overrideReminderOffsetMinutes is int?
+          ? overrideReminderOffsetMinutes
+          : this.overrideReminderOffsetMinutes,
+      overrideReminderCleared: overrideReminderCleared is bool?
+          ? overrideReminderCleared
+          : this.overrideReminderCleared,
       cancelled: cancelled ?? this.cancelled,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -288,6 +322,18 @@ class CalendarEventOverrideRowUpdateTable
   _i1.ColumnValue<DateTime, DateTime> overrideEndsAt(DateTime? value) =>
       _i1.ColumnValue(
         table.overrideEndsAt,
+        value,
+      );
+
+  _i1.ColumnValue<int, int> overrideReminderOffsetMinutes(int? value) =>
+      _i1.ColumnValue(
+        table.overrideReminderOffsetMinutes,
+        value,
+      );
+
+  _i1.ColumnValue<bool, bool> overrideReminderCleared(bool? value) =>
+      _i1.ColumnValue(
+        table.overrideReminderCleared,
         value,
       );
 
@@ -344,6 +390,14 @@ class CalendarEventOverrideRowTable extends _i1.Table<int?> {
       'overrideEndsAt',
       this,
     );
+    overrideReminderOffsetMinutes = _i1.ColumnInt(
+      'overrideReminderOffsetMinutes',
+      this,
+    );
+    overrideReminderCleared = _i1.ColumnBool(
+      'overrideReminderCleared',
+      this,
+    );
     cancelled = _i1.ColumnBool(
       'cancelled',
       this,
@@ -378,6 +432,10 @@ class CalendarEventOverrideRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnDateTime overrideEndsAt;
 
+  late final _i1.ColumnInt overrideReminderOffsetMinutes;
+
+  late final _i1.ColumnBool overrideReminderCleared;
+
   late final _i1.ColumnBool cancelled;
 
   late final _i1.ColumnDateTime createdAt;
@@ -396,6 +454,8 @@ class CalendarEventOverrideRowTable extends _i1.Table<int?> {
     overrideTitle,
     overrideStartsAt,
     overrideEndsAt,
+    overrideReminderOffsetMinutes,
+    overrideReminderCleared,
     cancelled,
     createdAt,
     updatedAt,

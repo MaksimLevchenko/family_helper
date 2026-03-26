@@ -23,6 +23,7 @@ void main() {
         endsAt: DateTime.utc(2026, 2, 10, 20, 0),
         timezone: 'UTC',
         rrule: 'FREQ=DAILY;INTERVAL=1',
+        scope: 'all',
       );
 
       final beforeOverride = await endpoints.calendar.listInstances(
@@ -39,8 +40,8 @@ void main() {
         clientOperationId: 'calendar-override-001',
         familyId: family.id,
         eventId: event.id,
-        occurrenceStart: DateTime.utc(2026, 2, 11, 19, 0),
-        scope: 'one',
+        occurrenceKeyStart: DateTime.utc(2026, 2, 11, 19, 0),
+        overrideReminderCleared: false,
         cancelled: true,
       );
 

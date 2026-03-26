@@ -450,6 +450,12 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'String?',
         ),
         _i2.ColumnDefinition(
+          name: 'reminderOffsetMinutes',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _i2.ColumnDefinition(
           name: 'colorKey',
           columnType: _i2.ColumnType.text,
           isNullable: true,
@@ -553,6 +559,18 @@ class Protocol extends _i1.SerializationManagerServer {
           columnType: _i2.ColumnType.timestampWithoutTimeZone,
           isNullable: true,
           dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'overrideReminderOffsetMinutes',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'overrideReminderCleared',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: true,
+          dartType: 'bool?',
         ),
         _i2.ColumnDefinition(
           name: 'cancelled',

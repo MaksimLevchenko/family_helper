@@ -297,6 +297,18 @@ class EndpointCalendar extends _i2.EndpointRef {
   @override
   String get name => 'calendar';
 
+  _i3.Future<_i6.CalendarEventDto> getEvent({
+    required int familyId,
+    required int eventId,
+  }) => caller.callServerEndpoint<_i6.CalendarEventDto>(
+    'calendar',
+    'getEvent',
+    {
+      'familyId': familyId,
+      'eventId': eventId,
+    },
+  );
+
   _i3.Future<_i6.CalendarEventDto> upsertEvent({
     required String clientOperationId,
     int? eventId,
@@ -307,8 +319,11 @@ class EndpointCalendar extends _i2.EndpointRef {
     required DateTime endsAt,
     required String timezone,
     String? rrule,
+    int? reminderOffsetMinutes,
     String? colorKey,
     String? category,
+    required String scope,
+    DateTime? anchorOccurrenceStart,
   }) => caller.callServerEndpoint<_i6.CalendarEventDto>(
     'calendar',
     'upsertEvent',
@@ -322,8 +337,11 @@ class EndpointCalendar extends _i2.EndpointRef {
       'endsAt': endsAt,
       'timezone': timezone,
       'rrule': rrule,
+      'reminderOffsetMinutes': reminderOffsetMinutes,
       'colorKey': colorKey,
       'category': category,
+      'scope': scope,
+      'anchorOccurrenceStart': anchorOccurrenceStart,
     },
   );
 
@@ -331,11 +349,12 @@ class EndpointCalendar extends _i2.EndpointRef {
     required String clientOperationId,
     required int familyId,
     required int eventId,
-    required DateTime occurrenceStart,
-    required String scope,
+    required DateTime occurrenceKeyStart,
     String? overrideTitle,
     DateTime? overrideStartsAt,
     DateTime? overrideEndsAt,
+    int? overrideReminderOffsetMinutes,
+    required bool overrideReminderCleared,
     required bool cancelled,
   }) => caller.callServerEndpoint<_i7.OperationResult>(
     'calendar',
@@ -344,12 +363,31 @@ class EndpointCalendar extends _i2.EndpointRef {
       'clientOperationId': clientOperationId,
       'familyId': familyId,
       'eventId': eventId,
-      'occurrenceStart': occurrenceStart,
-      'scope': scope,
+      'occurrenceKeyStart': occurrenceKeyStart,
       'overrideTitle': overrideTitle,
       'overrideStartsAt': overrideStartsAt,
       'overrideEndsAt': overrideEndsAt,
+      'overrideReminderOffsetMinutes': overrideReminderOffsetMinutes,
+      'overrideReminderCleared': overrideReminderCleared,
       'cancelled': cancelled,
+    },
+  );
+
+  _i3.Future<_i7.OperationResult> deleteEvent({
+    required String clientOperationId,
+    required int familyId,
+    required int eventId,
+    required String scope,
+    DateTime? anchorOccurrenceStart,
+  }) => caller.callServerEndpoint<_i7.OperationResult>(
+    'calendar',
+    'deleteEvent',
+    {
+      'clientOperationId': clientOperationId,
+      'familyId': familyId,
+      'eventId': eventId,
+      'scope': scope,
+      'anchorOccurrenceStart': anchorOccurrenceStart,
     },
   );
 
@@ -392,6 +430,13 @@ class EndpointFamily extends _i2.EndpointRef {
         'family',
         'listMembers',
         {'familyId': familyId},
+      );
+
+  _i3.Future<_i9.FamilyDto?> getCurrentFamily() =>
+      caller.callServerEndpoint<_i9.FamilyDto?>(
+        'family',
+        'getCurrentFamily',
+        {},
       );
 
   _i3.Future<_i9.FamilyDto> getFamily({required int familyId}) =>

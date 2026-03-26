@@ -6,6 +6,8 @@ fields:
   overrideTitle: String?
   overrideStartsAt: DateTime?
   overrideEndsAt: DateTime?
+  overrideReminderOffsetMinutes: int?
+  overrideReminderCleared: bool?
   cancelled: bool
   createdAt: DateTime
   updatedAt: DateTime

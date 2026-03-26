@@ -646,6 +646,41 @@ class _CalendarEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
+  _i3.Future<_i6.CalendarEventDto> getEvent(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required int familyId,
+    required int eventId,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'getEvent',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'getEvent',
+          parameters: _i1.testObjectToJson({
+            'familyId': familyId,
+            'eventId': eventId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i6.CalendarEventDto>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _i3.Future<_i6.CalendarEventDto> upsertEvent(
     _i1.TestSessionBuilder sessionBuilder, {
     required String clientOperationId,
@@ -657,8 +692,11 @@ class _CalendarEndpoint {
     required DateTime endsAt,
     required String timezone,
     String? rrule,
+    int? reminderOffsetMinutes,
     String? colorKey,
     String? category,
+    required String scope,
+    DateTime? anchorOccurrenceStart,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -681,8 +719,11 @@ class _CalendarEndpoint {
             'endsAt': endsAt,
             'timezone': timezone,
             'rrule': rrule,
+            'reminderOffsetMinutes': reminderOffsetMinutes,
             'colorKey': colorKey,
             'category': category,
+            'scope': scope,
+            'anchorOccurrenceStart': anchorOccurrenceStart,
           }),
           serializationManager: _serializationManager,
         );
@@ -704,11 +745,12 @@ class _CalendarEndpoint {
     required String clientOperationId,
     required int familyId,
     required int eventId,
-    required DateTime occurrenceStart,
-    required String scope,
+    required DateTime occurrenceKeyStart,
     String? overrideTitle,
     DateTime? overrideStartsAt,
     DateTime? overrideEndsAt,
+    int? overrideReminderOffsetMinutes,
+    required bool overrideReminderCleared,
     required bool cancelled,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -726,12 +768,54 @@ class _CalendarEndpoint {
             'clientOperationId': clientOperationId,
             'familyId': familyId,
             'eventId': eventId,
-            'occurrenceStart': occurrenceStart,
-            'scope': scope,
+            'occurrenceKeyStart': occurrenceKeyStart,
             'overrideTitle': overrideTitle,
             'overrideStartsAt': overrideStartsAt,
             'overrideEndsAt': overrideEndsAt,
+            'overrideReminderOffsetMinutes': overrideReminderOffsetMinutes,
+            'overrideReminderCleared': overrideReminderCleared,
             'cancelled': cancelled,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i7.OperationResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i7.OperationResult> deleteEvent(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required String clientOperationId,
+    required int familyId,
+    required int eventId,
+    required String scope,
+    DateTime? anchorOccurrenceStart,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'deleteEvent',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'deleteEvent',
+          parameters: _i1.testObjectToJson({
+            'clientOperationId': clientOperationId,
+            'familyId': familyId,
+            'eventId': eventId,
+            'scope': scope,
+            'anchorOccurrenceStart': anchorOccurrenceStart,
           }),
           serializationManager: _serializationManager,
         );
@@ -855,6 +939,36 @@ class _FamilyEndpoint {
                   _localCallContext.arguments,
                 )
                 as _i3.Future<List<_i10.FamilyMemberDto>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i9.FamilyDto?> getCurrentFamily(
+    _i1.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'family',
+            method: 'getCurrentFamily',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'family',
+          methodName: 'getCurrentFamily',
+          parameters: _i1.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i9.FamilyDto?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

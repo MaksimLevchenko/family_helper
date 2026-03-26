@@ -21,6 +21,10 @@ class FamilyRepository {
     return _apiClient.client.family.listMembers(familyId: familyId);
   }
 
+  Future<FamilyDto?> getCurrentFamily() {
+    return _apiClient.client.family.getCurrentFamily();
+  }
+
   Future<FamilyDto> getFamily({required int familyId}) {
     return _apiClient.client.family.getFamily(familyId: familyId);
   }
