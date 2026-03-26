@@ -1115,6 +1115,9 @@ class EndpointTasks extends _i2.EndpointRef {
     required bool isPersonal,
     required String priority,
     DateTime? dueAt,
+    String? dueInputMode,
+    int? dueOffsetValue,
+    String? dueOffsetUnit,
     String? recurrenceMode,
     String? recurrenceRrule,
     int? assigneeProfileId,
@@ -1130,6 +1133,9 @@ class EndpointTasks extends _i2.EndpointRef {
       'isPersonal': isPersonal,
       'priority': priority,
       'dueAt': dueAt,
+      'dueInputMode': dueInputMode,
+      'dueOffsetValue': dueOffsetValue,
+      'dueOffsetUnit': dueOffsetUnit,
       'recurrenceMode': recurrenceMode,
       'recurrenceRrule': recurrenceRrule,
       'assigneeProfileId': assigneeProfileId,
@@ -1164,6 +1170,20 @@ class EndpointTasks extends _i2.EndpointRef {
   }) => caller.callServerEndpoint<_i27.TaskDto>(
     'tasks',
     'completeTask',
+    {
+      'clientOperationId': clientOperationId,
+      'familyId': familyId,
+      'taskId': taskId,
+    },
+  );
+
+  _i3.Future<_i7.OperationResult> deleteTask({
+    required String clientOperationId,
+    required int familyId,
+    required int taskId,
+  }) => caller.callServerEndpoint<_i7.OperationResult>(
+    'tasks',
+    'deleteTask',
     {
       'clientOperationId': clientOperationId,
       'familyId': familyId,

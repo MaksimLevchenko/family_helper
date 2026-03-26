@@ -2137,6 +2137,21 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<DateTime?>(),
               nullable: true,
             ),
+            'dueInputMode': _i1.ParameterDescription(
+              name: 'dueInputMode',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'dueOffsetValue': _i1.ParameterDescription(
+              name: 'dueOffsetValue',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
+            'dueOffsetUnit': _i1.ParameterDescription(
+              name: 'dueOffsetUnit',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
             'recurrenceMode': _i1.ParameterDescription(
               name: 'recurrenceMode',
               type: _i1.getType<String?>(),
@@ -2167,6 +2182,9 @@ class Endpoints extends _i1.EndpointDispatch {
                 isPersonal: params['isPersonal'],
                 priority: params['priority'],
                 dueAt: params['dueAt'],
+                dueInputMode: params['dueInputMode'],
+                dueOffsetValue: params['dueOffsetValue'],
+                dueOffsetUnit: params['dueOffsetUnit'],
                 recurrenceMode: params['recurrenceMode'],
                 recurrenceRrule: params['recurrenceRrule'],
                 assigneeProfileId: params['assigneeProfileId'],
@@ -2251,6 +2269,36 @@ class Endpoints extends _i1.EndpointDispatch {
                     familyId: params['familyId'],
                     taskId: params['taskId'],
                   ),
+        ),
+        'deleteTask': _i1.MethodConnector(
+          name: 'deleteTask',
+          params: {
+            'clientOperationId': _i1.ParameterDescription(
+              name: 'clientOperationId',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'familyId': _i1.ParameterDescription(
+              name: 'familyId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'taskId': _i1.ParameterDescription(
+              name: 'taskId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['tasks'] as _i16.TasksEndpoint).deleteTask(
+                session,
+                clientOperationId: params['clientOperationId'],
+                familyId: params['familyId'],
+                taskId: params['taskId'],
+              ),
         ),
       },
     );

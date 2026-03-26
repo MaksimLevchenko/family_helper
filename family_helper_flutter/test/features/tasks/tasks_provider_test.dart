@@ -60,6 +60,18 @@ class _FakeTasksRepository implements TasksRepository {
   }
 
   @override
+  Future<OperationResult> deleteTask({
+    required String clientOperationId,
+    required int familyId,
+    required int taskId,
+  }) async {
+    final tasks = _tasksByFamily[familyId] ?? <TaskDto>[];
+    tasks.removeWhere((task) => task.id == taskId);
+    _historyByTask.remove(taskId);
+    return OperationResult(success: true, message: 'Task deleted');
+  }
+
+  @override
   Future<List<TaskHistoryEntryDto>> listTaskHistory({
     required int familyId,
     required int taskId,
@@ -89,6 +101,9 @@ class _FakeTasksRepository implements TasksRepository {
     required bool isPersonal,
     required String priority,
     DateTime? dueAt,
+    String? dueInputMode,
+    int? dueOffsetValue,
+    String? dueOffsetUnit,
     String? recurrenceMode,
     String? recurrenceRrule,
     int? assigneeProfileId,
@@ -111,6 +126,9 @@ class _FakeTasksRepository implements TasksRepository {
       priority: priority,
       status: 'open',
       dueAt: dueAt,
+      dueInputMode: dueInputMode,
+      dueOffsetValue: dueOffsetValue,
+      dueOffsetUnit: dueOffsetUnit,
       recurrenceMode: recurrenceMode,
       recurrenceRrule: recurrenceRrule,
       assigneeProfileId: assigneeProfileId,
@@ -224,6 +242,36 @@ void main() {
       expect(cubit.state.completedTasks.single.id, 1);
       expect(cubit.state.completedTasks.single.status, 'completed');
       expect(cubit.state.history.single.eventType, 'completed');
+    },
+  );
+
+  test(
+    'deleteCurrentTask removes task and selects the next available task',
+    () async {
+      final familySelectionCubit = _TestFamilySelectionCubit(42);
+      final repository = _FakeTasksRepository()
+        ..seedFamily(42, [
+          _task(id: 1, title: 'First task'),
+          _task(id: 2, title: 'Second task'),
+        ])
+        ..seedHistory(1, [_history(id: 1, taskId: 1, eventType: 'created')])
+        ..seedHistory(2, [_history(id: 2, taskId: 2, eventType: 'created')]);
+
+      final cubit = TasksCubit(
+        repository: repository,
+        familySelectionCubit: familySelectionCubit,
+      );
+      addTearDown(cubit.close);
+
+      await _flushAsync();
+
+      final didDelete = await cubit.deleteCurrentTask();
+      await _flushAsync();
+
+      expect(didDelete, isTrue);
+      expect(cubit.state.tasks.map((task) => task.id), [2]);
+      expect(cubit.state.currentTaskId, 2);
+      expect(cubit.state.history.single.taskId, 2);
     },
   );
 }

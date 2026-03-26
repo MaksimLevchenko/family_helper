@@ -7,6 +7,7 @@ import 'package:family_helper_flutter/features/notifications/domain/notification
 import 'package:family_helper_flutter/features/notifications/providers/notifications_provider.dart';
 import 'package:family_helper_flutter/features/tasks/domain/task_form.dart';
 import 'package:family_helper_flutter/features/tasks/presentation/tasks_screen.dart';
+import 'package:family_helper_flutter/features/tasks/presentation/widgets/task_workspace_widgets.dart';
 import 'package:family_helper_flutter/features/tasks/providers/tasks_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -183,6 +184,33 @@ class _TasksCubitStub extends Cubit<TasksState> implements TasksCubit {
         )
         .toList();
     emit(state.copyWith(tasks: updatedTasks));
+  }
+
+  @override
+  Future<bool> deleteCurrentTask() async {
+    final currentTaskId = state.currentTaskId;
+    if (currentTaskId == null) {
+      return false;
+    }
+    final remainingTasks = state.tasks
+        .where((task) => task.id != currentTaskId)
+        .toList();
+    emit(
+      state.copyWith(
+        tasks: remainingTasks,
+        currentTaskId: remainingTasks.isEmpty ? null : remainingTasks.first.id,
+        history: remainingTasks.isEmpty
+            ? const []
+            : [
+                _history(
+                  id: 900 + remainingTasks.first.id,
+                  taskId: remainingTasks.first.id,
+                  eventType: 'created',
+                ),
+              ],
+      ),
+    );
+    return true;
   }
 
   @override
@@ -363,13 +391,21 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final narrowScrollable = find.descendant(
-        of: find.byKey(const Key('tasks-narrow-layout')),
-        matching: find.byType(Scrollable),
-      ).first;
+      final narrowScrollable = find
+          .descendant(
+            of: find.byKey(const Key('tasks-narrow-layout')),
+            matching: find.byType(Scrollable),
+          )
+          .first;
 
       expect(find.byKey(const Key('tasks-narrow-layout')), findsOneWidget);
-      expect(find.text('Overdue'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(SectionHeader),
+          matching: find.text('Overdue'),
+        ),
+        findsOneWidget,
+      );
       await tester.scrollUntilVisible(
         find.text('Today'),
         300,
@@ -456,8 +492,55 @@ void main() {
     },
   );
 
+  testWidgets('delete action removes the selected task after confirmation', (
+    tester,
+  ) async {
+    setSurface(tester, const Size(1280, 900));
+    final tasksCubit = _TasksCubitStub(
+      TasksState.initial(
+        hasSelectedFamily: true,
+      ).copyWith(
+        isInitialLoading: false,
+        tasks: [
+          _task(id: 1, title: 'Trash'),
+          _task(id: 2, title: 'Dishes'),
+        ],
+        history: [_history(id: 1, taskId: 1, eventType: 'created')],
+        currentTaskId: 1,
+      ),
+    );
+
+    await tester.pumpWidget(
+      buildSubject(
+        tasksCubit: tasksCubit,
+        familyMembersCubit: _FamilyMembersCubitStub(
+          FamilyMembersState.initial(familyId: 42).copyWith(
+            isLoading: false,
+            members: [_member()],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('task-detail-delete-button')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Delete "Trash" permanently from active tasks and archive.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('task-delete-confirm-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Trash'), findsNothing);
+    expect(find.text('Dishes'), findsWidgets);
+    expect(tasksCubit.state.currentTaskId, 2);
+  });
+
   testWidgets(
-    'task editor hides assignee for personal tasks and validates due date',
+    'task editor hides assignee for personal tasks and disables reminder without deadline',
     (
       tester,
     ) async {
@@ -494,10 +577,16 @@ void main() {
 
       expect(find.byKey(const Key('task-editor-assignee-field')), findsNothing);
 
-      await tester.tap(find.byKey(const Key('task-editor-reminder-field')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('1 hour before').last);
-      await tester.pumpAndSettle();
+      final reminderField = tester.widget<ReminderPresetField>(
+        find.byKey(const Key('task-editor-reminder-field')),
+      );
+      final recurrenceField = tester
+          .widget<DropdownButtonFormField<TaskRecurrencePreset>>(
+            find.byKey(const Key('task-editor-recurrence-field')),
+          );
+
+      expect(reminderField.enabled, isFalse);
+      expect(recurrenceField.onChanged, isNull);
 
       await tester.enterText(
         find.byKey(const Key('task-editor-title-field')),
@@ -506,11 +595,8 @@ void main() {
       await tester.tap(find.text('Create task').last);
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Set a due date before adding reminders or recurrence.'),
-        findsOneWidget,
-      );
-      expect(tasksCubit.lastSavedForm, isNull);
+      expect(tasksCubit.lastSavedForm, isNotNull);
+      expect(tasksCubit.lastSavedForm!.dueAt, isNull);
     },
   );
 }

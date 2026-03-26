@@ -35,6 +35,9 @@ class TasksService {
     required bool isPersonal,
     String priority = 'normal',
     DateTime? dueAt,
+    String? dueInputMode,
+    int? dueOffsetValue,
+    String? dueOffsetUnit,
     String? recurrenceMode,
     String? recurrenceRrule,
     int? assigneeProfileId,
@@ -86,6 +89,12 @@ class TasksService {
         assigneeProfileId: assigneeProfileId,
         transaction: transaction,
       );
+      final normalizedDeadline = _normalizeDeadline(
+        dueAt: dueAt,
+        dueInputMode: dueInputMode,
+        dueOffsetValue: dueOffsetValue,
+        dueOffsetUnit: dueOffsetUnit,
+      );
       if (taskId == null) {
         final inserted = await TaskRow.db.insertRow(
           session,
@@ -96,7 +105,10 @@ class TasksService {
             isPersonal: isPersonal,
             priority: priority,
             status: 'open',
-            dueAt: dueAt?.toUtc(),
+            dueAt: normalizedDeadline.dueAt,
+            dueInputMode: normalizedDeadline.dueInputMode,
+            dueOffsetValue: normalizedDeadline.dueOffsetValue,
+            dueOffsetUnit: normalizedDeadline.dueOffsetUnit,
             recurrenceMode: recurrenceMode,
             recurrenceRrule: recurrenceRrule,
             assigneeProfileId: assigneeProfileId,
@@ -175,7 +187,10 @@ class TasksService {
           description: description,
           isPersonal: isPersonal,
           priority: priority,
-          dueAt: dueAt?.toUtc(),
+          dueAt: normalizedDeadline.dueAt,
+          dueInputMode: normalizedDeadline.dueInputMode,
+          dueOffsetValue: normalizedDeadline.dueOffsetValue,
+          dueOffsetUnit: normalizedDeadline.dueOffsetUnit,
           recurrenceMode: recurrenceMode,
           recurrenceRrule: recurrenceRrule,
           assigneeProfileId: assigneeProfileId,
@@ -463,6 +478,103 @@ class TasksService {
     });
   }
 
+  Future<OperationResult> deleteTask(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+    required int taskId,
+  }) async {
+    final authUserId = authContext.requireAuthUserId(session).uuid;
+
+    return session.db.transaction((transaction) async {
+      final actorProfileId = await rbac.ensureFamilyRole(
+        session,
+        familyId: familyId,
+        minRole: 'member',
+        transaction: transaction,
+      );
+
+      final isFresh = await idempotency.tryBegin(
+        session,
+        actorAuthUserId: authUserId,
+        action: 'tasks.deleteTask',
+        clientOperationId: clientOperationId,
+        transaction: transaction,
+      );
+      if (!isFresh) {
+        return OperationResult(success: true, message: 'Already deleted');
+      }
+
+      await session.db.unsafeQuery(
+        'SELECT "id" FROM "task" WHERE "id" = @taskId AND "familyId" = @familyId AND "deletedAt" IS NULL FOR UPDATE',
+        transaction: transaction,
+        parameters: QueryParameters.named({
+          'taskId': taskId,
+          'familyId': familyId,
+        }),
+      );
+
+      final row = await _findVisibleTaskRow(
+        session,
+        familyId: familyId,
+        taskId: taskId,
+        viewerProfileId: actorProfileId,
+        transaction: transaction,
+      );
+      if (row == null) {
+        return OperationResult(success: true, message: 'Already deleted');
+      }
+
+      final now = clock.nowUtc();
+      final nextVersion = row.version + 1;
+      await TaskRow.db.updateRow(
+        session,
+        row.copyWith(
+          deletedAt: now,
+          updatedAt: now,
+          version: nextVersion,
+        ),
+        transaction: transaction,
+      );
+
+      await _appendHistory(
+        session,
+        taskId: taskId,
+        actorProfileId: actorProfileId,
+        eventType: 'deleted',
+        details: 'Task deleted',
+        transaction: transaction,
+      );
+
+      await changeFeed.appendChange(
+        session,
+        feature: 'tasks',
+        entityType: 'task',
+        entityId: taskId,
+        operation: 'deleted',
+        familyId: familyId,
+        version: nextVersion,
+        payload: {'title': row.title},
+        transaction: transaction,
+      );
+
+      await realtime.publish(
+        session,
+        familyId: familyId,
+        event: FamilyRealtimeEvent(
+          familyId: familyId,
+          feature: 'tasks',
+          entityType: 'task',
+          entityId: taskId,
+          eventType: 'tasks.updated',
+          changedAt: now,
+        ),
+      );
+
+      return OperationResult(success: true, message: 'Task deleted');
+    });
+  }
+
   Future<TaskDto> _findTask(
     Session session,
     int taskId, {
@@ -605,6 +717,9 @@ class TasksService {
       priority: row.priority,
       status: row.status,
       dueAt: row.dueAt,
+      dueInputMode: row.dueInputMode,
+      dueOffsetValue: row.dueOffsetValue,
+      dueOffsetUnit: row.dueOffsetUnit,
       recurrenceMode: row.recurrenceMode,
       recurrenceRrule: row.recurrenceRrule,
       assigneeProfileId: row.assigneeProfileId,
@@ -613,4 +728,55 @@ class TasksService {
       version: row.version,
     );
   }
+}
+
+class _NormalizedTaskDeadline {
+  const _NormalizedTaskDeadline({
+    required this.dueAt,
+    required this.dueInputMode,
+    required this.dueOffsetValue,
+    required this.dueOffsetUnit,
+  });
+
+  final DateTime? dueAt;
+  final String? dueInputMode;
+  final int? dueOffsetValue;
+  final String? dueOffsetUnit;
+}
+
+_NormalizedTaskDeadline _normalizeDeadline({
+  required DateTime? dueAt,
+  required String? dueInputMode,
+  required int? dueOffsetValue,
+  required String? dueOffsetUnit,
+}) {
+  final mode = dueInputMode?.trim();
+  return switch (mode) {
+    'none' => const _NormalizedTaskDeadline(
+      dueAt: null,
+      dueInputMode: 'none',
+      dueOffsetValue: null,
+      dueOffsetUnit: null,
+    ),
+    'relative' => _NormalizedTaskDeadline(
+      dueAt: dueAt?.toUtc(),
+      dueInputMode: 'relative',
+      dueOffsetValue: dueOffsetValue != null && dueOffsetValue > 0
+          ? dueOffsetValue
+          : null,
+      dueOffsetUnit: dueOffsetUnit,
+    ),
+    'absolute' => _NormalizedTaskDeadline(
+      dueAt: dueAt?.toUtc(),
+      dueInputMode: 'absolute',
+      dueOffsetValue: null,
+      dueOffsetUnit: null,
+    ),
+    _ => _NormalizedTaskDeadline(
+      dueAt: dueAt?.toUtc(),
+      dueInputMode: dueAt == null ? 'none' : null,
+      dueOffsetValue: null,
+      dueOffsetUnit: null,
+    ),
+  };
 }

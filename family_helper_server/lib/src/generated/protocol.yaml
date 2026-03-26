@@ -79,3 +79,4 @@ tasks:
   - listTasks:
   - listTaskHistory:
   - completeTask:
+  - deleteTask:

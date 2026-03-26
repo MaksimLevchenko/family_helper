@@ -2705,6 +2705,9 @@ class _TasksEndpoint {
     required bool isPersonal,
     required String priority,
     DateTime? dueAt,
+    String? dueInputMode,
+    int? dueOffsetValue,
+    String? dueOffsetUnit,
     String? recurrenceMode,
     String? recurrenceRrule,
     int? assigneeProfileId,
@@ -2729,6 +2732,9 @@ class _TasksEndpoint {
             'isPersonal': isPersonal,
             'priority': priority,
             'dueAt': dueAt,
+            'dueInputMode': dueInputMode,
+            'dueOffsetValue': dueOffsetValue,
+            'dueOffsetUnit': dueOffsetUnit,
             'recurrenceMode': recurrenceMode,
             'recurrenceRrule': recurrenceRrule,
             'assigneeProfileId': assigneeProfileId,
@@ -2846,6 +2852,43 @@ class _TasksEndpoint {
                   _localCallContext.arguments,
                 )
                 as _i3.Future<_i27.TaskDto>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i7.OperationResult> deleteTask(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required String clientOperationId,
+    required int familyId,
+    required int taskId,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'tasks',
+            method: 'deleteTask',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'tasks',
+          methodName: 'deleteTask',
+          parameters: _i1.testObjectToJson({
+            'clientOperationId': clientOperationId,
+            'familyId': familyId,
+            'taskId': taskId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i7.OperationResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

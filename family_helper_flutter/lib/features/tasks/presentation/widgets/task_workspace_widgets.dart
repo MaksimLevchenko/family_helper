@@ -12,12 +12,14 @@ class TasksToolbar extends StatelessWidget {
   const TasksToolbar({
     super.key,
     required this.state,
+    this.isCompact = false,
     required this.currentFilter,
     required this.onFilterChanged,
     required this.onCreateTask,
   });
 
   final TasksState state;
+  final bool isCompact;
   final TaskFilter currentFilter;
   final ValueChanged<TaskFilter> onFilterChanged;
   final VoidCallback? onCreateTask;
@@ -27,29 +29,54 @@ class TasksToolbar extends StatelessWidget {
     final openTasks = state.openTasks;
     final overdueCount = openTasks.where(isTaskOverdue).length;
     final dueTodayCount = openTasks.where(isTaskDueToday).length;
+    final summaryCards = [
+      SummaryCard(
+        title: 'Open',
+        value: '${openTasks.length}',
+        isCompact: isCompact,
+      ),
+      SummaryCard(
+        title: 'Due today',
+        value: '$dueTodayCount',
+        isCompact: isCompact,
+      ),
+      SummaryCard(
+        title: 'Overdue',
+        value: '$overdueCount',
+        accentColor: context.colors.warning,
+        isCompact: isCompact,
+      ),
+      SummaryCard(
+        title: 'Archive',
+        value: '${state.completedTasks.length}',
+        accentColor: context.colors.success,
+        isCompact: isCompact,
+      ),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            SummaryCard(title: 'Open', value: '${openTasks.length}'),
-            SummaryCard(title: 'Due today', value: '$dueTodayCount'),
-            SummaryCard(
-              title: 'Overdue',
-              value: '$overdueCount',
-              accentColor: context.colors.warning,
+        if (isCompact)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (var index = 0; index < summaryCards.length; index++) ...[
+                  summaryCards[index],
+                  if (index != summaryCards.length - 1)
+                    const SizedBox(width: 8),
+                ],
+              ],
             ),
-            SummaryCard(
-              title: 'Archive',
-              value: '${state.completedTasks.length}',
-              accentColor: context.colors.success,
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
+          )
+        else
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: summaryCards,
+          ),
+        SizedBox(height: isCompact ? 10 : 12),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -68,9 +95,9 @@ class TasksToolbar extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: isCompact ? 8 : 12),
             SizedBox(
-              width: 160,
+              width: isCompact ? 136 : 160,
               child: AppButton(
                 label: 'Create task',
                 onPressed: onCreateTask,
@@ -199,8 +226,10 @@ class TaskDetailPane extends StatelessWidget {
     required this.members,
     required this.currentProfileId,
     required this.isOffline,
+    this.isEmbedded = false,
     required this.onEditTask,
     required this.onCompleteTask,
+    required this.onDeleteTask,
   });
 
   final TaskDto? task;
@@ -210,8 +239,10 @@ class TaskDetailPane extends StatelessWidget {
   final List<FamilyMemberDto> members;
   final int? currentProfileId;
   final bool isOffline;
+  final bool isEmbedded;
   final VoidCallback? onEditTask;
   final Future<void> Function()? onCompleteTask;
+  final Future<void> Function()? onDeleteTask;
 
   @override
   Widget build(BuildContext context) {
@@ -313,34 +344,61 @@ class TaskDetailPane extends StatelessWidget {
                     onPressed: onEditTask == null || isBusy ? null : onEditTask,
                   ),
                 ),
+                SizedBox(
+                  width: 160,
+                  child: AppButton(
+                    key: const Key('task-detail-delete-button'),
+                    label: 'Delete task',
+                    variant: AppButtonVariant.danger,
+                    onPressed: onDeleteTask == null || isBusy
+                        ? null
+                        : () async {
+                            await onDeleteTask!();
+                          },
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 20),
             Text('History', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 10),
-            SizedBox(
-              height: 240,
-              child: isHistoryLoading
-                  ? const Center(
-                      child: SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    )
-                  : history.isEmpty
-                  ? const EmptyText(
-                      title: 'No history yet',
-                      message: 'Task updates and completions will appear here.',
-                    )
-                  : ListView.separated(
-                      itemCount: history.length,
-                      separatorBuilder: (_, __) => const Divider(height: 16),
-                      itemBuilder: (context, index) {
-                        return HistoryRow(entry: history[index]);
-                      },
-                    ),
-            ),
+            if (isHistoryLoading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              )
+            else if (history.isEmpty)
+              const EmptyText(
+                title: 'No history yet',
+                message: 'Task updates and completions will appear here.',
+              )
+            else if (isEmbedded)
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: history.length,
+                separatorBuilder: (context, _) => const Divider(height: 16),
+                itemBuilder: (context, index) {
+                  return HistoryRow(entry: history[index]);
+                },
+              )
+            else
+              SizedBox(
+                height: 240,
+                child: ListView.separated(
+                  itemCount: history.length,
+                  separatorBuilder: (context, _) => const Divider(height: 16),
+                  itemBuilder: (context, index) {
+                    return HistoryRow(entry: history[index]);
+                  },
+                ),
+              ),
           ],
         ),
       ),
@@ -484,18 +542,20 @@ class SummaryCard extends StatelessWidget {
     required this.title,
     required this.value,
     this.accentColor,
+    this.isCompact = false,
   });
 
   final String title;
   final String value;
   final Color? accentColor;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
     final color = accentColor ?? context.colors.primary;
     return Container(
-      constraints: const BoxConstraints(minWidth: 120),
-      padding: const EdgeInsets.all(14),
+      constraints: BoxConstraints(minWidth: isCompact ? 96 : 120),
+      padding: EdgeInsets.all(isCompact ? 10 : 14),
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -505,12 +565,16 @@ class SummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: TextStyle(color: context.colors.textSecondary)),
-          const SizedBox(height: 6),
+          SizedBox(height: isCompact ? 4 : 6),
           Text(
             value,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: color,
-            ),
+            style:
+                (isCompact
+                        ? Theme.of(context).textTheme.titleLarge
+                        : Theme.of(context).textTheme.headlineSmall)
+                    ?.copyWith(
+                      color: color,
+                    ),
           ),
         ],
       ),

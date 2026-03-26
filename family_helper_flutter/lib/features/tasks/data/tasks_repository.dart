@@ -32,6 +32,9 @@ class TasksRepository {
     required bool isPersonal,
     required String priority,
     DateTime? dueAt,
+    String? dueInputMode,
+    int? dueOffsetValue,
+    String? dueOffsetUnit,
     String? recurrenceMode,
     String? recurrenceRrule,
     int? assigneeProfileId,
@@ -45,6 +48,9 @@ class TasksRepository {
       isPersonal: isPersonal,
       priority: priority,
       dueAt: dueAt,
+      dueInputMode: dueInputMode,
+      dueOffsetValue: dueOffsetValue,
+      dueOffsetUnit: dueOffsetUnit,
       recurrenceMode: recurrenceMode,
       recurrenceRrule: recurrenceRrule,
       assigneeProfileId: assigneeProfileId,
@@ -57,6 +63,18 @@ class TasksRepository {
     required int taskId,
   }) {
     return _apiClient.client.tasks.completeTask(
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      taskId: taskId,
+    );
+  }
+
+  Future<OperationResult> deleteTask({
+    required String clientOperationId,
+    required int familyId,
+    required int taskId,
+  }) {
+    return _apiClient.client.tasks.deleteTask(
       clientOperationId: clientOperationId,
       familyId: familyId,
       taskId: taskId,

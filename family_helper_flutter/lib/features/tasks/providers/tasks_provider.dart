@@ -16,6 +16,7 @@ class TasksState {
     required this.isInitialLoading,
     required this.isSavingTask,
     required this.isCompletingTask,
+    required this.isDeletingTask,
     required this.isHistoryLoading,
     required this.isReminderSyncing,
     required this.tasks,
@@ -30,6 +31,7 @@ class TasksState {
   final bool isInitialLoading;
   final bool isSavingTask;
   final bool isCompletingTask;
+  final bool isDeletingTask;
   final bool isHistoryLoading;
   final bool isReminderSyncing;
   final List<TaskDto> tasks;
@@ -45,6 +47,7 @@ class TasksState {
       isInitialLoading: hasSelectedFamily,
       isSavingTask: false,
       isCompletingTask: false,
+      isDeletingTask: false,
       isHistoryLoading: false,
       isReminderSyncing: false,
       tasks: const [],
@@ -57,6 +60,7 @@ class TasksState {
     bool? isInitialLoading,
     bool? isSavingTask,
     bool? isCompletingTask,
+    bool? isDeletingTask,
     bool? isHistoryLoading,
     bool? isReminderSyncing,
     List<TaskDto>? tasks,
@@ -73,6 +77,7 @@ class TasksState {
       isInitialLoading: isInitialLoading ?? this.isInitialLoading,
       isSavingTask: isSavingTask ?? this.isSavingTask,
       isCompletingTask: isCompletingTask ?? this.isCompletingTask,
+      isDeletingTask: isDeletingTask ?? this.isDeletingTask,
       isHistoryLoading: isHistoryLoading ?? this.isHistoryLoading,
       isReminderSyncing: isReminderSyncing ?? this.isReminderSyncing,
       tasks: tasks ?? this.tasks,
@@ -257,6 +262,9 @@ class TasksCubit extends Cubit<TasksState> {
         isPersonal: form.isPersonal,
         priority: form.priorityValue,
         dueAt: form.dueAt,
+        dueInputMode: form.dueInputModeValue,
+        dueOffsetValue: form.normalizedDueOffsetValue,
+        dueOffsetUnit: form.dueOffsetUnitValue,
         recurrenceMode: form.recurrenceMode,
         recurrenceRrule: form.recurrenceRrule,
         assigneeProfileId: form.isPersonal ? null : form.assigneeProfileId,
@@ -306,6 +314,9 @@ class TasksCubit extends Cubit<TasksState> {
       TaskForm.create().copyWith(
         title: title,
         isPersonal: isPersonal,
+        dueInputMode: dueAt == null
+            ? TaskDueInputMode.none
+            : TaskDueInputMode.absolute,
         dueAt: dueAt,
         recurrencePreset: recurringOnComplete
             ? TaskRecurrencePreset.daily
@@ -364,6 +375,60 @@ class TasksCubit extends Cubit<TasksState> {
     }
   }
 
+  Future<bool> deleteCurrentTask() async {
+    final familyId = _familySelectionCubit.state;
+    final taskId = state.currentTaskId;
+    if (familyId == null || taskId == null) {
+      emit(state.copyWith(error: 'Family/task is not selected'));
+      return false;
+    }
+
+    emit(
+      state.copyWith(
+        hasSelectedFamily: true,
+        isDeletingTask: true,
+        clearError: true,
+      ),
+    );
+
+    try {
+      await _repository.deleteTask(
+        clientOperationId: OperationId.next(),
+        familyId: familyId,
+        taskId: taskId,
+      );
+
+      final tasks = await _repository.listTasks(familyId: familyId);
+      final syncedAt = DateTime.now().toUtc();
+      final nextState =
+          _buildLoadedState(
+            tasks,
+            preferredTaskId: tasks.any((task) => task.id == taskId)
+                ? taskId
+                : null,
+          ).copyWith(
+            isUsingCachedData: false,
+            lastSuccessfulSyncAt: syncedAt,
+          );
+      await _writeSnapshot(familyId, nextState, syncedAt);
+      emit(nextState);
+      await _loadHistoryForTask(nextState.currentTaskId);
+      return true;
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'tasks.deleteTask',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'taskId': taskId,
+        },
+      );
+      emit(state.copyWith(isDeletingTask: false, error: '$error'));
+      return false;
+    }
+  }
+
   TasksState _buildLoadedState(
     List<TaskDto> tasks, {
     int? preferredTaskId,
@@ -378,6 +443,7 @@ class TasksCubit extends Cubit<TasksState> {
       isInitialLoading: false,
       isSavingTask: false,
       isCompletingTask: false,
+      isDeletingTask: false,
       isHistoryLoading: selectedTaskId != null,
       tasks: tasks,
       history: selectedTaskId == state.currentTaskId ? state.history : const [],

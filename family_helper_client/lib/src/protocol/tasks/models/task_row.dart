@@ -22,6 +22,9 @@ abstract class TaskRow implements _i1.SerializableModel {
     required this.priority,
     required this.status,
     this.dueAt,
+    this.dueInputMode,
+    this.dueOffsetValue,
+    this.dueOffsetUnit,
     this.recurrenceMode,
     this.recurrenceRrule,
     this.assigneeProfileId,
@@ -43,6 +46,9 @@ abstract class TaskRow implements _i1.SerializableModel {
     required String priority,
     required String status,
     DateTime? dueAt,
+    String? dueInputMode,
+    int? dueOffsetValue,
+    String? dueOffsetUnit,
     String? recurrenceMode,
     String? recurrenceRrule,
     int? assigneeProfileId,
@@ -67,6 +73,9 @@ abstract class TaskRow implements _i1.SerializableModel {
       dueAt: jsonSerialization['dueAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['dueAt']),
+      dueInputMode: jsonSerialization['dueInputMode'] as String?,
+      dueOffsetValue: jsonSerialization['dueOffsetValue'] as int?,
+      dueOffsetUnit: jsonSerialization['dueOffsetUnit'] as String?,
       recurrenceMode: jsonSerialization['recurrenceMode'] as String?,
       recurrenceRrule: jsonSerialization['recurrenceRrule'] as String?,
       assigneeProfileId: jsonSerialization['assigneeProfileId'] as int?,
@@ -109,6 +118,12 @@ abstract class TaskRow implements _i1.SerializableModel {
 
   DateTime? dueAt;
 
+  String? dueInputMode;
+
+  int? dueOffsetValue;
+
+  String? dueOffsetUnit;
+
   String? recurrenceMode;
 
   String? recurrenceRrule;
@@ -141,6 +156,9 @@ abstract class TaskRow implements _i1.SerializableModel {
     String? priority,
     String? status,
     DateTime? dueAt,
+    String? dueInputMode,
+    int? dueOffsetValue,
+    String? dueOffsetUnit,
     String? recurrenceMode,
     String? recurrenceRrule,
     int? assigneeProfileId,
@@ -164,6 +182,9 @@ abstract class TaskRow implements _i1.SerializableModel {
       'priority': priority,
       'status': status,
       if (dueAt != null) 'dueAt': dueAt?.toJson(),
+      if (dueInputMode != null) 'dueInputMode': dueInputMode,
+      if (dueOffsetValue != null) 'dueOffsetValue': dueOffsetValue,
+      if (dueOffsetUnit != null) 'dueOffsetUnit': dueOffsetUnit,
       if (recurrenceMode != null) 'recurrenceMode': recurrenceMode,
       if (recurrenceRrule != null) 'recurrenceRrule': recurrenceRrule,
       if (assigneeProfileId != null) 'assigneeProfileId': assigneeProfileId,
@@ -195,6 +216,9 @@ class _TaskRowImpl extends TaskRow {
     required String priority,
     required String status,
     DateTime? dueAt,
+    String? dueInputMode,
+    int? dueOffsetValue,
+    String? dueOffsetUnit,
     String? recurrenceMode,
     String? recurrenceRrule,
     int? assigneeProfileId,
@@ -214,6 +238,9 @@ class _TaskRowImpl extends TaskRow {
          priority: priority,
          status: status,
          dueAt: dueAt,
+         dueInputMode: dueInputMode,
+         dueOffsetValue: dueOffsetValue,
+         dueOffsetUnit: dueOffsetUnit,
          recurrenceMode: recurrenceMode,
          recurrenceRrule: recurrenceRrule,
          assigneeProfileId: assigneeProfileId,
@@ -239,6 +266,9 @@ class _TaskRowImpl extends TaskRow {
     String? priority,
     String? status,
     Object? dueAt = _Undefined,
+    Object? dueInputMode = _Undefined,
+    Object? dueOffsetValue = _Undefined,
+    Object? dueOffsetUnit = _Undefined,
     Object? recurrenceMode = _Undefined,
     Object? recurrenceRrule = _Undefined,
     Object? assigneeProfileId = _Undefined,
@@ -259,6 +289,13 @@ class _TaskRowImpl extends TaskRow {
       priority: priority ?? this.priority,
       status: status ?? this.status,
       dueAt: dueAt is DateTime? ? dueAt : this.dueAt,
+      dueInputMode: dueInputMode is String? ? dueInputMode : this.dueInputMode,
+      dueOffsetValue: dueOffsetValue is int?
+          ? dueOffsetValue
+          : this.dueOffsetValue,
+      dueOffsetUnit: dueOffsetUnit is String?
+          ? dueOffsetUnit
+          : this.dueOffsetUnit,
       recurrenceMode: recurrenceMode is String?
           ? recurrenceMode
           : this.recurrenceMode,

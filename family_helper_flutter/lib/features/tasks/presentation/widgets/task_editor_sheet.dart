@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/config/app_defaults.dart';
 import '../../../../ui_kit/app_modal_sheet.dart';
@@ -144,6 +145,7 @@ class TaskEditorSheet extends StatefulWidget {
     required this.isSubmitting,
     required this.existingTask,
     required this.onSubmit,
+    this.nowProvider,
   });
 
   final TaskForm initialForm;
@@ -152,6 +154,7 @@ class TaskEditorSheet extends StatefulWidget {
   final bool isSubmitting;
   final TaskDto? existingTask;
   final Future<bool> Function(TaskForm form) onSubmit;
+  final DateTime Function()? nowProvider;
 
   @override
   State<TaskEditorSheet> createState() => _TaskEditorSheetState();
@@ -161,13 +164,17 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
+  late final TextEditingController _dueOffsetController;
   late TaskPriorityOption _priority;
   late bool _isPersonal;
   late int? _assigneeProfileId;
+  late TaskDueInputMode _dueInputMode;
   late DateTime? _dueAt;
+  late TaskDueOffsetUnit _dueOffsetUnit;
   late ReminderPreset _reminderPreset;
   late TaskRecurrencePreset _recurrencePreset;
   late int _recurrenceInterval;
+  bool _deadlineDirty = false;
 
   @override
   void initState() {
@@ -179,7 +186,12 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
     _priority = widget.initialForm.priority;
     _isPersonal = widget.initialForm.isPersonal;
     _assigneeProfileId = widget.initialForm.assigneeProfileId;
+    _dueInputMode = widget.initialForm.dueInputMode;
     _dueAt = widget.initialForm.dueAt;
+    _dueOffsetController = TextEditingController(
+      text: widget.initialForm.dueOffsetValue?.toString() ?? '1',
+    );
+    _dueOffsetUnit = widget.initialForm.dueOffsetUnit;
     _reminderPreset = widget.initialForm.reminderPreset;
     _recurrencePreset = widget.initialForm.recurrencePreset;
     _recurrenceInterval = widget.initialForm.recurrenceInterval;
@@ -189,7 +201,85 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _dueOffsetController.dispose();
     super.dispose();
+  }
+
+  DateTime _nowUtc() => (widget.nowProvider?.call() ?? DateTime.now()).toUtc();
+
+  int? get _dueOffsetValue {
+    final value = int.tryParse(_dueOffsetController.text.trim());
+    if (value == null || value < 1) {
+      return null;
+    }
+    return value;
+  }
+
+  DateTime? get _resolvedDueAt {
+    switch (_dueInputMode) {
+      case TaskDueInputMode.none:
+        return null;
+      case TaskDueInputMode.absolute:
+        return _dueAt;
+      case TaskDueInputMode.relative:
+        final offsetValue = _dueOffsetValue;
+        if (offsetValue == null) {
+          return null;
+        }
+        if (!_deadlineDirty &&
+            widget.initialForm.dueInputMode == TaskDueInputMode.relative &&
+            widget.initialForm.dueAt != null &&
+            widget.initialForm.dueOffsetValue == offsetValue &&
+            widget.initialForm.dueOffsetUnit == _dueOffsetUnit) {
+          return widget.initialForm.dueAt;
+        }
+        return _nowUtc().add(_dueOffsetUnit.toDuration(offsetValue));
+    }
+  }
+
+  bool get _hasValidDeadline => _resolvedDueAt != null;
+
+  void _markDeadlineChanged() {
+    _deadlineDirty = true;
+  }
+
+  void _resetDeadlineDependentFields() {
+    _reminderPreset = ReminderPreset.none;
+    _recurrencePreset = TaskRecurrencePreset.none;
+    _recurrenceInterval = 1;
+  }
+
+  void _setDueInputMode(TaskDueInputMode mode) {
+    setState(() {
+      _markDeadlineChanged();
+      _dueInputMode = mode;
+      if (mode == TaskDueInputMode.none) {
+        _dueAt = null;
+        _resetDeadlineDependentFields();
+      } else if (mode == TaskDueInputMode.relative) {
+        _dueOffsetController.text = _dueOffsetController.text.trim().isEmpty
+            ? '1'
+            : _dueOffsetController.text.trim();
+      }
+    });
+  }
+
+  void _applyRelativePreset(int value, TaskDueOffsetUnit unit) {
+    setState(() {
+      _markDeadlineChanged();
+      _dueInputMode = TaskDueInputMode.relative;
+      _dueOffsetController.text = '$value';
+      _dueOffsetUnit = unit;
+    });
+  }
+
+  String _formatDuePreview(DateTime value) {
+    final local = value.toLocal();
+    final month = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$month/$day ${local.year} $hour:$minute';
   }
 
   @override
@@ -198,6 +288,7 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
     final activeMembers = widget.members
         .where((member) => member.status == 'active')
         .toList();
+    final hasValidDeadline = _hasValidDeadline;
 
     return Form(
       key: _formKey,
@@ -213,8 +304,8 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
             const SizedBox(height: 8),
             Text(
               isEditing
-                  ? 'Update assignment, due date, recurrence, and reminder settings.'
-                  : 'Create a family task with assignment, due date, and reminder settings.',
+                  ? 'Update assignment, deadline, recurrence, and reminder settings.'
+                  : 'Create a family task with an optional deadline, recurrence, and reminders.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
@@ -310,27 +401,39 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
               ),
             ],
             const SizedBox(height: 12),
-            DueDateField(
-              value: _dueAt,
-              onChanged: (value) {
+            TaskDeadlineSection(
+              mode: _dueInputMode,
+              dueAt: _dueAt,
+              dueOffsetValue: _dueOffsetController,
+              dueOffsetUnit: _dueOffsetUnit,
+              previewDueAt: _resolvedDueAt,
+              onModeChanged: _setDueInputMode,
+              onAbsoluteChanged: (value) {
                 setState(() {
+                  _markDeadlineChanged();
                   _dueAt = value;
                 });
               },
-              onClear: () {
+              onRelativePresetSelected: _applyRelativePreset,
+              onRelativeValueChanged: (_) {
                 setState(() {
-                  _dueAt = null;
-                  _reminderPreset = ReminderPreset.none;
-                  _recurrencePreset = TaskRecurrencePreset.none;
-                  _recurrenceInterval = 1;
+                  _markDeadlineChanged();
                 });
               },
+              onRelativeUnitChanged: (unit) {
+                setState(() {
+                  _markDeadlineChanged();
+                  _dueOffsetUnit = unit;
+                });
+              },
+              formatPreview: _formatDuePreview,
             ),
             const SizedBox(height: 12),
             ReminderPresetField(
               key: const Key('task-editor-reminder-field'),
               label: 'Reminder',
               value: _reminderPreset,
+              enabled: hasValidDeadline,
               onChanged: (value) {
                 if (value == null) {
                   return;
@@ -353,19 +456,22 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
                     ),
                   )
                   .toList(),
-              onChanged: (value) {
-                if (value == null) {
-                  return;
-                }
-                setState(() {
-                  _recurrencePreset = value;
-                  if (value == TaskRecurrencePreset.none) {
-                    _recurrenceInterval = 1;
-                  }
-                });
-              },
+              onChanged: hasValidDeadline
+                  ? (value) {
+                      if (value == null) {
+                        return;
+                      }
+                      setState(() {
+                        _recurrencePreset = value;
+                        if (value == TaskRecurrencePreset.none) {
+                          _recurrenceInterval = 1;
+                        }
+                      });
+                    }
+                  : null,
             ),
-            if (_recurrencePreset != TaskRecurrencePreset.none) ...[
+            if (_recurrencePreset != TaskRecurrencePreset.none &&
+                hasValidDeadline) ...[
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
                 key: const Key('task-editor-recurrence-interval-field'),
@@ -406,9 +512,20 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
       return;
     }
 
+    if (_dueInputMode == TaskDueInputMode.absolute && _dueAt == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Pick a deadline date and time or switch to no deadline.',
+          ),
+        ),
+      );
+      return;
+    }
+
     if ((_reminderPreset != ReminderPreset.none ||
             _recurrencePreset != TaskRecurrencePreset.none) &&
-        _dueAt == null) {
+        _resolvedDueAt == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -426,7 +543,12 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
         isPersonal: _isPersonal,
         priority: _priority,
         assigneeProfileId: _isPersonal ? null : _assigneeProfileId,
-        dueAt: _dueAt,
+        dueInputMode: _dueInputMode,
+        dueAt: _resolvedDueAt,
+        dueOffsetValue: _dueInputMode == TaskDueInputMode.relative
+            ? _dueOffsetValue
+            : null,
+        dueOffsetUnit: _dueOffsetUnit,
         reminderPreset: _reminderPreset,
         recurrencePreset: _recurrencePreset,
         recurrenceInterval: _recurrenceInterval,
@@ -439,37 +561,196 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
   }
 }
 
-class DueDateField extends StatelessWidget {
-  const DueDateField({
+class TaskDeadlineSection extends StatelessWidget {
+  const TaskDeadlineSection({
     super.key,
-    required this.value,
-    required this.onChanged,
-    required this.onClear,
+    required this.mode,
+    required this.dueAt,
+    required this.dueOffsetValue,
+    required this.dueOffsetUnit,
+    required this.previewDueAt,
+    required this.onModeChanged,
+    required this.onAbsoluteChanged,
+    required this.onRelativePresetSelected,
+    required this.onRelativeValueChanged,
+    required this.onRelativeUnitChanged,
+    required this.formatPreview,
   });
 
-  final DateTime? value;
-  final ValueChanged<DateTime> onChanged;
-  final VoidCallback onClear;
+  final TaskDueInputMode mode;
+  final DateTime? dueAt;
+  final TextEditingController dueOffsetValue;
+  final TaskDueOffsetUnit dueOffsetUnit;
+  final DateTime? previewDueAt;
+  final ValueChanged<TaskDueInputMode> onModeChanged;
+  final ValueChanged<DateTime> onAbsoluteChanged;
+  final void Function(int value, TaskDueOffsetUnit unit)
+  onRelativePresetSelected;
+  final ValueChanged<String> onRelativeValueChanged;
+  final ValueChanged<TaskDueOffsetUnit> onRelativeUnitChanged;
+  final String Function(DateTime value) formatPreview;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: DateTimePickerField(
+        Text('Deadline', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final option in TaskDueInputMode.values)
+              ChoiceChip(
+                key: Key('task-editor-deadline-mode-${option.name}'),
+                label: Text(option.label),
+                selected: mode == option,
+                onSelected: (_) => onModeChanged(option),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (mode == TaskDueInputMode.none)
+          Text(
+            'This task will not have a deadline.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          )
+        else if (mode == TaskDueInputMode.absolute)
+          DateTimePickerField(
             key: const Key('task-editor-due-at-field'),
             label: 'Due at',
-            value: value,
-            onChanged: onChanged,
+            value: dueAt,
+            onChanged: onAbsoluteChanged,
+          )
+        else
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final preset in _relativeDuePresets)
+                    ChoiceChip(
+                      key: Key('task-editor-relative-preset-${preset.key}'),
+                      label: Text(preset.label),
+                      selected:
+                          dueOffsetValue.text.trim() == '${preset.value}' &&
+                          dueOffsetUnit == preset.unit,
+                      onSelected: (_) =>
+                          onRelativePresetSelected(preset.value, preset.unit),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      key: const Key('task-editor-due-offset-value-field'),
+                      controller: dueOffsetValue,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: const InputDecoration(
+                        labelText: 'Amount',
+                        hintText: '1',
+                      ),
+                      onChanged: onRelativeValueChanged,
+                      validator: (_) {
+                        if (mode != TaskDueInputMode.relative) {
+                          return null;
+                        }
+                        final value = int.tryParse(dueOffsetValue.text.trim());
+                        if (value == null || value < 1) {
+                          return 'Enter a positive number.';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: DropdownButtonFormField<TaskDueOffsetUnit>(
+                      key: const Key('task-editor-due-offset-unit-field'),
+                      initialValue: dueOffsetUnit,
+                      decoration: const InputDecoration(labelText: 'Unit'),
+                      items: TaskDueOffsetUnit.values
+                          .map(
+                            (unit) => DropdownMenuItem<TaskDueOffsetUnit>(
+                              value: unit,
+                              child: Text(unit.label),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) {
+                          return;
+                        }
+                        onRelativeUnitChanged(value);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                previewDueAt == null
+                    ? 'Enter a valid offset to calculate the deadline.'
+                    : 'Will be due ${formatPreview(previewDueAt!)}',
+                key: const Key('task-editor-relative-preview'),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
           ),
-        ),
-        IconButton(
-          key: const Key('task-editor-clear-due-at-button'),
-          onPressed: value == null ? null : onClear,
-          icon: const Icon(Icons.clear),
-          tooltip: 'Clear due date',
-        ),
       ],
     );
   }
 }
+
+class _RelativeDuePreset {
+  const _RelativeDuePreset({
+    required this.key,
+    required this.label,
+    required this.value,
+    required this.unit,
+  });
+
+  final String key;
+  final String label;
+  final int value;
+  final TaskDueOffsetUnit unit;
+}
+
+const _relativeDuePresets = [
+  _RelativeDuePreset(
+    key: '30m',
+    label: '30 min',
+    value: 30,
+    unit: TaskDueOffsetUnit.minutes,
+  ),
+  _RelativeDuePreset(
+    key: '1h',
+    label: '1 hour',
+    value: 1,
+    unit: TaskDueOffsetUnit.hours,
+  ),
+  _RelativeDuePreset(
+    key: '3h',
+    label: '3 hours',
+    value: 3,
+    unit: TaskDueOffsetUnit.hours,
+  ),
+  _RelativeDuePreset(
+    key: '1d',
+    label: '1 day',
+    value: 1,
+    unit: TaskDueOffsetUnit.days,
+  ),
+  _RelativeDuePreset(
+    key: '3d',
+    label: '3 days',
+    value: 3,
+    unit: TaskDueOffsetUnit.days,
+  ),
+];

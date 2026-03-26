@@ -8,6 +8,9 @@ fields:
   priority: String
   status: String
   dueAt: DateTime?
+  dueInputMode: String?
+  dueOffsetValue: int?
+  dueOffsetUnit: String?
   recurrenceMode: String?
   recurrenceRrule: String?
   assigneeProfileId: int?

@@ -18,6 +18,9 @@ class TasksEndpoint extends Endpoint {
     required bool isPersonal,
     String priority = 'normal',
     DateTime? dueAt,
+    String? dueInputMode,
+    int? dueOffsetValue,
+    String? dueOffsetUnit,
     String? recurrenceMode,
     String? recurrenceRrule,
     int? assigneeProfileId,
@@ -32,6 +35,9 @@ class TasksEndpoint extends Endpoint {
       isPersonal: isPersonal,
       priority: priority,
       dueAt: dueAt,
+      dueInputMode: dueInputMode,
+      dueOffsetValue: dueOffsetValue,
+      dueOffsetUnit: dueOffsetUnit,
       recurrenceMode: recurrenceMode,
       recurrenceRrule: recurrenceRrule,
       assigneeProfileId: assigneeProfileId,
@@ -66,6 +72,20 @@ class TasksEndpoint extends Endpoint {
     required int taskId,
   }) {
     return service.completeTask(
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      taskId: taskId,
+    );
+  }
+
+  Future<OperationResult> deleteTask(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+    required int taskId,
+  }) {
+    return service.deleteTask(
       session,
       clientOperationId: clientOperationId,
       familyId: familyId,
