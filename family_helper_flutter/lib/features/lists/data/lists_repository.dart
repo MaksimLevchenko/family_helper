@@ -7,6 +7,12 @@ class ListsRepository {
 
   final AppApiClient _apiClient;
 
+  Future<List<FamilyListDto>> listFamilyLists({
+    required int familyId,
+  }) {
+    return _apiClient.client.lists.listFamilyLists(familyId: familyId);
+  }
+
   Future<FamilyListDto> upsertList({
     required String clientOperationId,
     int? listId,
@@ -47,6 +53,30 @@ class ListsRepository {
     );
   }
 
+  Future<ListItemDto> updateItem({
+    required String clientOperationId,
+    required int familyId,
+    required int itemId,
+    required String title,
+    required double qty,
+    String? unit,
+    String? note,
+    int? priceCents,
+    String? category,
+  }) {
+    return _apiClient.client.lists.updateItem(
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      itemId: itemId,
+      title: title,
+      qty: qty,
+      unit: unit,
+      note: note,
+      priceCents: priceCents,
+      category: category,
+    );
+  }
+
   Future<ListItemDto> toggleBought({
     required String clientOperationId,
     required int familyId,
@@ -56,6 +86,30 @@ class ListsRepository {
       clientOperationId: clientOperationId,
       familyId: familyId,
       itemId: itemId,
+    );
+  }
+
+  Future<OperationResult> deleteItem({
+    required String clientOperationId,
+    required int familyId,
+    required int itemId,
+  }) {
+    return _apiClient.client.lists.deleteItem(
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      itemId: itemId,
+    );
+  }
+
+  Future<OperationResult> deleteList({
+    required String clientOperationId,
+    required int familyId,
+    required int listId,
+  }) {
+    return _apiClient.client.lists.deleteList(
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      listId: listId,
     );
   }
 
@@ -77,6 +131,9 @@ class ListsRepository {
     required int familyId,
     required int listId,
   }) {
-    return _apiClient.client.lists.listItems(familyId: familyId, listId: listId);
+    return _apiClient.client.lists.listItems(
+      familyId: familyId,
+      listId: listId,
+    );
   }
 }

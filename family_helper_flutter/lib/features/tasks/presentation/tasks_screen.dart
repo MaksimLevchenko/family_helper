@@ -1,13 +1,17 @@
-import 'dart:convert';
-
+import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../core/config/app_defaults.dart';
+import '../../../core/network/server_availability_cubit.dart';
+import '../../../core/routing/app_routes.dart';
 import '../../../ui_kit/ui_kit.dart';
-import '../../notifications/domain/notification_models.dart';
+import '../../auth_profile/providers/profile_provider.dart';
+import '../../family_invites/providers/family_provider.dart';
 import '../../notifications/providers/notifications_provider.dart';
 import '../providers/tasks_provider.dart';
+import 'widgets/task_editor_sheet.dart';
+import 'widgets/task_workspace_widgets.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -17,152 +21,298 @@ class TasksScreen extends StatefulWidget {
 }
 
 class _TasksScreenState extends State<TasksScreen> {
-  final _titleController = TextEditingController();
-  bool _isPersonal = false;
-  bool _recurringOnComplete = false;
-  DateTime? _dueAt;
-  ReminderPreset _reminderPreset = ReminderPreset.none;
+  static const _wideLayoutBreakpoint = 720.0;
+
+  TaskFilter _filter = TaskFilter.allOpen;
 
   @override
-  void dispose() {
-    _titleController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final profileBloc = context.read<ProfileBloc>();
+      if (profileBloc.state.profile == null) {
+        profileBloc.add(const ProfileLoadRequested());
+      }
+
+      final familySelectionCubit = context.read<FamilySelectionCubit>();
+      final familyMembersCubit = context.read<FamilyMembersCubit>();
+      if (familySelectionCubit.state != null &&
+          familyMembersCubit.state.members.isEmpty &&
+          !familyMembersCubit.state.isLoading) {
+        familyMembersCubit.loadMembers();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final isOffline =
+        context.watch<ServerAvailabilityCubit?>()?.state.isUnavailable ?? false;
+    final tasksState = context.watch<TasksCubit>().state;
+    final currentProfileId = context.watch<ProfileBloc>().state.profile?.id;
+    final familyMembersState = context.watch<FamilyMembersCubit>().state;
+    final notificationsState = context.watch<NotificationsCubit>().state;
+    final visibleTasks = visibleTasksForFilter(
+      tasksState,
+      currentProfileId,
+      _filter,
+    );
+
+    _ensureSelection(tasksState, visibleTasks);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Tasks')),
-      body: BlocBuilder<TasksCubit, TasksState>(
-        builder: (context, state) {
-          if (state.isLoading && state.tasks.isEmpty) {
-            return const LoadingState();
-          }
+      appBar: serverStatusAppBar(context, title: const Text('Tasks')),
+      body: tasksState.hasSelectedFamily
+          ? _buildSelectedFamilyBody(
+              context,
+              tasksState: tasksState,
+              notificationsState: notificationsState,
+              familyMembersState: familyMembersState,
+              currentProfileId: currentProfileId,
+              isOffline: isOffline,
+            )
+          : SafeArea(
+              child: NoFamilyTasksView(
+                onOpenFamily: () {
+                  context.go(AppRoutes.family);
+                },
+              ),
+            ),
+    );
+  }
 
-          if (state.error != null && state.tasks.isEmpty) {
-            return ErrorState(
-              message: state.error!,
-              onRetry: () => context.read<TasksCubit>().reload(),
+  Widget _buildSelectedFamilyBody(
+    BuildContext context, {
+    required TasksState tasksState,
+    required NotificationsState notificationsState,
+    required FamilyMembersState familyMembersState,
+    required int? currentProfileId,
+    required bool isOffline,
+  }) {
+    if (tasksState.isInitialLoading && tasksState.tasks.isEmpty) {
+      return const SafeArea(
+        child: LoadingState(label: 'Loading tasks...'),
+      );
+    }
+
+    if (tasksState.error != null && tasksState.tasks.isEmpty) {
+      return SafeArea(
+        child: ErrorState(
+          message: tasksState.error!,
+          onRetry: () => context.read<TasksCubit>().reload(),
+        ),
+      );
+    }
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= _wideLayoutBreakpoint;
+            final visibleTasks = visibleTasksForFilter(
+              tasksState,
+              currentProfileId,
+              _filter,
             );
-          }
+            final selectedTask = resolvedSelectedTask(tasksState, visibleTasks);
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              if (state.error != null) ...[
-                AppBanner(text: state.error!, isError: true),
-                const SizedBox(height: 12),
-              ],
-              AppTextField(controller: _titleController, label: 'Task title'),
-              const SizedBox(height: 12),
-              DateTimePickerField(
-                label: 'Due at',
-                value: _dueAt,
-                onChanged: (value) => setState(() => _dueAt = value),
-              ),
-              const SizedBox(height: 12),
-              ReminderPresetField(
-                label: 'Reminder',
-                value: _reminderPreset,
-                onChanged: (value) {
-                  if (value == null) {
-                    return;
-                  }
-                  setState(() => _reminderPreset = value);
-                },
-              ),
-              SwitchListTile(
-                value: _isPersonal,
-                onChanged: (value) => setState(() => _isPersonal = value),
-                title: const Text('Personal task'),
-              ),
-              SwitchListTile(
-                value: _recurringOnComplete,
-                onChanged: (value) =>
-                    setState(() => _recurringOnComplete = value),
-                title: const Text('Generate next on complete'),
-              ),
-              AppButton(
-                label: 'Create task',
-                isLoading: state.isLoading,
-                onPressed: () async {
-                  final tasksCubit = context.read<TasksCubit>();
-                  final notificationsCubit = context.read<NotificationsCubit>();
-                  final messenger = ScaffoldMessenger.of(context);
-                  final title = _titleController.text.trim();
-                  if (title.isEmpty) {
-                    return;
-                  }
-                  if (_reminderPreset != ReminderPreset.none &&
-                      _dueAt == null) {
-                    messenger.showSnackBar(
-                      const SnackBar(
-                        content: Text('Set a due date to add a reminder.'),
-                      ),
-                    );
-                    return;
-                  }
-
-                  final task = await tasksCubit.createTask(
-                    title: title,
-                    isPersonal: _isPersonal,
-                    dueAt: _dueAt,
-                    recurringOnComplete: _recurringOnComplete,
-                  );
-                  if (!mounted || task == null) {
-                    return;
-                  }
-
-                  final remindAt = _dueAt == null
-                      ? null
-                      : _reminderPreset.scheduleAt(_dueAt!);
-                  if (remindAt == null) {
-                    return;
-                  }
-
-                  final result = await notificationsCubit.ensureReminder(
-                    notificationType: AppDefaults.taskNotificationType,
-                    entityType: AppDefaults.taskReminderEntityType,
-                    entityId: task.id,
-                    remindAt: remindAt,
-                    payloadJson: jsonEncode({'taskId': task.id}),
-                    title: 'Task reminder',
-                    body: title,
-                  );
-                  if (!mounted || result.message == null) {
-                    return;
-                  }
-                  messenger.showSnackBar(
-                    SnackBar(content: Text(result.message!)),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              if (state.tasks.isEmpty)
-                const EmptyState(
-                  title: 'No tasks',
-                  message: 'Create your first personal or shared task.',
-                )
-              else
-                ...state.tasks.map(
-                  (task) => AppTile(
-                    title: task.title,
-                    subtitle:
-                        'Status: ${task.status}, Priority: ${task.priority}, Personal: ${task.isPersonal}',
-                    trailing: Checkbox(
-                      value: task.status == 'completed',
-                      onChanged: task.status == 'completed'
-                          ? null
-                          : (_) async {
-                              await context.read<TasksCubit>().complete(task);
-                            },
-                    ),
-                  ),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CachedDataStatus(
+                  isUsingCachedData: tasksState.isUsingCachedData,
+                  lastSuccessfulSyncAt: tasksState.lastSuccessfulSyncAt,
                 ),
-            ],
-          );
-        },
+                if (tasksState.error != null) ...[
+                  const SizedBox(height: 10),
+                  AppBanner(text: tasksState.error!, isError: true),
+                ],
+                const SizedBox(height: 10),
+                TasksToolbar(
+                  state: tasksState,
+                  currentFilter: _filter,
+                  onFilterChanged: (filter) {
+                    setState(() {
+                      _filter = filter;
+                    });
+                    final filtered = visibleTasksForFilter(
+                      tasksState,
+                      currentProfileId,
+                      filter,
+                    );
+                    context.read<TasksCubit>().setCurrentTask(
+                      filtered.isEmpty ? null : filtered.first.id,
+                    );
+                  },
+                  onCreateTask: isOffline
+                      ? null
+                      : () {
+                          showTaskEditor(
+                            context,
+                            isWide: isWide,
+                            members: familyMembersState.members,
+                            currentProfileId: currentProfileId,
+                            notificationsState: notificationsState,
+                            existingTask: null,
+                          );
+                        },
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: isWide
+                      ? Row(
+                          key: const Key('tasks-wide-layout'),
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 340,
+                              child: TasksSidebar(
+                                visibleTasks: visibleTasks,
+                                currentFilter: _filter,
+                                selectedTaskId: selectedTask?.id,
+                                members: familyMembersState.members,
+                                currentProfileId: currentProfileId,
+                                isCompletingTask: tasksState.isCompletingTask,
+                                isOffline: isOffline,
+                                isEmbedded: false,
+                                onSelectTask: (taskId) {
+                                  context.read<TasksCubit>().setCurrentTask(
+                                    taskId,
+                                  );
+                                },
+                                onCompleteTask: (task) async {
+                                  await context.read<TasksCubit>().complete(
+                                    task,
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: TaskDetailPane(
+                                task: selectedTask,
+                                history: tasksState.history,
+                                isHistoryLoading: tasksState.isHistoryLoading,
+                                isBusy:
+                                    tasksState.isSavingTask ||
+                                    tasksState.isCompletingTask ||
+                                    tasksState.isReminderSyncing,
+                                members: familyMembersState.members,
+                                currentProfileId: currentProfileId,
+                                isOffline: isOffline,
+                                onEditTask:
+                                    selectedTask == null ||
+                                        selectedTask.status == 'completed' ||
+                                        isOffline
+                                    ? null
+                                    : () {
+                                        showTaskEditor(
+                                          context,
+                                          isWide: true,
+                                          members: familyMembersState.members,
+                                          currentProfileId: currentProfileId,
+                                          notificationsState:
+                                              notificationsState,
+                                          existingTask: selectedTask,
+                                        );
+                                      },
+                                onCompleteTask:
+                                    selectedTask == null ||
+                                        selectedTask.status == 'completed' ||
+                                        isOffline
+                                    ? null
+                                    : () async {
+                                        await context
+                                            .read<TasksCubit>()
+                                            .complete(selectedTask);
+                                      },
+                              ),
+                            ),
+                          ],
+                        )
+                      : ListView(
+                          key: const Key('tasks-narrow-layout'),
+                          children: [
+                            TaskDetailPane(
+                              task: selectedTask,
+                              history: tasksState.history,
+                              isHistoryLoading: tasksState.isHistoryLoading,
+                              isBusy:
+                                  tasksState.isSavingTask ||
+                                  tasksState.isCompletingTask ||
+                                  tasksState.isReminderSyncing,
+                              members: familyMembersState.members,
+                              currentProfileId: currentProfileId,
+                              isOffline: isOffline,
+                              onEditTask:
+                                  selectedTask == null ||
+                                      selectedTask.status == 'completed' ||
+                                      isOffline
+                                  ? null
+                                  : () {
+                                      showTaskEditor(
+                                        context,
+                                        isWide: false,
+                                        members: familyMembersState.members,
+                                        currentProfileId: currentProfileId,
+                                        notificationsState: notificationsState,
+                                        existingTask: selectedTask,
+                                      );
+                                    },
+                              onCompleteTask:
+                                  selectedTask == null ||
+                                      selectedTask.status == 'completed' ||
+                                      isOffline
+                                  ? null
+                                  : () async {
+                                      await context.read<TasksCubit>().complete(
+                                        selectedTask,
+                                      );
+                                    },
+                            ),
+                            const SizedBox(height: 16),
+                            TasksSidebar(
+                              visibleTasks: visibleTasks,
+                              currentFilter: _filter,
+                              selectedTaskId: selectedTask?.id,
+                              members: familyMembersState.members,
+                              currentProfileId: currentProfileId,
+                              isCompletingTask: tasksState.isCompletingTask,
+                              isOffline: isOffline,
+                              isEmbedded: true,
+                              onSelectTask: (taskId) {
+                                context.read<TasksCubit>().setCurrentTask(
+                                  taskId,
+                                );
+                              },
+                              onCompleteTask: (task) async {
+                                await context.read<TasksCubit>().complete(task);
+                              },
+                            ),
+                          ],
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
+  }
+
+  void _ensureSelection(TasksState state, List<TaskDto> visibleTasks) {
+    final selected = resolvedSelectedTask(state, visibleTasks);
+    final nextTaskId = selected?.id;
+    if (nextTaskId == state.currentTaskId) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      context.read<TasksCubit>().setCurrentTask(nextTaskId);
+    });
   }
 }

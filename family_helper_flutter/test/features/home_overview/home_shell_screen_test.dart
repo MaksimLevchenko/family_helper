@@ -66,6 +66,17 @@ class _NotificationsCubitStub extends Cubit<NotificationsState>
   Future<void> reloadReminders({String? status}) async {}
 
   @override
+  Future<ReminderActionResult> replaceEntityReminder({
+    required String notificationType,
+    required String entityType,
+    required int entityId,
+    DateTime? remindAt,
+    required String payloadJson,
+    required String title,
+    required String body,
+  }) async => ReminderActionResult.successResult;
+
+  @override
   void reset({bool preserveAccountSettings = false}) {
     emit(NotificationsState.initial());
   }
@@ -110,7 +121,8 @@ Widget _buildSubject({
         routes: [
           GoRoute(
             path: AppRoutes.overview,
-            builder: (context, state) => const Scaffold(body: Text('Home page')),
+            builder: (context, state) =>
+                const Scaffold(body: Text('Home page')),
           ),
           GoRoute(
             path: AppRoutes.calendar,

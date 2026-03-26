@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/network/server_availability_cubit.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../providers/money_goals_provider.dart';
@@ -24,8 +25,11 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isOffline =
+        context.watch<ServerAvailabilityCubit?>()?.state.isUnavailable ?? false;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Money Goals')),
+      appBar: serverStatusAppBar(context, title: const Text('Money Goals')),
       body: BlocBuilder<MoneyGoalsCubit, MoneyGoalsState>(
         builder: (context, state) {
           if (state.hasSelectedFamily &&
@@ -64,8 +68,12 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
                 builder: (context, constraints) {
                   final isWide = constraints.maxWidth >= _wideLayoutBreakpoint;
                   return isWide
-                      ? _buildWideLayout(context, state)
-                      : _buildNarrowLayout(context, state);
+                      ? _buildWideLayout(context, state, isOffline: isOffline)
+                      : _buildNarrowLayout(
+                          context,
+                          state,
+                          isOffline: isOffline,
+                        );
                 },
               ),
             ),
@@ -75,28 +83,49 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
     );
   }
 
-  Widget _buildNarrowLayout(BuildContext context, MoneyGoalsState state) {
+  Widget _buildNarrowLayout(
+    BuildContext context,
+    MoneyGoalsState state, {
+    required bool isOffline,
+  }) {
     return ListView(
       key: const Key('money-goals-narrow-layout'),
       children: [
+        CachedDataStatus(
+          isUsingCachedData: state.isUsingCachedData,
+          lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+        ),
         if (state.error != null) ...[
           AppBanner(text: state.error!, isError: true),
           const SizedBox(height: 10),
         ],
         MoneyGoalsSummaryCard(goals: state.goals),
         const SizedBox(height: 8),
-        _buildDetailSection(context, state, isWide: false),
+        _buildDetailSection(
+          context,
+          state,
+          isWide: false,
+          isOffline: isOffline,
+        ),
         const SizedBox(height: 16),
         _buildGoalSections(context, state),
       ],
     );
   }
 
-  Widget _buildWideLayout(BuildContext context, MoneyGoalsState state) {
+  Widget _buildWideLayout(
+    BuildContext context,
+    MoneyGoalsState state, {
+    required bool isOffline,
+  }) {
     return Column(
       key: const Key('money-goals-wide-layout'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        CachedDataStatus(
+          isUsingCachedData: state.isUsingCachedData,
+          lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+        ),
         if (state.error != null) ...[
           AppBanner(text: state.error!, isError: true),
           const SizedBox(height: 10),
@@ -113,7 +142,15 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
                     context.read<MoneyGoalsCubit>().setCurrentGoal(goalId);
                   },
                   onCreateGoal: () {
-                    _showCreateGoalOverlay(context, isWide: true);
+                    if (isOffline) {
+                      _showOfflineMessage(context);
+                      return;
+                    }
+                    _showCreateGoalOverlay(
+                      context,
+                      isWide: true,
+                      isOffline: isOffline,
+                    );
                   },
                 ),
               ),
@@ -125,7 +162,12 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
                     children: [
                       MoneyGoalsSummaryCard(goals: state.goals),
                       const SizedBox(height: 12),
-                      _buildDetailSection(context, state, isWide: true),
+                      _buildDetailSection(
+                        context,
+                        state,
+                        isWide: true,
+                        isOffline: isOffline,
+                      ),
                     ],
                   ),
                 ),
@@ -141,6 +183,7 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
     BuildContext context,
     MoneyGoalsState state, {
     required bool isWide,
+    required bool isOffline,
   }) {
     final selectedGoal = state.selectedGoal;
 
@@ -161,6 +204,7 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
                 context,
                 selectedGoal,
                 isWide: isWide,
+                isOffline: isOffline,
               ),
         onWithdrawFunds: isArchivedGoal(selectedGoal)
             ? () {}
@@ -168,6 +212,7 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
                 context,
                 selectedGoal,
                 isWide: isWide,
+                isOffline: isOffline,
               ),
         onArchiveGoal: isArchivedGoal(selectedGoal)
             ? () {}
@@ -175,13 +220,19 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
                 context,
                 selectedGoal,
                 isWide: isWide,
+                isOffline: isOffline,
               ),
         onDeleteGoal: () => _showDeleteGoalOverlay(
           context,
           selectedGoal,
           isWide: isWide,
+          isOffline: isOffline,
         ),
-        onCreateGoal: () => _showCreateGoalOverlay(context, isWide: isWide),
+        onCreateGoal: () => _showCreateGoalOverlay(
+          context,
+          isWide: isWide,
+          isOffline: isOffline,
+        ),
         onUpdateGoal:
             ({
               required String title,
@@ -190,6 +241,10 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
               DateTime? deadlineAt,
               required String currency,
             }) {
+              if (isOffline) {
+                _showOfflineMessage(context);
+                return Future.value(false);
+              }
               return context.read<MoneyGoalsCubit>().updateCurrentGoal(
                 title: title,
                 targetAmountCents: targetAmountCents,
@@ -207,7 +262,11 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
         message: 'Create your first savings goal and start tracking progress.',
         buttonLabel: 'Create first goal',
         isLoading: state.isCreatingGoal,
-        onPressed: () => _showCreateGoalOverlay(context, isWide: isWide),
+        onPressed: () => _showCreateGoalOverlay(
+          context,
+          isWide: isWide,
+          isOffline: isOffline,
+        ),
       );
     }
 
@@ -217,7 +276,11 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
           'Select a goal from the active list or archive to inspect progress and actions.',
       buttonLabel: 'Create another goal',
       isLoading: state.isCreatingGoal,
-      onPressed: () => _showCreateGoalOverlay(context, isWide: isWide),
+      onPressed: () => _showCreateGoalOverlay(
+        context,
+        isWide: isWide,
+        isOffline: isOffline,
+      ),
     );
   }
 
@@ -273,7 +336,12 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
   Future<void> _showCreateGoalOverlay(
     BuildContext context, {
     required bool isWide,
+    required bool isOffline,
   }) async {
+    if (isOffline) {
+      _showOfflineMessage(context);
+      return;
+    }
     await _showAdaptiveOverlay(
       context,
       isWide: isWide,
@@ -301,7 +369,12 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
     BuildContext context,
     MoneyGoalDto goal, {
     required bool isWide,
+    required bool isOffline,
   }) async {
+    if (isOffline) {
+      _showOfflineMessage(context);
+      return;
+    }
     await _showAdaptiveOverlay(
       context,
       isWide: isWide,
@@ -325,7 +398,12 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
     BuildContext context,
     MoneyGoalDto goal, {
     required bool isWide,
+    required bool isOffline,
   }) async {
+    if (isOffline) {
+      _showOfflineMessage(context);
+      return;
+    }
     await _showAdaptiveOverlay(
       context,
       isWide: isWide,
@@ -349,7 +427,12 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
     BuildContext context,
     MoneyGoalDto goal, {
     required bool isWide,
+    required bool isOffline,
   }) async {
+    if (isOffline) {
+      _showOfflineMessage(context);
+      return;
+    }
     await _showAdaptiveOverlay(
       context,
       isWide: isWide,
@@ -373,7 +456,12 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
     BuildContext context,
     MoneyGoalDto goal, {
     required bool isWide,
+    required bool isOffline,
   }) async {
+    if (isOffline) {
+      _showOfflineMessage(context);
+      return;
+    }
     await _showAdaptiveOverlay(
       context,
       isWide: isWide,
@@ -424,21 +512,26 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         return BlocProvider<MoneyGoalsCubit>.value(
           value: cubit,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              12,
-              8,
-              12,
-              MediaQuery.of(sheetContext).viewInsets.bottom + 12,
-            ),
+          child: AppModalSheet(
+            contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: child,
           ),
         );
       },
+    );
+  }
+
+  void _showOfflineMessage(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Server unavailable. This action will work again when connection is restored.',
+        ),
+      ),
     );
   }
 }

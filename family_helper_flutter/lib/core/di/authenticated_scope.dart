@@ -12,6 +12,7 @@ import '../../features/privacy_security/providers/privacy_provider.dart';
 import '../../features/tasks/providers/tasks_provider.dart';
 import '../realtime/realtime_feature_flags.dart';
 import '../auth/auth_session.dart';
+import '../offline/offline_snapshot_store.dart';
 import '../realtime/realtime_provider.dart';
 import '../sync/sync_controller.dart';
 import 'service_locator.dart';
@@ -42,12 +43,14 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
   @override
   void initState() {
     super.initState();
+    final snapshotStore = getIt<OfflineSnapshotStore>();
     _familySelectionCubit = context.read<FamilySelectionCubit>();
     _syncCubit = SyncCubit(getIt());
     _familyMembersCubit = FamilyMembersCubit(
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,
       offlineQueueManager: getIt(),
+      snapshotStore: snapshotStore,
     );
     _calendarCubit = CalendarCubit(
       repository: getIt(),
@@ -55,24 +58,29 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
       authCubit: getIt<AuthCubit>(),
       notificationsRepository: getIt(),
       localNotificationService: getIt(),
+      snapshotStore: snapshotStore,
     );
     _tasksCubit = TasksCubit(
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,
+      snapshotStore: snapshotStore,
     );
     _listsCubit = ListsCubit(
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,
+      snapshotStore: snapshotStore,
     );
     _moneyGoalsCubit = MoneyGoalsCubit(
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,
+      snapshotStore: snapshotStore,
     );
     _notificationsCubit = NotificationsCubit(
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,
       localNotificationService: getIt(),
       offlineQueueManager: getIt(),
+      snapshotStore: snapshotStore,
     );
     _notificationsCubit.refreshPermissionStatus();
     _notificationsCubit.loadPreferences();
@@ -80,12 +88,17 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,
       offlineQueueManager: getIt(),
+      snapshotStore: snapshotStore,
     );
     _privacyCubit = PrivacyCubit(
       repository: getIt(),
       offlineQueueManager: getIt(),
+      snapshotStore: snapshotStore,
     );
-    _profileBloc = ProfileBloc(repository: getIt());
+    _profileBloc = ProfileBloc(
+      repository: getIt(),
+      snapshotStore: snapshotStore,
+    );
     _realtimeCubit = RealtimeCubit(
       manager: getIt(),
       familySelectionCubit: _familySelectionCubit,

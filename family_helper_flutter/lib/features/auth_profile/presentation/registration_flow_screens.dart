@@ -8,6 +8,7 @@ import '../../../core/logging/app_error_logger.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../ui_kit/ui_kit.dart';
+import 'auth_flow_scaffold.dart';
 
 class RegistrationEmailStepScreen extends StatefulWidget {
   const RegistrationEmailStepScreen({super.key});
@@ -32,14 +33,21 @@ class _RegistrationEmailStepScreenState
   @override
   Widget build(BuildContext context) {
     return _RegistrationStepScaffold(
-      title: 'Create account',
-      subtitle: 'Step 1 of 3: enter your email',
+      cardEyebrow: 'Create account',
+      title: 'Start with your email',
+      subtitle: 'We will send a verification code so you can continue safely.',
+      stepIndex: 1,
+      stepTotal: 3,
       error: _error,
       body: [
         AppTextField(
           controller: _emailController,
           label: 'Email',
           keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.done,
+          autofillHints: const [AutofillHints.email],
+          prefixIcon: const Icon(Icons.alternate_email_rounded),
+          onSubmitted: (_) => _submit(),
         ),
         const SizedBox(height: 16),
         AppButton(
@@ -141,8 +149,11 @@ class _RegistrationCodeStepScreenState
         requestId == null ||
         requestId.isEmpty) {
       return _RegistrationStepScaffold(
-        title: 'Create account',
-        subtitle: 'Missing registration context',
+        cardEyebrow: 'Create account',
+        title: 'Missing registration context',
+        subtitle: 'Please restart registration from the first step.',
+        stepIndex: 1,
+        stepTotal: 3,
         error: 'Please restart registration from step 1.',
         body: [
           AppButton(
@@ -160,8 +171,12 @@ class _RegistrationCodeStepScreenState
     }
 
     return _RegistrationStepScaffold(
-      title: 'Create account',
-      subtitle: 'Step 2 of 3: enter verification code',
+      cardEyebrow: 'Create account',
+      title: 'Check your inbox',
+      subtitle:
+          'Enter the verification code to continue setting up your space.',
+      stepIndex: 2,
+      stepTotal: 3,
       error: _error,
       body: [
         Text(
@@ -172,6 +187,9 @@ class _RegistrationCodeStepScreenState
         AppTextField(
           controller: _codeController,
           label: 'Verification code',
+          textInputAction: TextInputAction.done,
+          prefixIcon: const Icon(Icons.mark_email_read_rounded),
+          onSubmitted: (_) => _submit(),
         ),
         const SizedBox(height: 16),
         AppButton(
@@ -286,8 +304,11 @@ class _RegistrationPasswordStepScreenState
 
     if (registrationToken == null || registrationToken.isEmpty) {
       return _RegistrationStepScaffold(
-        title: 'Create account',
-        subtitle: 'Missing registration context',
+        cardEyebrow: 'Create account',
+        title: 'Missing registration context',
+        subtitle: 'Please restart registration from the first step.',
+        stepIndex: 1,
+        stepTotal: 3,
         error: 'Please restart registration from step 1.',
         body: [
           AppButton(
@@ -305,14 +326,21 @@ class _RegistrationPasswordStepScreenState
     }
 
     return _RegistrationStepScaffold(
-      title: 'Create account',
-      subtitle: 'Step 3 of 3: create password',
+      cardEyebrow: 'Create account',
+      title: 'Create your password',
+      subtitle: 'One last step and your family space is ready to use.',
+      stepIndex: 3,
+      stepTotal: 3,
       error: _error,
       body: [
         AppTextField(
           controller: _passwordController,
           label: 'Password',
           obscureText: true,
+          textInputAction: TextInputAction.done,
+          autofillHints: const [AutofillHints.newPassword],
+          prefixIcon: const Icon(Icons.lock_outline_rounded),
+          onSubmitted: (_) => _submit(),
         ),
         const SizedBox(height: 16),
         AppButton(
@@ -380,55 +408,46 @@ class _RegistrationPasswordStepScreenState
 
 class _RegistrationStepScaffold extends StatelessWidget {
   const _RegistrationStepScaffold({
+    required this.cardEyebrow,
     required this.title,
     required this.subtitle,
     required this.body,
+    required this.stepIndex,
+    required this.stepTotal,
     this.error,
   });
 
+  final String cardEyebrow;
   final String title;
   final String subtitle;
   final String? error;
   final List<Widget> body;
+  final int stepIndex;
+  final int stepTotal;
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-
-    return Scaffold(
-      backgroundColor: colors.background,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 28,
+    return AuthFlowScaffold(
+      cardEyebrow: cardEyebrow,
+      cardTitle: title,
+      cardSubtitle: subtitle,
+      progressStep: stepIndex,
+      progressTotal: stepTotal,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ...body,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: error == null
+                ? const SizedBox.shrink()
+                : Padding(
+                    key: ValueKey(error),
+                    padding: const EdgeInsets.only(top: 12),
+                    child: AppBanner(text: error!, isError: true),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  subtitle,
-                  style: TextStyle(color: colors.textSecondary),
-                ),
-                const SizedBox(height: 24),
-                ...body,
-                if (error != null) ...[
-                  const SizedBox(height: 12),
-                  AppBanner(text: error!, isError: true),
-                ],
-              ],
-            ),
           ),
-        ),
+        ],
       ),
     );
   }

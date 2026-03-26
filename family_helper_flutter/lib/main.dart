@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'core/auth/auth_session.dart';
 import 'core/di/service_locator.dart';
 import 'core/logging/app_error_logger.dart';
+import 'core/network/server_availability_cubit.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
@@ -144,26 +145,39 @@ class FamilyHelperApp extends StatefulWidget {
   State<FamilyHelperApp> createState() => _FamilyHelperAppState();
 }
 
-class _FamilyHelperAppState extends State<FamilyHelperApp> {
+class _FamilyHelperAppState extends State<FamilyHelperApp>
+    with WidgetsBindingObserver {
   late final GoRouter _router;
   late final FamilySelectionCubit _familySelectionCubit;
+  late final ServerAvailabilityCubit _serverAvailabilityCubit;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _familySelectionCubit = FamilySelectionCubit(
       repository: getIt<FamilyRepository>(),
       authCubit: getIt<AuthCubit>(),
     );
     _familySelectionCubit.bootstrap();
+    _serverAvailabilityCubit = getIt<ServerAvailabilityCubit>();
+    _serverAvailabilityCubit.start();
     _router = createAppRouter(getIt<AuthCubit>(), _familySelectionCubit);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     unawaited(_familySelectionCubit.close());
     unawaited(resetServiceLocator());
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_serverAvailabilityCubit.refresh());
+    }
   }
 
   @override
@@ -173,6 +187,9 @@ class _FamilyHelperAppState extends State<FamilyHelperApp> {
         BlocProvider<ThemeCubit>.value(value: getIt<ThemeCubit>()),
         BlocProvider<AuthCubit>.value(value: getIt<AuthCubit>()),
         BlocProvider<FamilySelectionCubit>.value(value: _familySelectionCubit),
+        BlocProvider<ServerAvailabilityCubit>.value(
+          value: _serverAvailabilityCubit,
+        ),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(
         builder: (context, themeMode) {

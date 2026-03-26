@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/network/server_availability_cubit.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../providers/media_provider.dart';
 
@@ -9,8 +10,11 @@ class MediaScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isOffline =
+        context.watch<ServerAvailabilityCubit?>()?.state.isUnavailable ?? false;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Media & Avatars')),
+      appBar: serverStatusAppBar(context, title: const Text('Media & Avatars')),
       body: BlocBuilder<MediaCubit, MediaState>(
         builder: (context, state) {
           if (state.isLoading &&
@@ -31,6 +35,10 @@ class MediaScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              CachedDataStatus(
+                isUsingCachedData: state.isUsingCachedData,
+                lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+              ),
               if (state.error != null) ...[
                 AppBanner(text: state.error!, isError: true),
                 const SizedBox(height: 12),
@@ -46,7 +54,9 @@ class MediaScreen extends StatelessWidget {
               AppButton(
                 label: 'Pick, crop and upload image',
                 isLoading: state.isLoading,
-                onPressed: () async {
+                onPressed: isOffline
+                    ? null
+                    : () async {
                   await context.read<MediaCubit>().uploadImage();
                 },
               ),

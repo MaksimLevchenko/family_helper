@@ -19,6 +19,7 @@ abstract class FamilyListDto implements _i1.SerializableModel {
     required this.title,
     required this.listType,
     required this.createdByProfileId,
+    this.pendingItemsCount,
     required this.updatedAt,
     required this.version,
   });
@@ -29,6 +30,7 @@ abstract class FamilyListDto implements _i1.SerializableModel {
     required String title,
     required String listType,
     required int createdByProfileId,
+    int? pendingItemsCount,
     required DateTime updatedAt,
     required int version,
   }) = _FamilyListDtoImpl;
@@ -40,6 +42,7 @@ abstract class FamilyListDto implements _i1.SerializableModel {
       title: jsonSerialization['title'] as String,
       listType: jsonSerialization['listType'] as String,
       createdByProfileId: jsonSerialization['createdByProfileId'] as int,
+      pendingItemsCount: jsonSerialization['pendingItemsCount'] as int?,
       updatedAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['updatedAt'],
       ),
@@ -57,6 +60,8 @@ abstract class FamilyListDto implements _i1.SerializableModel {
 
   int createdByProfileId;
 
+  int? pendingItemsCount;
+
   DateTime updatedAt;
 
   int version;
@@ -70,6 +75,7 @@ abstract class FamilyListDto implements _i1.SerializableModel {
     String? title,
     String? listType,
     int? createdByProfileId,
+    int? pendingItemsCount,
     DateTime? updatedAt,
     int? version,
   });
@@ -82,6 +88,7 @@ abstract class FamilyListDto implements _i1.SerializableModel {
       'title': title,
       'listType': listType,
       'createdByProfileId': createdByProfileId,
+      if (pendingItemsCount != null) 'pendingItemsCount': pendingItemsCount,
       'updatedAt': updatedAt.toJson(),
       'version': version,
     };
@@ -93,6 +100,8 @@ abstract class FamilyListDto implements _i1.SerializableModel {
   }
 }
 
+class _Undefined {}
+
 class _FamilyListDtoImpl extends FamilyListDto {
   _FamilyListDtoImpl({
     required int id,
@@ -100,6 +109,7 @@ class _FamilyListDtoImpl extends FamilyListDto {
     required String title,
     required String listType,
     required int createdByProfileId,
+    int? pendingItemsCount,
     required DateTime updatedAt,
     required int version,
   }) : super._(
@@ -108,6 +118,7 @@ class _FamilyListDtoImpl extends FamilyListDto {
          title: title,
          listType: listType,
          createdByProfileId: createdByProfileId,
+         pendingItemsCount: pendingItemsCount,
          updatedAt: updatedAt,
          version: version,
        );
@@ -122,6 +133,7 @@ class _FamilyListDtoImpl extends FamilyListDto {
     String? title,
     String? listType,
     int? createdByProfileId,
+    Object? pendingItemsCount = _Undefined,
     DateTime? updatedAt,
     int? version,
   }) {
@@ -131,6 +143,9 @@ class _FamilyListDtoImpl extends FamilyListDto {
       title: title ?? this.title,
       listType: listType ?? this.listType,
       createdByProfileId: createdByProfileId ?? this.createdByProfileId,
+      pendingItemsCount: pendingItemsCount is int?
+          ? pendingItemsCount
+          : this.pendingItemsCount,
       updatedAt: updatedAt ?? this.updatedAt,
       version: version ?? this.version,
     );

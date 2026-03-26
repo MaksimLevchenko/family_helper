@@ -247,6 +247,104 @@ class NotificationsService {
     });
   }
 
+  Future<ReminderDto?> replaceReminder(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+    required String entityType,
+    required int entityId,
+    DateTime? remindAt,
+    String payloadJson = '{}',
+  }) async {
+    final authUserId = authContext.requireAuthUserId(session).uuid;
+
+    return session.db.transaction((transaction) async {
+      final profileId = await rbac.ensureFamilyRole(
+        session,
+        familyId: familyId,
+        minRole: 'member',
+        transaction: transaction,
+      );
+
+      final isFresh = await idempotency.tryBegin(
+        session,
+        actorAuthUserId: authUserId,
+        action: 'notifications.replaceReminder',
+        clientOperationId: clientOperationId,
+        transaction: transaction,
+      );
+
+      if (!isFresh) {
+        return _findScheduledReminderForEntity(
+          session,
+          familyId: familyId,
+          profileId: profileId,
+          entityType: entityType,
+          entityId: entityId,
+          transaction: transaction,
+        );
+      }
+
+      final existing = await ReminderRow.db.find(
+        session,
+        where: (t) =>
+            t.familyId.equals(familyId) &
+            t.profileId.equals(profileId) &
+            t.entityType.equals(entityType) &
+            t.entityId.equals(entityId) &
+            t.status.equals('scheduled'),
+        transaction: transaction,
+      );
+      final now = clock.nowUtc();
+
+      for (final reminder in existing) {
+        final cancelled = await ReminderRow.db.updateRow(
+          session,
+          reminder.copyWith(status: 'cancelled'),
+          transaction: transaction,
+        );
+        await _emitReminderChange(
+          session,
+          familyId: familyId,
+          reminderId: cancelled.id!,
+          operation: 'cancelled',
+          changedAt: now,
+          transaction: transaction,
+        );
+      }
+
+      if (remindAt == null) {
+        return null;
+      }
+
+      final row = await ReminderRow.db.insertRow(
+        session,
+        ReminderRow(
+          familyId: familyId,
+          entityType: entityType,
+          entityId: entityId,
+          profileId: profileId,
+          remindAt: remindAt.toUtc(),
+          status: 'scheduled',
+          payloadJson: payloadJson,
+          clientOperationId: clientOperationId,
+          firedAt: null,
+          createdAt: now,
+        ),
+        transaction: transaction,
+      );
+      await _emitReminderChange(
+        session,
+        familyId: familyId,
+        reminderId: row.id!,
+        operation: 'scheduled',
+        changedAt: now,
+        transaction: transaction,
+      );
+      return _mapReminder(row);
+    });
+  }
+
   Future<List<ReminderDto>> listReminders(
     Session session, {
     int? familyId,
@@ -281,6 +379,29 @@ class NotificationsService {
     );
 
     return rows.map(_mapReminder).toList();
+  }
+
+  Future<ReminderDto?> _findScheduledReminderForEntity(
+    Session session, {
+    required int familyId,
+    required int profileId,
+    required String entityType,
+    required int entityId,
+    Transaction? transaction,
+  }) async {
+    final row = await ReminderRow.db.findFirstRow(
+      session,
+      where: (t) =>
+          t.familyId.equals(familyId) &
+          t.profileId.equals(profileId) &
+          t.entityType.equals(entityType) &
+          t.entityId.equals(entityId) &
+          t.status.equals('scheduled'),
+      orderBy: (t) => t.remindAt,
+      orderDescending: true,
+      transaction: transaction,
+    );
+    return row == null ? null : _mapReminder(row);
   }
 
   Future<int> processDueReminders(Session session) async {
@@ -369,6 +490,39 @@ class NotificationsService {
       payloadJson: columns['payloadJson'] as String,
       firedAt: (columns['firedAt'] as DateTime?)?.toUtc(),
       createdAt: (columns['createdAt'] as DateTime).toUtc(),
+    );
+  }
+
+  Future<void> _emitReminderChange(
+    Session session, {
+    required int familyId,
+    required int reminderId,
+    required String operation,
+    required DateTime changedAt,
+    Transaction? transaction,
+  }) async {
+    await changeFeed.appendChange(
+      session,
+      feature: 'notifications',
+      entityType: 'reminder',
+      entityId: reminderId,
+      operation: operation,
+      familyId: familyId,
+      version: 1,
+      transaction: transaction,
+    );
+
+    await realtime.publish(
+      session,
+      familyId: familyId,
+      event: FamilyRealtimeEvent(
+        familyId: familyId,
+        feature: 'notifications',
+        entityType: 'reminder',
+        entityId: reminderId,
+        eventType: 'notifications.updated',
+        changedAt: changedAt,
+      ),
     );
   }
 }

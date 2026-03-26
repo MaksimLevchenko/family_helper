@@ -62,6 +62,8 @@ import 'package:family_helper_server/src/generated/sync/models/sync_changes_resp
     as _i26;
 import 'package:family_helper_server/src/generated/tasks/models/task_dto.dart'
     as _i27;
+import 'package:family_helper_server/src/generated/tasks/models/task_history_entry_dto.dart'
+    as _i28;
 import 'package:family_helper_server/src/generated/protocol.dart';
 import 'package:family_helper_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -181,6 +183,8 @@ class TestEndpoints {
 
   late final _GreetingEndpoint greeting;
 
+  late final _HealthEndpoint health;
+
   late final _ListsEndpoint lists;
 
   late final _MediaEndpoint media;
@@ -226,6 +230,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     greeting = _GreetingEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    health = _HealthEndpoint(
       endpoints,
       serializationManager,
     );
@@ -1233,6 +1241,45 @@ class _GreetingEndpoint {
   }
 }
 
+class _HealthEndpoint {
+  _HealthEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _i2.EndpointDispatch _endpointDispatch;
+
+  final _i2.SerializationManager _serializationManager;
+
+  _i3.Future<bool> ping(_i1.TestSessionBuilder sessionBuilder) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'health',
+            method: 'ping',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'health',
+          methodName: 'ping',
+          parameters: _i1.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<bool>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
 class _ListsEndpoint {
   _ListsEndpoint(
     this._endpointDispatch,
@@ -1242,6 +1289,37 @@ class _ListsEndpoint {
   final _i2.EndpointDispatch _endpointDispatch;
 
   final _i2.SerializationManager _serializationManager;
+
+  _i3.Future<List<_i13.FamilyListDto>> listFamilyLists(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required int familyId,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'lists',
+            method: 'listFamilyLists',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'lists',
+          methodName: 'listFamilyLists',
+          parameters: _i1.testObjectToJson({'familyId': familyId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<List<_i13.FamilyListDto>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _i3.Future<_i13.FamilyListDto> upsertList(
     _i1.TestSessionBuilder sessionBuilder, {
@@ -1333,6 +1411,55 @@ class _ListsEndpoint {
     });
   }
 
+  _i3.Future<_i14.ListItemDto> updateItem(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required String clientOperationId,
+    required int familyId,
+    required int itemId,
+    required String title,
+    required double qty,
+    String? unit,
+    String? note,
+    int? priceCents,
+    String? category,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'lists',
+            method: 'updateItem',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'lists',
+          methodName: 'updateItem',
+          parameters: _i1.testObjectToJson({
+            'clientOperationId': clientOperationId,
+            'familyId': familyId,
+            'itemId': itemId,
+            'title': title,
+            'qty': qty,
+            'unit': unit,
+            'note': note,
+            'priceCents': priceCents,
+            'category': category,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i14.ListItemDto>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _i3.Future<_i14.ListItemDto> toggleBought(
     _i1.TestSessionBuilder sessionBuilder, {
     required String clientOperationId,
@@ -1363,6 +1490,80 @@ class _ListsEndpoint {
                   _localCallContext.arguments,
                 )
                 as _i3.Future<_i14.ListItemDto>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i7.OperationResult> deleteItem(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required String clientOperationId,
+    required int familyId,
+    required int itemId,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'lists',
+            method: 'deleteItem',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'lists',
+          methodName: 'deleteItem',
+          parameters: _i1.testObjectToJson({
+            'clientOperationId': clientOperationId,
+            'familyId': familyId,
+            'itemId': itemId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i7.OperationResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i7.OperationResult> deleteList(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required String clientOperationId,
+    required int familyId,
+    required int listId,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'lists',
+            method: 'deleteList',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'lists',
+          methodName: 'deleteList',
+          parameters: _i1.testObjectToJson({
+            'clientOperationId': clientOperationId,
+            'familyId': familyId,
+            'listId': listId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i7.OperationResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2082,6 +2283,49 @@ class _NotificationsEndpoint {
     });
   }
 
+  _i3.Future<_i21.ReminderDto?> replaceReminder(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required String clientOperationId,
+    required int familyId,
+    required String entityType,
+    required int entityId,
+    DateTime? remindAt,
+    required String payloadJson,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'notifications',
+            method: 'replaceReminder',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'notifications',
+          methodName: 'replaceReminder',
+          parameters: _i1.testObjectToJson({
+            'clientOperationId': clientOperationId,
+            'familyId': familyId,
+            'entityType': entityType,
+            'entityId': entityId,
+            'remindAt': remindAt,
+            'payloadJson': payloadJson,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i21.ReminderDto?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _i3.Future<List<_i21.ReminderDto>> listReminders(
     _i1.TestSessionBuilder sessionBuilder, {
     int? familyId,
@@ -2528,6 +2772,43 @@ class _TasksEndpoint {
                   _localCallContext.arguments,
                 )
                 as _i3.Future<List<_i27.TaskDto>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<List<_i28.TaskHistoryEntryDto>> listTaskHistory(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required int familyId,
+    required int taskId,
+    required int limit,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'tasks',
+            method: 'listTaskHistory',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'tasks',
+          methodName: 'listTaskHistory',
+          parameters: _i1.testObjectToJson({
+            'familyId': familyId,
+            'taskId': taskId,
+            'limit': limit,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<List<_i28.TaskHistoryEntryDto>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:family_helper_client/family_helper_client.dart';
 
+import '../../../core/network/server_availability_cubit.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../../auth_profile/providers/profile_provider.dart';
 import '../providers/family_provider.dart';
@@ -53,9 +54,11 @@ class _FamilyScreenState extends State<FamilyScreen> {
   @override
   Widget build(BuildContext context) {
     final currentProfileId = context.watch<ProfileBloc>().state.profile?.id;
+    final isOffline =
+        context.watch<ServerAvailabilityCubit?>()?.state.isUnavailable ?? false;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Family')),
+      appBar: serverStatusAppBar(context, title: const Text('Family')),
       body: BlocBuilder<FamilyMembersCubit, FamilyMembersState>(
         builder: (context, state) {
           if (state.isLoading &&
@@ -92,6 +95,10 @@ class _FamilyScreenState extends State<FamilyScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              CachedDataStatus(
+                isUsingCachedData: state.isUsingCachedData,
+                lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+              ),
               if (state.error != null) ...[
                 AppBanner(text: state.error!, isError: true),
                 const SizedBox(height: 12),
@@ -101,6 +108,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                   familyTitleController: _createFamilyTitleController,
                   inviteCodeController: _inviteCodeController,
                   isLoading: state.isLoading,
+                  isOffline: isOffline,
                 ),
               ] else ...[
                 _FamilySummaryCard(
@@ -126,6 +134,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                 _InviteSection(
                   inviteEmailController: _inviteEmailController,
                   lastInviteCode: state.lastInviteCode,
+                  isOffline: isOffline,
                   onCreateEmailInvite: () async {
                     await context.read<FamilyMembersCubit>().createInvite(
                       inviteType: 'email',
@@ -214,11 +223,13 @@ class _EmptyFamilySection extends StatelessWidget {
     required this.familyTitleController,
     required this.inviteCodeController,
     required this.isLoading,
+    required this.isOffline,
   });
 
   final TextEditingController familyTitleController;
   final TextEditingController inviteCodeController;
   final bool isLoading;
+  final bool isOffline;
 
   @override
   Widget build(BuildContext context) {
@@ -248,7 +259,9 @@ class _EmptyFamilySection extends StatelessWidget {
                 AppButton(
                   label: 'Create family',
                   isLoading: isLoading,
-                  onPressed: () async {
+                  onPressed: isOffline
+                      ? null
+                      : () async {
                     final title = familyTitleController.text.trim();
                     if (title.isEmpty) {
                       return;
@@ -281,7 +294,9 @@ class _EmptyFamilySection extends StatelessWidget {
                 const SizedBox(height: 12),
                 AppButton(
                   label: 'Join family',
-                  onPressed: () async {
+                  onPressed: isOffline
+                      ? null
+                      : () async {
                     final code = inviteCodeController.text.trim();
                     if (code.isEmpty) {
                       return;
@@ -357,6 +372,7 @@ class _InviteSection extends StatelessWidget {
   const _InviteSection({
     required this.inviteEmailController,
     required this.lastInviteCode,
+    required this.isOffline,
     required this.onCreateEmailInvite,
     required this.onCreateCodeInvite,
     required this.onCopyCode,
@@ -364,6 +380,7 @@ class _InviteSection extends StatelessWidget {
 
   final TextEditingController inviteEmailController;
   final String? lastInviteCode;
+  final bool isOffline;
   final Future<void> Function() onCreateEmailInvite;
   final Future<void> Function() onCreateCodeInvite;
   final Future<void> Function()? onCopyCode;
@@ -390,7 +407,9 @@ class _InviteSection extends StatelessWidget {
             const SizedBox(height: 12),
             AppButton(
               label: 'Send email invite',
-              onPressed: () async {
+              onPressed: isOffline
+                  ? null
+                  : () async {
                 await onCreateEmailInvite();
               },
             ),
@@ -398,7 +417,9 @@ class _InviteSection extends StatelessWidget {
             AppButton(
               label: 'Create invite code',
               variant: AppButtonVariant.secondary,
-              onPressed: () async {
+              onPressed: isOffline
+                  ? null
+                  : () async {
                 await onCreateCodeInvite();
               },
             ),

@@ -29,10 +29,16 @@ family:
   - leaveFamily:
 greeting:
   - hello:
+health:
+  - ping:
 lists:
+  - listFamilyLists:
   - upsertList:
   - addItem:
+  - updateItem:
   - toggleBought:
+  - deleteItem:
+  - deleteList:
   - reorderItems:
   - listItems:
 media:
@@ -54,6 +60,7 @@ notifications:
   - upsertPreference:
   - listPreferences:
   - scheduleReminder:
+  - replaceReminder:
   - listReminders:
   - processDueReminders:
 privacy:
@@ -70,4 +77,5 @@ sync:
 tasks:
   - upsertTask:
   - listTasks:
+  - listTaskHistory:
   - completeTask:

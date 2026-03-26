@@ -1,8 +1,11 @@
+import 'dart:math' as math;
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
 
-class StartupLoadingScreen extends StatelessWidget {
+class StartupLoadingScreen extends StatefulWidget {
   const StartupLoadingScreen({
     super.key,
     required this.title,
@@ -15,6 +18,29 @@ class StartupLoadingScreen extends StatelessWidget {
   final bool isLoading;
 
   @override
+  State<StartupLoadingScreen> createState() => _StartupLoadingScreenState();
+}
+
+class _StartupLoadingScreenState extends State<StartupLoadingScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2400),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = context.colors;
@@ -22,129 +48,399 @@ class StartupLoadingScreen extends StatelessWidget {
 
     final gradientColors = isDark
         ? [
-            const Color(0xFF062A2A),
-            const Color(0xFF0B3E3C),
+            const Color(0xFF041E20),
+            const Color(0xFF0A3537),
             const Color(0xFF13605A),
           ]
         : [
-            const Color(0xFFF3FFFC),
-            const Color(0xFFDDF7F1),
-            const Color(0xFFB7E6DD),
+            const Color(0xFFF7FFFD),
+            const Color(0xFFE5FBF5),
+            const Color(0xFFC3ECE2),
           ];
 
+    final spotlightColor = isDark
+        ? const Color(0xFF8BE1D0).withValues(alpha: 0.14)
+        : const Color(0xFF13605A).withValues(alpha: 0.10);
     final orbColor = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : colors.primary.withValues(alpha: 0.12);
-    final cardColor = isDark
-        ? Colors.black.withValues(alpha: 0.16)
-        : Colors.white.withValues(alpha: 0.58);
+        ? Colors.white.withValues(alpha: 0.05)
+        : colors.primary.withValues(alpha: 0.10);
+    final cardGradient = isDark
+        ? [
+            const Color(0xFF0B2224).withValues(alpha: 0.84),
+            const Color(0xFF09181A).withValues(alpha: 0.76),
+          ]
+        : [
+            Colors.white.withValues(alpha: 0.78),
+            Colors.white.withValues(alpha: 0.58),
+          ];
+    final cardBorderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.white.withValues(alpha: 0.64);
+    final dividerColor = isDark
+        ? Colors.white.withValues(alpha: 0.09)
+        : colors.primary.withValues(alpha: 0.10);
 
-    return Scaffold(
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: gradientColors,
-          ),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              top: -72,
-              right: -48,
-              child: _BackgroundOrb(size: 220, color: orbColor),
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final t = _controller.value;
+
+        return Scaffold(
+          body: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: gradientColors,
+              ),
             ),
-            Positioned(
-              bottom: -110,
-              left: -60,
-              child: _BackgroundOrb(size: 260, color: orbColor),
-            ),
-            SafeArea(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 360),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: IgnorePointer(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.35),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 32,
-                            offset: const Offset(0, 18),
-                          ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 28,
-                          vertical: 32,
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 72,
-                              height: 72,
-                              decoration: BoxDecoration(
-                                color: colors.primary.withValues(alpha: 0.14),
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              alignment: Alignment.center,
-                              child: Icon(
-                                Icons.favorite_rounded,
-                                size: 36,
-                                color: colors.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              title,
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.headlineMedium?.copyWith(
-                                color: colors.textPrimary,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.4,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              message,
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: colors.textSecondary,
-                                height: 1.45,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 180),
-                              child: isLoading
-                                  ? SizedBox(
-                                      key: const ValueKey('progress'),
-                                      width: 28,
-                                      height: 28,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 3,
-                                        color: colors.primary,
-                                      ),
-                                    )
-                                  : Icon(
-                                      key: const ValueKey('error'),
-                                      Icons.error_outline_rounded,
-                                      size: 28,
-                                      color: theme.colorScheme.error,
-                                    ),
-                            ),
+                        gradient: RadialGradient(
+                          center: Alignment(0.88 - (t * 0.32), -0.96),
+                          radius: 0.72,
+                          colors: [
+                            spotlightColor,
+                            Colors.transparent,
                           ],
                         ),
                       ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: -64 + (math.sin(t * math.pi * 2) * 10),
+                  right: -44,
+                  child: _BackgroundOrb(size: 220, color: orbColor),
+                ),
+                Positioned(
+                  bottom: -118,
+                  left: -54 + (math.cos(t * math.pi * 2) * 8),
+                  child: _BackgroundOrb(size: 260, color: orbColor),
+                ),
+                Positioned(
+                  top: 116,
+                  left: 28,
+                  child: _BackgroundOrb(
+                    size: 88,
+                    color: colors.primary.withValues(
+                      alpha: isDark ? 0.08 : 0.12,
+                    ),
+                  ),
+                ),
+                SafeArea(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 392),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(32),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: cardGradient,
+                                ),
+                                borderRadius: BorderRadius.circular(32),
+                                border: Border.all(color: cardBorderColor),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(
+                                      alpha: isDark ? 0.24 : 0.10,
+                                    ),
+                                    blurRadius: 40,
+                                    offset: const Offset(0, 24),
+                                  ),
+                                ],
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  28,
+                                  30,
+                                  28,
+                                  26,
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _AnimatedBadge(
+                                      progress: t,
+                                      primary: colors.primary,
+                                      glowColor: spotlightColor,
+                                    ),
+                                    const SizedBox(height: 24),
+                                    Text(
+                                      widget.title,
+                                      textAlign: TextAlign.center,
+                                      style: theme.textTheme.headlineMedium
+                                          ?.copyWith(
+                                            color: colors.textPrimary,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: -0.6,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      widget.message,
+                                      textAlign: TextAlign.center,
+                                      style: theme.textTheme.bodyLarge
+                                          ?.copyWith(
+                                            color: colors.textSecondary,
+                                            height: 1.55,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    AnimatedSwitcher(
+                                      duration: const Duration(
+                                        milliseconds: 220,
+                                      ),
+                                      switchInCurve: Curves.easeOutCubic,
+                                      switchOutCurve: Curves.easeInCubic,
+                                      child: widget.isLoading
+                                          ? Column(
+                                              key: const ValueKey('progress'),
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                _ProgressTrack(
+                                                  progress: t,
+                                                  primary: colors.primary,
+                                                  trackColor: dividerColor,
+                                                ),
+                                                const SizedBox(height: 14),
+                                                _LoaderDots(
+                                                  progress: t,
+                                                  primary: colors.primary,
+                                                ),
+                                              ],
+                                            )
+                                          : Container(
+                                              key: const ValueKey('error'),
+                                              width: 56,
+                                              height: 56,
+                                              decoration: BoxDecoration(
+                                                color: theme
+                                                    .colorScheme
+                                                    .errorContainer,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: Icon(
+                                                Icons.error_outline_rounded,
+                                                size: 28,
+                                                color: theme.colorScheme.error,
+                                              ),
+                                            ),
+                                    ),
+                                    const SizedBox(height: 22),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 10,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: colors.primary.withValues(
+                                          alpha: isDark ? 0.10 : 0.08,
+                                        ),
+                                        borderRadius: BorderRadius.circular(18),
+                                        border: Border.all(
+                                          color: dividerColor,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            widget.isLoading
+                                                ? Icons.auto_awesome_rounded
+                                                : Icons.shield_outlined,
+                                            size: 18,
+                                            color: colors.primary,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Flexible(
+                                            child: Text(
+                                              widget.isLoading
+                                                  ? 'Bringing your family space online'
+                                                  : 'We hit a snag while opening your space',
+                                              textAlign: TextAlign.center,
+                                              style: theme.textTheme.bodySmall
+                                                  ?.copyWith(
+                                                    color: colors.textSecondary,
+                                                    fontWeight: FontWeight.w600,
+                                                    letterSpacing: 0.1,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AnimatedBadge extends StatelessWidget {
+  const _AnimatedBadge({
+    required this.progress,
+    required this.primary,
+    required this.glowColor,
+  });
+
+  final double progress;
+  final Color primary;
+  final Color glowColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final pulse = (math.sin(progress * math.pi * 2) + 1) / 2;
+    final orbitAngle = (progress * math.pi * 2) - (math.pi / 2);
+    final orbitRadius = 54.0;
+
+    return SizedBox(
+      width: 132,
+      height: 132,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 116 + (pulse * 12),
+            height: 116 + (pulse * 12),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  glowColor.withValues(alpha: 0.64),
+                  glowColor.withValues(alpha: 0.08),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+          Container(
+            width: 108,
+            height: 108,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: primary.withValues(alpha: 0.14 + (pulse * 0.14)),
+                width: 1.5,
+              ),
+            ),
+          ),
+          Transform.translate(
+            offset: Offset(
+              math.cos(orbitAngle) * orbitRadius,
+              math.sin(orbitAngle) * orbitRadius,
+            ),
+            child: Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.95),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: primary.withValues(alpha: 0.28),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  primary.withValues(alpha: 0.88),
+                  primary,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: primary.withValues(alpha: 0.26 + (pulse * 0.12)),
+                  blurRadius: 26,
+                  offset: const Offset(0, 14),
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.favorite_rounded,
+              size: 40,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressTrack extends StatelessWidget {
+  const _ProgressTrack({
+    required this.progress,
+    required this.primary,
+    required this.trackColor,
+  });
+
+  final double progress;
+  final Color primary;
+  final Color trackColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 164,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(999),
+        child: Stack(
+          children: [
+            Container(
+              height: 6,
+              color: trackColor,
+            ),
+            Align(
+              alignment: Alignment(-1.35 + (progress * 2.7), 0),
+              child: FractionallySizedBox(
+                widthFactor: 0.52,
+                child: Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(999),
+                    gradient: LinearGradient(
+                      colors: [
+                        primary.withValues(alpha: 0.15),
+                        primary.withValues(alpha: 0.95),
+                        Colors.white.withValues(alpha: 0.92),
+                      ],
                     ),
                   ),
                 ),
@@ -153,6 +449,36 @@ class StartupLoadingScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _LoaderDots extends StatelessWidget {
+  const _LoaderDots({
+    required this.progress,
+    required this.primary,
+  });
+
+  final double progress;
+  final Color primary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(3, (index) {
+        final phase = ((progress + (index * 0.16)) % 1.0) * math.pi * 2;
+        final value = (math.sin(phase) + 1) / 2;
+        return Container(
+          width: 10 + (value * 5),
+          height: 10 + (value * 5),
+          margin: const EdgeInsets.symmetric(horizontal: 5),
+          decoration: BoxDecoration(
+            color: primary.withValues(alpha: 0.34 + (value * 0.56)),
+            shape: BoxShape.circle,
+          ),
+        );
+      }),
     );
   }
 }

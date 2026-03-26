@@ -62,7 +62,9 @@ import 'package:family_helper_client/src/protocol/sync/models/sync_changes_respo
     as _i26;
 import 'package:family_helper_client/src/protocol/tasks/models/task_dto.dart'
     as _i27;
-import 'protocol.dart' as _i28;
+import 'package:family_helper_client/src/protocol/tasks/models/task_history_entry_dto.dart'
+    as _i28;
+import 'protocol.dart' as _i29;
 
 /// {@category Endpoint}
 class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
@@ -534,11 +536,33 @@ class EndpointGreeting extends _i2.EndpointRef {
 }
 
 /// {@category Endpoint}
+class EndpointHealth extends _i2.EndpointRef {
+  EndpointHealth(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'health';
+
+  _i3.Future<bool> ping() => caller.callServerEndpoint<bool>(
+    'health',
+    'ping',
+    {},
+  );
+}
+
+/// {@category Endpoint}
 class EndpointLists extends _i2.EndpointRef {
   EndpointLists(_i2.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'lists';
+
+  _i3.Future<List<_i13.FamilyListDto>> listFamilyLists({
+    required int familyId,
+  }) => caller.callServerEndpoint<List<_i13.FamilyListDto>>(
+    'lists',
+    'listFamilyLists',
+    {'familyId': familyId},
+  );
 
   _i3.Future<_i13.FamilyListDto> upsertList({
     required String clientOperationId,
@@ -584,6 +608,32 @@ class EndpointLists extends _i2.EndpointRef {
     },
   );
 
+  _i3.Future<_i14.ListItemDto> updateItem({
+    required String clientOperationId,
+    required int familyId,
+    required int itemId,
+    required String title,
+    required double qty,
+    String? unit,
+    String? note,
+    int? priceCents,
+    String? category,
+  }) => caller.callServerEndpoint<_i14.ListItemDto>(
+    'lists',
+    'updateItem',
+    {
+      'clientOperationId': clientOperationId,
+      'familyId': familyId,
+      'itemId': itemId,
+      'title': title,
+      'qty': qty,
+      'unit': unit,
+      'note': note,
+      'priceCents': priceCents,
+      'category': category,
+    },
+  );
+
   _i3.Future<_i14.ListItemDto> toggleBought({
     required String clientOperationId,
     required int familyId,
@@ -595,6 +645,34 @@ class EndpointLists extends _i2.EndpointRef {
       'clientOperationId': clientOperationId,
       'familyId': familyId,
       'itemId': itemId,
+    },
+  );
+
+  _i3.Future<_i7.OperationResult> deleteItem({
+    required String clientOperationId,
+    required int familyId,
+    required int itemId,
+  }) => caller.callServerEndpoint<_i7.OperationResult>(
+    'lists',
+    'deleteItem',
+    {
+      'clientOperationId': clientOperationId,
+      'familyId': familyId,
+      'itemId': itemId,
+    },
+  );
+
+  _i3.Future<_i7.OperationResult> deleteList({
+    required String clientOperationId,
+    required int familyId,
+    required int listId,
+  }) => caller.callServerEndpoint<_i7.OperationResult>(
+    'lists',
+    'deleteList',
+    {
+      'clientOperationId': clientOperationId,
+      'familyId': familyId,
+      'listId': listId,
     },
   );
 
@@ -885,6 +963,26 @@ class EndpointNotifications extends _i2.EndpointRef {
     },
   );
 
+  _i3.Future<_i21.ReminderDto?> replaceReminder({
+    required String clientOperationId,
+    required int familyId,
+    required String entityType,
+    required int entityId,
+    DateTime? remindAt,
+    required String payloadJson,
+  }) => caller.callServerEndpoint<_i21.ReminderDto?>(
+    'notifications',
+    'replaceReminder',
+    {
+      'clientOperationId': clientOperationId,
+      'familyId': familyId,
+      'entityType': entityType,
+      'entityId': entityId,
+      'remindAt': remindAt,
+      'payloadJson': payloadJson,
+    },
+  );
+
   _i3.Future<List<_i21.ReminderDto>> listReminders({
     int? familyId,
     String? status,
@@ -1045,6 +1143,20 @@ class EndpointTasks extends _i2.EndpointRef {
         {'familyId': familyId},
       );
 
+  _i3.Future<List<_i28.TaskHistoryEntryDto>> listTaskHistory({
+    required int familyId,
+    required int taskId,
+    required int limit,
+  }) => caller.callServerEndpoint<List<_i28.TaskHistoryEntryDto>>(
+    'tasks',
+    'listTaskHistory',
+    {
+      'familyId': familyId,
+      'taskId': taskId,
+      'limit': limit,
+    },
+  );
+
   _i3.Future<_i27.TaskDto> completeTask({
     required String clientOperationId,
     required int familyId,
@@ -1091,7 +1203,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i28.Protocol(),
+         _i29.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -1106,6 +1218,7 @@ class Client extends _i2.ServerpodClientShared {
     calendar = EndpointCalendar(this);
     family = EndpointFamily(this);
     greeting = EndpointGreeting(this);
+    health = EndpointHealth(this);
     lists = EndpointLists(this);
     media = EndpointMedia(this);
     moneyGoals = EndpointMoneyGoals(this);
@@ -1128,6 +1241,8 @@ class Client extends _i2.ServerpodClientShared {
   late final EndpointFamily family;
 
   late final EndpointGreeting greeting;
+
+  late final EndpointHealth health;
 
   late final EndpointLists lists;
 
@@ -1155,6 +1270,7 @@ class Client extends _i2.ServerpodClientShared {
     'calendar': calendar,
     'family': family,
     'greeting': greeting,
+    'health': health,
     'lists': lists,
     'media': media,
     'moneyGoals': moneyGoals,

@@ -8,6 +8,7 @@ import 'package:family_helper_flutter/features/lists/providers/lists_provider.da
 import 'package:family_helper_flutter/features/money_goals/providers/money_goals_provider.dart';
 import 'package:family_helper_flutter/features/notifications/domain/notification_models.dart';
 import 'package:family_helper_flutter/features/notifications/providers/notifications_provider.dart';
+import 'package:family_helper_flutter/features/tasks/domain/task_form.dart';
 import 'package:family_helper_flutter/features/tasks/providers/tasks_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -31,7 +32,18 @@ class _TasksCubitStub extends Cubit<TasksState> implements TasksCubit {
   Future<void> reload() async {}
 
   @override
-  void reset() => emit(TasksState.initial());
+  void reset({bool hasSelectedFamily = false}) {
+    emit(TasksState.initial(hasSelectedFamily: hasSelectedFamily));
+  }
+
+  @override
+  Future<TaskDto?> saveTask(TaskForm form, {int? taskId}) async => null;
+
+  @override
+  void setCurrentTask(int? taskId) {}
+
+  @override
+  void setReminderSyncing(bool value) {}
 }
 
 class _CalendarCubitStub extends Cubit<CalendarState> implements CalendarCubit {
@@ -92,11 +104,28 @@ class _ListsCubitStub extends Cubit<ListsState> implements ListsCubit {
     required String title,
     double qty = 1,
     String? unit,
+    String? note,
     int? priceCents,
   }) async {}
 
   @override
   Future<void> createList(String title, {String listType = 'shopping'}) async {}
+
+  @override
+  Future<void> deleteItem(ListItemDto item) async {}
+
+  @override
+  Future<void> deleteSelectedList() async {}
+
+  @override
+  Future<void> loadItemsForSelectedList({bool showLoading = true}) async {}
+
+  @override
+  Future<void> loadLists({
+    int? preferredSelectedListId,
+    bool loadSelectedItems = true,
+    bool showLoading = true,
+  }) async {}
 
   @override
   Future<void> reload() async {}
@@ -111,7 +140,26 @@ class _ListsCubitStub extends Cubit<ListsState> implements ListsCubit {
   void setCurrentList(int listId) {}
 
   @override
+  Future<void> selectList(int listId) async {}
+
+  @override
   Future<void> toggleBought(ListItemDto item) async {}
+
+  @override
+  Future<void> updateItem(
+    ListItemDto item, {
+    required String title,
+    required double qty,
+    String? unit,
+    String? note,
+    int? priceCents,
+  }) async {}
+
+  @override
+  Future<void> updateSelectedList({
+    required String title,
+    required String listType,
+  }) async {}
 }
 
 class _MoneyGoalsCubitStub extends Cubit<MoneyGoalsState>
@@ -220,6 +268,17 @@ class _NotificationsCubitStub extends Cubit<NotificationsState>
 
   @override
   Future<void> reloadReminders({String? status}) async {}
+
+  @override
+  Future<ReminderActionResult> replaceEntityReminder({
+    required String notificationType,
+    required String entityType,
+    required int entityId,
+    DateTime? remindAt,
+    required String payloadJson,
+    required String title,
+    required String body,
+  }) async => ReminderActionResult.successResult;
 
   @override
   void reset({bool preserveAccountSettings = false}) {

@@ -3,38 +3,113 @@ import 'dart:async';
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/config/app_defaults.dart';
 import '../../../core/logging/app_error_logger.dart';
+import '../../../core/offline/offline_snapshot_store.dart';
 import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/tasks_repository.dart';
+import '../domain/task_form.dart';
 
 class TasksState {
   const TasksState({
-    required this.isLoading,
+    required this.hasSelectedFamily,
+    required this.isInitialLoading,
+    required this.isSavingTask,
+    required this.isCompletingTask,
+    required this.isHistoryLoading,
+    required this.isReminderSyncing,
     required this.tasks,
+    required this.history,
+    this.currentTaskId,
+    this.isUsingCachedData = false,
+    this.lastSuccessfulSyncAt,
     this.error,
   });
 
-  final bool isLoading;
+  final bool hasSelectedFamily;
+  final bool isInitialLoading;
+  final bool isSavingTask;
+  final bool isCompletingTask;
+  final bool isHistoryLoading;
+  final bool isReminderSyncing;
   final List<TaskDto> tasks;
+  final List<TaskHistoryEntryDto> history;
+  final int? currentTaskId;
+  final bool isUsingCachedData;
+  final DateTime? lastSuccessfulSyncAt;
   final String? error;
 
-  factory TasksState.initial() {
-    return const TasksState(isLoading: false, tasks: []);
+  factory TasksState.initial({bool hasSelectedFamily = false}) {
+    return TasksState(
+      hasSelectedFamily: hasSelectedFamily,
+      isInitialLoading: hasSelectedFamily,
+      isSavingTask: false,
+      isCompletingTask: false,
+      isHistoryLoading: false,
+      isReminderSyncing: false,
+      tasks: const [],
+      history: const [],
+    );
   }
 
   TasksState copyWith({
-    bool? isLoading,
+    bool? hasSelectedFamily,
+    bool? isInitialLoading,
+    bool? isSavingTask,
+    bool? isCompletingTask,
+    bool? isHistoryLoading,
+    bool? isReminderSyncing,
     List<TaskDto>? tasks,
-    String? error,
+    List<TaskHistoryEntryDto>? history,
+    Object? currentTaskId = _unset,
+    bool? isUsingCachedData,
+    DateTime? lastSuccessfulSyncAt,
+    Object? error = _unset,
     bool clearError = false,
+    bool clearLastSuccessfulSyncAt = false,
   }) {
     return TasksState(
-      isLoading: isLoading ?? this.isLoading,
+      hasSelectedFamily: hasSelectedFamily ?? this.hasSelectedFamily,
+      isInitialLoading: isInitialLoading ?? this.isInitialLoading,
+      isSavingTask: isSavingTask ?? this.isSavingTask,
+      isCompletingTask: isCompletingTask ?? this.isCompletingTask,
+      isHistoryLoading: isHistoryLoading ?? this.isHistoryLoading,
+      isReminderSyncing: isReminderSyncing ?? this.isReminderSyncing,
       tasks: tasks ?? this.tasks,
-      error: clearError ? null : (error ?? this.error),
+      history: history ?? this.history,
+      currentTaskId: currentTaskId == _unset
+          ? this.currentTaskId
+          : currentTaskId as int?,
+      isUsingCachedData: isUsingCachedData ?? this.isUsingCachedData,
+      lastSuccessfulSyncAt: clearLastSuccessfulSyncAt
+          ? null
+          : (lastSuccessfulSyncAt ?? this.lastSuccessfulSyncAt),
+      error: clearError
+          ? null
+          : (error == _unset ? this.error : error as String?),
     );
+  }
+
+  List<TaskDto> get openTasks {
+    return tasks.where((task) => task.status != 'completed').toList();
+  }
+
+  List<TaskDto> get completedTasks {
+    return tasks.where((task) => task.status == 'completed').toList();
+  }
+
+  TaskDto? get selectedTask {
+    final taskId = currentTaskId;
+    if (taskId == null) {
+      return null;
+    }
+
+    for (final task in tasks) {
+      if (task.id == taskId) {
+        return task;
+      }
+    }
+    return null;
   }
 }
 
@@ -42,48 +117,100 @@ class TasksCubit extends Cubit<TasksState> {
   TasksCubit({
     required TasksRepository repository,
     required FamilySelectionCubit familySelectionCubit,
+    OfflineSnapshotStore? snapshotStore,
   }) : _repository = repository,
        _familySelectionCubit = familySelectionCubit,
-       super(TasksState.initial()) {
+       _snapshotStore = snapshotStore,
+       super(
+         TasksState.initial(
+           hasSelectedFamily: familySelectionCubit.state != null,
+         ),
+       ) {
     _familySub = _familySelectionCubit.stream.listen((familyId) {
       unawaited(_handleFamilyChanged(familyId));
     });
+    if (_familySelectionCubit.state != null) {
+      unawaited(_handleFamilyChanged(_familySelectionCubit.state));
+    }
   }
 
   final TasksRepository _repository;
   final FamilySelectionCubit _familySelectionCubit;
+  final OfflineSnapshotStore? _snapshotStore;
   StreamSubscription<int?>? _familySub;
+  int _historyRequestId = 0;
 
   Future<void> _handleFamilyChanged(int? familyId) async {
-    reset();
+    reset(hasSelectedFamily: familyId != null);
     if (familyId == null) {
       return;
     }
+    await _restoreSnapshot(familyId);
     await reload();
   }
 
-  void reset() {
-    emit(TasksState.initial());
+  void reset({bool hasSelectedFamily = false}) {
+    emit(TasksState.initial(hasSelectedFamily: hasSelectedFamily));
+  }
+
+  void setCurrentTask(int? taskId) {
+    if (taskId == state.currentTaskId) {
+      return;
+    }
+
+    if (taskId == null) {
+      ++_historyRequestId;
+      emit(
+        state.copyWith(
+          currentTaskId: null,
+          history: const [],
+          isHistoryLoading: false,
+          clearError: true,
+        ),
+      );
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        currentTaskId: taskId,
+        history: const [],
+        isHistoryLoading: true,
+        clearError: true,
+      ),
+    );
+    unawaited(_loadHistoryForTask(taskId));
+  }
+
+  void setReminderSyncing(bool value) {
+    emit(state.copyWith(isReminderSyncing: value));
   }
 
   Future<void> reload() async {
     final familyId = _familySelectionCubit.state;
     if (familyId == null) {
-      emit(const TasksState(isLoading: false, tasks: []));
+      emit(TasksState.initial());
       return;
     }
 
-    emit(state.copyWith(isLoading: true, clearError: true));
+    emit(
+      state.copyWith(
+        hasSelectedFamily: true,
+        isInitialLoading: state.tasks.isEmpty,
+        clearError: true,
+      ),
+    );
 
     try {
       final tasks = await _repository.listTasks(familyId: familyId);
-      emit(
-        state.copyWith(
-          isLoading: false,
-          tasks: tasks,
-          clearError: true,
-        ),
+      final syncedAt = DateTime.now().toUtc();
+      final nextState = _buildLoadedState(tasks).copyWith(
+        isUsingCachedData: false,
+        lastSuccessfulSyncAt: syncedAt,
       );
+      await _writeSnapshot(familyId, nextState, syncedAt);
+      emit(nextState);
+      await _loadHistoryForTask(nextState.currentTaskId);
     } catch (error, stackTrace) {
       AppErrorLogger.logHandled(
         scope: 'tasks.reload',
@@ -91,7 +218,81 @@ class TasksCubit extends Cubit<TasksState> {
         stackTrace: stackTrace,
         context: {'familyId': familyId},
       );
-      emit(state.copyWith(isLoading: false, error: '$error'));
+      emit(
+        state.copyWith(
+          isInitialLoading: false,
+          isHistoryLoading: false,
+          isUsingCachedData: state.tasks.isNotEmpty || state.history.isNotEmpty,
+          error: '$error',
+        ),
+      );
+    }
+  }
+
+  Future<TaskDto?> saveTask(
+    TaskForm form, {
+    int? taskId,
+  }) async {
+    final familyId = _familySelectionCubit.state;
+    if (familyId == null) {
+      emit(state.copyWith(error: 'Family is not selected'));
+      return null;
+    }
+
+    emit(
+      state.copyWith(
+        hasSelectedFamily: true,
+        isSavingTask: true,
+        clearError: true,
+      ),
+    );
+
+    try {
+      final task = await _repository.upsertTask(
+        clientOperationId: OperationId.next(),
+        taskId: taskId,
+        familyId: familyId,
+        title: form.title.trim(),
+        description: form.normalizedDescription,
+        isPersonal: form.isPersonal,
+        priority: form.priorityValue,
+        dueAt: form.dueAt,
+        recurrenceMode: form.recurrenceMode,
+        recurrenceRrule: form.recurrenceRrule,
+        assigneeProfileId: form.isPersonal ? null : form.assigneeProfileId,
+      );
+
+      final tasks = await _repository.listTasks(familyId: familyId);
+      final syncedAt = DateTime.now().toUtc();
+      final nextState =
+          _buildLoadedState(
+            tasks,
+            preferredTaskId: task.id,
+          ).copyWith(
+            isUsingCachedData: false,
+            lastSuccessfulSyncAt: syncedAt,
+          );
+      await _writeSnapshot(familyId, nextState, syncedAt);
+      emit(nextState);
+      await _loadHistoryForTask(nextState.currentTaskId);
+      return task;
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'tasks.saveTask',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'taskId': taskId,
+        },
+      );
+      emit(
+        state.copyWith(
+          isSavingTask: false,
+          error: '$error',
+        ),
+      );
+      return null;
     }
   }
 
@@ -100,43 +301,18 @@ class TasksCubit extends Cubit<TasksState> {
     required bool isPersonal,
     DateTime? dueAt,
     bool recurringOnComplete = false,
-  }) async {
-    final familyId = _familySelectionCubit.state;
-    if (familyId == null) {
-      emit(state.copyWith(error: 'Family is not selected'));
-      return null;
-    }
-
-    emit(state.copyWith(isLoading: true, clearError: true));
-
-    try {
-      final task = await _repository.upsertTask(
-        clientOperationId: OperationId.next(),
-        familyId: familyId,
+  }) {
+    return saveTask(
+      TaskForm.create().copyWith(
         title: title,
         isPersonal: isPersonal,
-        priority: AppDefaults.defaultTaskPriority,
         dueAt: dueAt,
-        recurrenceMode: recurringOnComplete
-            ? AppDefaults.defaultTaskRecurrenceMode
-            : null,
-        recurrenceRrule: recurringOnComplete
-            ? AppDefaults.dailyRecurrenceRrule
-            : null,
-      );
-
-      await reload();
-      return task;
-    } catch (error, stackTrace) {
-      AppErrorLogger.logHandled(
-        scope: 'tasks.createTask',
-        error: error,
-        stackTrace: stackTrace,
-        context: {'familyId': familyId},
-      );
-      emit(state.copyWith(isLoading: false, error: '$error'));
-      return null;
-    }
+        recurrencePreset: recurringOnComplete
+            ? TaskRecurrencePreset.daily
+            : TaskRecurrencePreset.none,
+        recurrenceInterval: 1,
+      ),
+    );
   }
 
   Future<void> complete(TaskDto task) async {
@@ -146,7 +322,13 @@ class TasksCubit extends Cubit<TasksState> {
       return;
     }
 
-    emit(state.copyWith(isLoading: true, clearError: true));
+    emit(
+      state.copyWith(
+        hasSelectedFamily: true,
+        isCompletingTask: true,
+        clearError: true,
+      ),
+    );
 
     try {
       await _repository.completeTask(
@@ -155,7 +337,19 @@ class TasksCubit extends Cubit<TasksState> {
         taskId: task.id,
       );
 
-      await reload();
+      final tasks = await _repository.listTasks(familyId: familyId);
+      final syncedAt = DateTime.now().toUtc();
+      final nextState =
+          _buildLoadedState(
+            tasks,
+            preferredTaskId: task.id,
+          ).copyWith(
+            isUsingCachedData: false,
+            lastSuccessfulSyncAt: syncedAt,
+          );
+      await _writeSnapshot(familyId, nextState, syncedAt);
+      emit(nextState);
+      await _loadHistoryForTask(nextState.currentTaskId);
     } catch (error, stackTrace) {
       AppErrorLogger.logHandled(
         scope: 'tasks.complete',
@@ -166,7 +360,143 @@ class TasksCubit extends Cubit<TasksState> {
           'taskId': task.id,
         },
       );
-      emit(state.copyWith(isLoading: false, error: '$error'));
+      emit(state.copyWith(isCompletingTask: false, error: '$error'));
+    }
+  }
+
+  TasksState _buildLoadedState(
+    List<TaskDto> tasks, {
+    int? preferredTaskId,
+  }) {
+    final selectedTaskId = _resolveCurrentTaskId(
+      tasks,
+      preferredTaskId: preferredTaskId,
+    );
+
+    return state.copyWith(
+      hasSelectedFamily: true,
+      isInitialLoading: false,
+      isSavingTask: false,
+      isCompletingTask: false,
+      isHistoryLoading: selectedTaskId != null,
+      tasks: tasks,
+      history: selectedTaskId == state.currentTaskId ? state.history : const [],
+      currentTaskId: selectedTaskId,
+      clearError: true,
+    );
+  }
+
+  int? _resolveCurrentTaskId(
+    List<TaskDto> tasks, {
+    int? preferredTaskId,
+  }) {
+    if (tasks.isEmpty) {
+      return null;
+    }
+
+    if (preferredTaskId != null &&
+        tasks.any((task) => task.id == preferredTaskId)) {
+      return preferredTaskId;
+    }
+
+    final currentTaskId = state.currentTaskId;
+    if (currentTaskId != null &&
+        tasks.any((task) => task.id == currentTaskId)) {
+      return currentTaskId;
+    }
+
+    for (final task in tasks) {
+      if (task.status != 'completed') {
+        return task.id;
+      }
+    }
+
+    return tasks.first.id;
+  }
+
+  Future<void> _loadHistoryForTask(int? taskId) async {
+    final familyId = _familySelectionCubit.state;
+    if (familyId == null || taskId == null) {
+      ++_historyRequestId;
+      emit(
+        state.copyWith(
+          history: const [],
+          isHistoryLoading: false,
+        ),
+      );
+      return;
+    }
+
+    final requestId = ++_historyRequestId;
+    if (state.currentTaskId != taskId) {
+      emit(
+        state.copyWith(
+          currentTaskId: taskId,
+          history: const [],
+          isHistoryLoading: true,
+          clearError: true,
+        ),
+      );
+    } else if (!state.isHistoryLoading) {
+      emit(
+        state.copyWith(
+          currentTaskId: taskId,
+          isHistoryLoading: true,
+          clearError: true,
+        ),
+      );
+    }
+
+    try {
+      final history = await _repository.listTaskHistory(
+        familyId: familyId,
+        taskId: taskId,
+      );
+      if (isClosed ||
+          requestId != _historyRequestId ||
+          state.currentTaskId != taskId) {
+        return;
+      }
+
+      emit(
+        state.copyWith(
+          history: history,
+          isHistoryLoading: false,
+          clearError: true,
+        ),
+      );
+      await _writeSnapshot(
+        familyId,
+        state.copyWith(
+          history: history,
+          isHistoryLoading: false,
+          isUsingCachedData: false,
+        ),
+        state.lastSuccessfulSyncAt ?? DateTime.now().toUtc(),
+      );
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'tasks.listTaskHistory',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'taskId': taskId,
+        },
+      );
+      if (isClosed ||
+          requestId != _historyRequestId ||
+          state.currentTaskId != taskId) {
+        return;
+      }
+
+      emit(
+        state.copyWith(
+          isHistoryLoading: false,
+          isUsingCachedData: state.tasks.isNotEmpty || state.history.isNotEmpty,
+          error: '$error',
+        ),
+      );
     }
   }
 
@@ -175,4 +505,84 @@ class TasksCubit extends Cubit<TasksState> {
     await _familySub?.cancel();
     return super.close();
   }
+
+  Future<void> _restoreSnapshot(int familyId) async {
+    final snapshotStore = _snapshotStore;
+    if (snapshotStore == null) {
+      return;
+    }
+
+    try {
+      final snapshot = await snapshotStore.read(_cacheKey(familyId));
+      if (snapshot == null || isClosed) {
+        return;
+      }
+
+      final tasks = (snapshot.payload['tasks'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(TaskDto.fromJson)
+          .toList();
+      final history =
+          (snapshot.payload['history'] as List<dynamic>? ?? const [])
+              .whereType<Map<String, dynamic>>()
+              .map(TaskHistoryEntryDto.fromJson)
+              .toList();
+      emit(
+        state.copyWith(
+          hasSelectedFamily: true,
+          isInitialLoading: false,
+          tasks: tasks,
+          history: history,
+          currentTaskId: snapshot.payload['currentTaskId'] as int?,
+          isHistoryLoading: false,
+          isUsingCachedData: true,
+          lastSuccessfulSyncAt: snapshot.updatedAt,
+          clearError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'tasks.restoreSnapshot',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
+    }
+  }
+
+  Future<void> _writeSnapshot(
+    int familyId,
+    TasksState snapshotState,
+    DateTime syncedAt,
+  ) async {
+    final snapshotStore = _snapshotStore;
+    if (snapshotStore == null) {
+      return;
+    }
+
+    try {
+      await snapshotStore.write(_cacheKey(familyId), {
+        'currentTaskId': snapshotState.currentTaskId,
+        'tasks': snapshotState.tasks.map((task) => task.toJson()).toList(),
+        'history': snapshotState.history
+            .map((entry) => entry.toJson())
+            .toList(),
+      }, updatedAt: syncedAt);
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'tasks.writeSnapshot',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'tasksCount': snapshotState.tasks.length,
+          'historyCount': snapshotState.history.length,
+        },
+      );
+    }
+  }
+
+  String _cacheKey(int familyId) => 'tasks/family/$familyId';
 }
+
+const _unset = Object();

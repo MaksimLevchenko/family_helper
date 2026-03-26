@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:family_helper_client/family_helper_client.dart';
 
+import '../../../core/network/server_availability_cubit.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../../media/providers/media_provider.dart';
 import '../providers/profile_provider.dart';
@@ -56,9 +57,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final mediaState = context.watch<MediaCubit>().state;
+    final isOffline =
+        context.watch<ServerAvailabilityCubit?>()?.state.isUnavailable ?? false;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: serverStatusAppBar(context, title: const Text('Profile')),
       body: BlocConsumer<ProfileBloc, ProfileState>(
         listenWhen: (previous, current) => previous.profile != current.profile,
         listener: (context, state) {
@@ -92,6 +95,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              CachedDataStatus(
+                isUsingCachedData: state.isUsingCachedData,
+                lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+              ),
               if (state.error != null) ...[
                 AppBanner(text: state.error!, isError: true),
                 const SizedBox(height: 12),
@@ -104,7 +111,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 avatarMediaId: profile.avatarMediaId,
                 avatarUrlFuture: _avatarUrlFuture,
                 isLoading: mediaState.isLoading || state.isLoading,
-                onChangePhoto: () async {
+                onChangePhoto: isOffline
+                    ? null
+                    : () async {
                   final mediaCubit = context.read<MediaCubit>();
                   final profileBloc = context.read<ProfileBloc>();
                   final mediaId = await mediaCubit.uploadAvatar();
@@ -115,7 +124,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ProfileUpdateRequested(avatarMediaId: mediaId),
                   );
                 },
-                onRemovePhoto: profile.avatarMediaId == null
+                onRemovePhoto: isOffline || profile.avatarMediaId == null
                     ? null
                     : () {
                         context.read<ProfileBloc>().add(
@@ -138,7 +147,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     )
                     .toList(),
-                onChanged: (value) {
+                onChanged: isOffline ? null : (value) {
                   if (value == null) {
                     return;
                   }
@@ -151,7 +160,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               AppButton(
                 label: 'Save profile',
                 isLoading: state.isLoading,
-                onPressed: () {
+                onPressed: isOffline
+                    ? null
+                    : () {
                   context.read<ProfileBloc>().add(
                     ProfileUpdateRequested(
                       displayName: _nameController.text.trim(),
@@ -190,7 +201,7 @@ class _AvatarCard extends StatelessWidget {
   final int? avatarMediaId;
   final Future<String>? avatarUrlFuture;
   final bool isLoading;
-  final Future<void> Function() onChangePhoto;
+  final Future<void> Function()? onChangePhoto;
   final VoidCallback? onRemovePhoto;
 
   @override
@@ -230,9 +241,11 @@ class _AvatarCard extends StatelessWidget {
             AppButton(
               label: avatarMediaId == null ? 'Add photo' : 'Change photo',
               isLoading: isLoading,
-              onPressed: () async {
-                await onChangePhoto();
-              },
+              onPressed: onChangePhoto == null
+                  ? null
+                  : () async {
+                      await onChangePhoto!();
+                    },
             ),
             if (onRemovePhoto != null) ...[
               const SizedBox(height: 12),

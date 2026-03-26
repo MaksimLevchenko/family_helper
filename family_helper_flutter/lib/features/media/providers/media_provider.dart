@@ -7,6 +7,7 @@ import '../../../core/logging/app_error_logger.dart';
 import '../../../core/offline/offline_error_classifier.dart';
 import '../../../core/offline/offline_operation.dart';
 import '../../../core/offline/offline_queue_manager.dart';
+import '../../../core/offline/offline_snapshot_store.dart';
 import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/media_repository.dart';
@@ -17,6 +18,8 @@ class MediaState {
     this.lastSignedUrl,
     required this.items,
     this.isLoading = false,
+    this.isUsingCachedData = false,
+    this.lastSuccessfulSyncAt,
     this.error,
   });
 
@@ -24,6 +27,8 @@ class MediaState {
   final String? lastSignedUrl;
   final List<MediaObjectDto> items;
   final bool isLoading;
+  final bool isUsingCachedData;
+  final DateTime? lastSuccessfulSyncAt;
   final String? error;
 
   MediaState copyWith({
@@ -31,14 +36,24 @@ class MediaState {
     String? lastSignedUrl,
     List<MediaObjectDto>? items,
     bool? isLoading,
+    bool? isUsingCachedData,
+    DateTime? lastSuccessfulSyncAt,
     String? error,
     bool clearError = false,
+    bool clearLastSuccessfulSyncAt = false,
+    bool clearLastSignedUrl = false,
   }) {
     return MediaState(
       lastMediaId: lastMediaId ?? this.lastMediaId,
-      lastSignedUrl: lastSignedUrl ?? this.lastSignedUrl,
+      lastSignedUrl: clearLastSignedUrl
+          ? null
+          : (lastSignedUrl ?? this.lastSignedUrl),
       items: items ?? this.items,
       isLoading: isLoading ?? this.isLoading,
+      isUsingCachedData: isUsingCachedData ?? this.isUsingCachedData,
+      lastSuccessfulSyncAt: clearLastSuccessfulSyncAt
+          ? null
+          : (lastSuccessfulSyncAt ?? this.lastSuccessfulSyncAt),
       error: clearError ? null : (error ?? this.error),
     );
   }
@@ -49,18 +64,22 @@ class MediaCubit extends Cubit<MediaState> {
     required MediaRepository repository,
     required FamilySelectionCubit familySelectionCubit,
     required OfflineQueueManager offlineQueueManager,
+    OfflineSnapshotStore? snapshotStore,
   }) : _repository = repository,
        _familySelectionCubit = familySelectionCubit,
        _offlineQueueManager = offlineQueueManager,
+       _snapshotStore = snapshotStore,
        super(const MediaState(items: [])) {
     _familySub = _familySelectionCubit.stream.listen((_) {
       unawaited(_handleFamilyChanged());
     });
+    unawaited(_handleFamilyChanged());
   }
 
   final MediaRepository _repository;
   final FamilySelectionCubit _familySelectionCubit;
   final OfflineQueueManager _offlineQueueManager;
+  final OfflineSnapshotStore? _snapshotStore;
   StreamSubscription<int?>? _familySub;
   static const _offlineFeature = 'media';
   static const _actionSoftDelete = 'soft_delete';
@@ -71,6 +90,7 @@ class MediaCubit extends Cubit<MediaState> {
 
   Future<void> _handleFamilyChanged() async {
     reset();
+    await _restoreSnapshot();
     await reload();
   }
 
@@ -80,10 +100,19 @@ class MediaCubit extends Cubit<MediaState> {
     try {
       await _replayQueuedOperations();
       final items = await _repository.listMedia(familyId: familyId);
+      final syncedAt = DateTime.now().toUtc();
+      await _writeSnapshot(
+        familyId: familyId,
+        items: items,
+        lastMediaId: state.lastMediaId,
+        syncedAt: syncedAt,
+      );
       emit(
         state.copyWith(
           isLoading: false,
           items: items,
+          isUsingCachedData: false,
+          lastSuccessfulSyncAt: syncedAt,
           clearError: true,
         ),
       );
@@ -94,7 +123,13 @@ class MediaCubit extends Cubit<MediaState> {
         stackTrace: stackTrace,
         context: {'familyId': familyId},
       );
-      emit(state.copyWith(isLoading: false, error: '$error'));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          isUsingCachedData: state.items.isNotEmpty,
+          error: '$error',
+        ),
+      );
     }
   }
 
@@ -116,6 +151,7 @@ class MediaCubit extends Cubit<MediaState> {
           isLoading: false,
           lastMediaId: media.id,
           lastSignedUrl: signedUrl,
+          isUsingCachedData: false,
           clearError: true,
         ),
       );
@@ -147,6 +183,7 @@ class MediaCubit extends Cubit<MediaState> {
           isLoading: false,
           lastMediaId: media.id,
           lastSignedUrl: signedUrl,
+          isUsingCachedData: false,
           clearError: true,
         ),
       );
@@ -227,5 +264,75 @@ class MediaCubit extends Cubit<MediaState> {
   Future<void> close() async {
     await _familySub?.cancel();
     return super.close();
+  }
+
+  Future<void> _restoreSnapshot() async {
+    final snapshotStore = _snapshotStore;
+    if (snapshotStore == null) {
+      return;
+    }
+
+    final familyId = _familySelectionCubit.state;
+    try {
+      final snapshot = await snapshotStore.read(_cacheKey(familyId));
+      if (snapshot == null || isClosed) {
+        return;
+      }
+
+      final items = (snapshot.payload['items'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(MediaObjectDto.fromJson)
+          .toList();
+      emit(
+        state.copyWith(
+          isLoading: false,
+          items: items,
+          lastMediaId: snapshot.payload['lastMediaId'] as int?,
+          clearLastSignedUrl: true,
+          isUsingCachedData: true,
+          lastSuccessfulSyncAt: snapshot.updatedAt,
+          clearError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'media.restoreSnapshot',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
+    }
+  }
+
+  Future<void> _writeSnapshot({
+    required int? familyId,
+    required List<MediaObjectDto> items,
+    required int? lastMediaId,
+    required DateTime syncedAt,
+  }) async {
+    final snapshotStore = _snapshotStore;
+    if (snapshotStore == null) {
+      return;
+    }
+
+    try {
+      await snapshotStore.write(_cacheKey(familyId), {
+        'lastMediaId': lastMediaId,
+        'items': items.map((item) => item.toJson()).toList(),
+      }, updatedAt: syncedAt);
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'media.writeSnapshot',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId, 'itemsCount': items.length},
+      );
+    }
+  }
+
+  String _cacheKey(int? familyId) {
+    return familyId == null
+        ? 'media/personal'
+        : 'media/family/$familyId';
   }
 }

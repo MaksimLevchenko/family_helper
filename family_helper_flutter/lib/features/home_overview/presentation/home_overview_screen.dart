@@ -36,11 +36,15 @@ class HomeOverviewScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: colors.background,
-      appBar: AppBar(title: const Text('Overview')),
+      appBar: serverStatusAppBar(context, title: const Text('Overview')),
       body: hasFamily
           ? ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                CachedDataStatus(
+                  isUsingCachedData: overview.isUsingCachedData,
+                  lastSuccessfulSyncAt: overview.lastSuccessfulSyncAt,
+                ),
                 if (!notifications.permissionStatus.isGranted) ...[
                   Card(
                     child: Padding(

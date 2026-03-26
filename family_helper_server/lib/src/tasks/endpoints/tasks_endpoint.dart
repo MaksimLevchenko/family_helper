@@ -45,6 +45,20 @@ class TasksEndpoint extends Endpoint {
     return service.listTasks(session, familyId: familyId);
   }
 
+  Future<List<TaskHistoryEntryDto>> listTaskHistory(
+    Session session, {
+    required int familyId,
+    required int taskId,
+    int limit = 50,
+  }) {
+    return service.listTaskHistory(
+      session,
+      familyId: familyId,
+      taskId: taskId,
+      limit: limit,
+    );
+  }
+
   Future<TaskDto> completeTask(
     Session session, {
     required String clientOperationId,

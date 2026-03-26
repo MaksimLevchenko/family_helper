@@ -28,7 +28,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: serverStatusAppBar(context, title: const Text('Notifications')),
       body: BlocBuilder<NotificationsCubit, NotificationsState>(
         builder: (context, state) {
           final taskRemindersEnabled = _preferenceEnabled(
@@ -43,6 +43,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              CachedDataStatus(
+                isUsingCachedData: state.isUsingCachedData,
+                lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+              ),
               if (state.error != null) ...[
                 AppBanner(text: state.error!, isError: true),
                 const SizedBox(height: 12),

@@ -66,6 +66,26 @@ class NotificationsEndpoint extends Endpoint {
     );
   }
 
+  Future<ReminderDto?> replaceReminder(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+    required String entityType,
+    required int entityId,
+    DateTime? remindAt,
+    String payloadJson = '{}',
+  }) {
+    return service.replaceReminder(
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      entityType: entityType,
+      entityId: entityId,
+      remindAt: remindAt,
+      payloadJson: payloadJson,
+    );
+  }
+
   Future<List<ReminderDto>> listReminders(
     Session session, {
     int? familyId,

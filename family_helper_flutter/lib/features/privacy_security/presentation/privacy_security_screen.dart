@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/network/server_availability_cubit.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../../auth_profile/providers/profile_provider.dart';
 import '../providers/privacy_provider.dart';
@@ -31,9 +32,11 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
   @override
   Widget build(BuildContext context) {
     final profileState = context.watch<ProfileBloc>().state;
+    final isOffline =
+        context.watch<ServerAvailabilityCubit?>()?.state.isUnavailable ?? false;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Privacy')),
+      appBar: serverStatusAppBar(context, title: const Text('Privacy')),
       body: BlocBuilder<PrivacyCubit, PrivacyState>(
         builder: (context, state) {
           if (state.isLoading &&
@@ -58,6 +61,10 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              CachedDataStatus(
+                isUsingCachedData: state.isUsingCachedData,
+                lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+              ),
               if (state.error != null) ...[
                 AppBanner(text: state.error!, isError: true),
                 const SizedBox(height: 12),
@@ -69,7 +76,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
               Card(
                 child: SwitchListTile(
                   value: analyticsEnabled,
-                  onChanged: profileState.profile == null
+                  onChanged: profileState.profile == null || isOffline
                       ? null
                       : (value) {
                           context.read<ProfileBloc>().add(
@@ -119,7 +126,9 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                         AppButton(
                           label: 'Cancel deletion request',
                           variant: AppButtonVariant.secondary,
-                          onPressed: () async {
+                          onPressed: isOffline
+                              ? null
+                              : () async {
                             final messenger = ScaffoldMessenger.of(context);
                             await context
                                 .read<PrivacyCubit>()

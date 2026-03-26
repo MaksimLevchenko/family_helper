@@ -1,0 +1,9 @@
+class: TaskHistoryEntryDto
+fields:
+  id: int
+  taskId: int
+  profileId: int
+  actorDisplayName: String
+  eventType: String
+  details: String
+  createdAt: DateTime

@@ -48,6 +48,19 @@ class _TestNotificationsCubit extends Cubit<NotificationsState>
   Future<void> reloadReminders({String? status}) async {}
 
   @override
+  Future<ReminderActionResult> replaceEntityReminder({
+    required String notificationType,
+    required String entityType,
+    required int entityId,
+    DateTime? remindAt,
+    required String payloadJson,
+    required String title,
+    required String body,
+  }) async {
+    return ReminderActionResult.successResult;
+  }
+
+  @override
   Future<void> registerPushToken({
     required String token,
     String? platform,

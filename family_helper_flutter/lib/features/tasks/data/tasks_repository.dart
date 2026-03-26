@@ -11,6 +11,18 @@ class TasksRepository {
     return _apiClient.client.tasks.listTasks(familyId: familyId);
   }
 
+  Future<List<TaskHistoryEntryDto>> listTaskHistory({
+    required int familyId,
+    required int taskId,
+    int limit = 50,
+  }) {
+    return _apiClient.client.tasks.listTaskHistory(
+      familyId: familyId,
+      taskId: taskId,
+      limit: limit,
+    );
+  }
+
   Future<TaskDto> upsertTask({
     required String clientOperationId,
     int? taskId,

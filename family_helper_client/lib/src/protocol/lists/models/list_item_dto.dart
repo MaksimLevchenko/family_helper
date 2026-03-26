@@ -25,6 +25,7 @@ abstract class ListItemDto implements _i1.SerializableModel {
     required this.positionIndex,
     required this.isBought,
     this.boughtByProfileId,
+    this.boughtByDisplayName,
     this.boughtAt,
     required this.updatedAt,
     required this.version,
@@ -42,6 +43,7 @@ abstract class ListItemDto implements _i1.SerializableModel {
     required int positionIndex,
     required bool isBought,
     int? boughtByProfileId,
+    String? boughtByDisplayName,
     DateTime? boughtAt,
     required DateTime updatedAt,
     required int version,
@@ -60,6 +62,7 @@ abstract class ListItemDto implements _i1.SerializableModel {
       positionIndex: jsonSerialization['positionIndex'] as int,
       isBought: jsonSerialization['isBought'] as bool,
       boughtByProfileId: jsonSerialization['boughtByProfileId'] as int?,
+      boughtByDisplayName: jsonSerialization['boughtByDisplayName'] as String?,
       boughtAt: jsonSerialization['boughtAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['boughtAt']),
@@ -92,6 +95,8 @@ abstract class ListItemDto implements _i1.SerializableModel {
 
   int? boughtByProfileId;
 
+  String? boughtByDisplayName;
+
   DateTime? boughtAt;
 
   DateTime updatedAt;
@@ -113,6 +118,7 @@ abstract class ListItemDto implements _i1.SerializableModel {
     int? positionIndex,
     bool? isBought,
     int? boughtByProfileId,
+    String? boughtByDisplayName,
     DateTime? boughtAt,
     DateTime? updatedAt,
     int? version,
@@ -132,6 +138,8 @@ abstract class ListItemDto implements _i1.SerializableModel {
       'positionIndex': positionIndex,
       'isBought': isBought,
       if (boughtByProfileId != null) 'boughtByProfileId': boughtByProfileId,
+      if (boughtByDisplayName != null)
+        'boughtByDisplayName': boughtByDisplayName,
       if (boughtAt != null) 'boughtAt': boughtAt?.toJson(),
       'updatedAt': updatedAt.toJson(),
       'version': version,
@@ -159,6 +167,7 @@ class _ListItemDtoImpl extends ListItemDto {
     required int positionIndex,
     required bool isBought,
     int? boughtByProfileId,
+    String? boughtByDisplayName,
     DateTime? boughtAt,
     required DateTime updatedAt,
     required int version,
@@ -174,6 +183,7 @@ class _ListItemDtoImpl extends ListItemDto {
          positionIndex: positionIndex,
          isBought: isBought,
          boughtByProfileId: boughtByProfileId,
+         boughtByDisplayName: boughtByDisplayName,
          boughtAt: boughtAt,
          updatedAt: updatedAt,
          version: version,
@@ -195,6 +205,7 @@ class _ListItemDtoImpl extends ListItemDto {
     int? positionIndex,
     bool? isBought,
     Object? boughtByProfileId = _Undefined,
+    Object? boughtByDisplayName = _Undefined,
     Object? boughtAt = _Undefined,
     DateTime? updatedAt,
     int? version,
@@ -213,6 +224,9 @@ class _ListItemDtoImpl extends ListItemDto {
       boughtByProfileId: boughtByProfileId is int?
           ? boughtByProfileId
           : this.boughtByProfileId,
+      boughtByDisplayName: boughtByDisplayName is String?
+          ? boughtByDisplayName
+          : this.boughtByDisplayName,
       boughtAt: boughtAt is DateTime? ? boughtAt : this.boughtAt,
       updatedAt: updatedAt ?? this.updatedAt,
       version: version ?? this.version,

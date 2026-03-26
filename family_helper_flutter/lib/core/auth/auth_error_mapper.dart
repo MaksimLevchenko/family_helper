@@ -22,11 +22,12 @@ class AuthErrorMapper {
       return 'Invalid email or password.';
     }
 
-    if (error case EmailAccountLoginException(
-      reason: EmailAccountLoginExceptionReason.tooManyAttempts,
-    )) {
-      return 'Too many sign-in attempts. Try again later.';
-    }
+    // Temporarily disabled to avoid showing a dedicated rate-limit message.
+    // if (error case EmailAccountLoginException(
+    //   reason: EmailAccountLoginExceptionReason.tooManyAttempts,
+    // )) {
+    //   return 'Too many sign-in attempts. Try again later.';
+    // }
 
     if (error case EmailAccountRequestException(reason: final reason)) {
       switch (reason) {

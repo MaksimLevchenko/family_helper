@@ -77,7 +77,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final themeMode = context.watch<ThemeCubit>().state;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: serverStatusAppBar(context, title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

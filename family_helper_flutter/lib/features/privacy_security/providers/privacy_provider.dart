@@ -7,6 +7,7 @@ import '../../../core/logging/app_error_logger.dart';
 import '../../../core/offline/offline_error_classifier.dart';
 import '../../../core/offline/offline_operation.dart';
 import '../../../core/offline/offline_queue_manager.dart';
+import '../../../core/offline/offline_snapshot_store.dart';
 import '../../../core/utils/operation_id.dart';
 import '../data/privacy_repository.dart';
 
@@ -15,12 +16,16 @@ class PrivacyState {
     this.lastExportJob,
     this.accountDeletion,
     this.isLoading = false,
+    this.isUsingCachedData = false,
+    this.lastSuccessfulSyncAt,
     this.error,
   });
 
   final PrivacyExportJobDto? lastExportJob;
   final AccountDeletionStatusDto? accountDeletion;
   final bool isLoading;
+  final bool isUsingCachedData;
+  final DateTime? lastSuccessfulSyncAt;
   final String? error;
 
   bool get hasActiveDeletionRequest {
@@ -52,13 +57,20 @@ class PrivacyState {
     PrivacyExportJobDto? lastExportJob,
     AccountDeletionStatusDto? accountDeletion,
     bool? isLoading,
+    bool? isUsingCachedData,
+    DateTime? lastSuccessfulSyncAt,
     String? error,
     bool clearError = false,
+    bool clearLastSuccessfulSyncAt = false,
   }) {
     return PrivacyState(
       lastExportJob: lastExportJob ?? this.lastExportJob,
       accountDeletion: accountDeletion ?? this.accountDeletion,
       isLoading: isLoading ?? this.isLoading,
+      isUsingCachedData: isUsingCachedData ?? this.isUsingCachedData,
+      lastSuccessfulSyncAt: clearLastSuccessfulSyncAt
+          ? null
+          : (lastSuccessfulSyncAt ?? this.lastSuccessfulSyncAt),
       error: clearError ? null : (error ?? this.error),
     );
   }
@@ -68,18 +80,23 @@ class PrivacyCubit extends Cubit<PrivacyState> {
   PrivacyCubit({
     required PrivacyRepositoryContract repository,
     required OfflineQueueManager offlineQueueManager,
+    OfflineSnapshotStore? snapshotStore,
     Duration exportStatusPollInterval = const Duration(seconds: 3),
     Duration exportStatusPollingTimeout = const Duration(seconds: 60),
     Future<void> Function(Duration duration)? delay,
   }) : _repository = repository,
        _offlineQueueManager = offlineQueueManager,
+       _snapshotStore = snapshotStore,
        _exportStatusPollInterval = exportStatusPollInterval,
        _exportStatusPollingTimeout = exportStatusPollingTimeout,
        _delay = delay ?? Future<void>.delayed,
-       super(const PrivacyState());
+       super(const PrivacyState()) {
+    _restoreSnapshot();
+  }
 
   final PrivacyRepositoryContract _repository;
   final OfflineQueueManager _offlineQueueManager;
+  final OfflineSnapshotStore? _snapshotStore;
   final Duration _exportStatusPollInterval;
   final Duration _exportStatusPollingTimeout;
   final Future<void> Function(Duration duration) _delay;
@@ -98,11 +115,19 @@ class PrivacyCubit extends Cubit<PrivacyState> {
     try {
       await _replayQueuedOperations();
       final status = await _repository.getStatus();
+      final syncedAt = DateTime.now().toUtc();
+      await _writeSnapshot(
+        lastExportJob: status.lastExportJob,
+        accountDeletion: status.accountDeletion,
+        syncedAt: syncedAt,
+      );
       emit(
         state.copyWith(
           isLoading: false,
           lastExportJob: status.lastExportJob,
           accountDeletion: status.accountDeletion,
+          isUsingCachedData: false,
+          lastSuccessfulSyncAt: syncedAt,
           clearError: true,
         ),
       );
@@ -112,7 +137,14 @@ class PrivacyCubit extends Cubit<PrivacyState> {
         error: error,
         stackTrace: stackTrace,
       );
-      emit(state.copyWith(isLoading: false, error: '$error'));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          isUsingCachedData:
+              state.lastExportJob != null || state.accountDeletion != null,
+          error: '$error',
+        ),
+      );
     }
   }
 
@@ -123,10 +155,16 @@ class PrivacyCubit extends Cubit<PrivacyState> {
       final job = await _repository.requestExport(
         clientOperationId: clientOperationId,
       );
+      await _writeSnapshot(
+        lastExportJob: job,
+        accountDeletion: state.accountDeletion,
+        syncedAt: state.lastSuccessfulSyncAt ?? DateTime.now().toUtc(),
+      );
       emit(
         state.copyWith(
           isLoading: false,
           lastExportJob: job,
+          isUsingCachedData: false,
           clearError: true,
         ),
       );
@@ -145,6 +183,8 @@ class PrivacyCubit extends Cubit<PrivacyState> {
         emit(
           state.copyWith(
             isLoading: false,
+            isUsingCachedData:
+                state.lastExportJob != null || state.accountDeletion != null,
             error: 'Network unavailable. Export request queued.',
           ),
         );
@@ -161,10 +201,16 @@ class PrivacyCubit extends Cubit<PrivacyState> {
       final status = await _repository.requestAccountDeletion(
         clientOperationId: clientOperationId,
       );
+      await _writeSnapshot(
+        lastExportJob: state.lastExportJob,
+        accountDeletion: status,
+        syncedAt: state.lastSuccessfulSyncAt ?? DateTime.now().toUtc(),
+      );
       emit(
         state.copyWith(
           isLoading: false,
           accountDeletion: status,
+          isUsingCachedData: false,
           clearError: true,
         ),
       );
@@ -182,6 +228,8 @@ class PrivacyCubit extends Cubit<PrivacyState> {
         emit(
           state.copyWith(
             isLoading: false,
+            isUsingCachedData:
+                state.lastExportJob != null || state.accountDeletion != null,
             error: 'Network unavailable. Deletion request queued.',
           ),
         );
@@ -195,10 +243,16 @@ class PrivacyCubit extends Cubit<PrivacyState> {
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
       final status = await _repository.cancelAccountDeletion();
+      await _writeSnapshot(
+        lastExportJob: state.lastExportJob,
+        accountDeletion: status,
+        syncedAt: state.lastSuccessfulSyncAt ?? DateTime.now().toUtc(),
+      );
       emit(
         state.copyWith(
           isLoading: false,
           accountDeletion: status,
+          isUsingCachedData: false,
           clearError: true,
         ),
       );
@@ -273,8 +327,14 @@ class PrivacyCubit extends Cubit<PrivacyState> {
           state.copyWith(
             lastExportJob: latestJob,
             accountDeletion: status.accountDeletion,
+            isUsingCachedData: false,
             clearError: true,
           ),
+        );
+        await _writeSnapshot(
+          lastExportJob: latestJob,
+          accountDeletion: status.accountDeletion,
+          syncedAt: state.lastSuccessfulSyncAt ?? DateTime.now().toUtc(),
         );
 
         if (latestJob == null) {
@@ -320,4 +380,67 @@ class PrivacyCubit extends Cubit<PrivacyState> {
     _exportPollGeneration++;
     return super.close();
   }
+
+  Future<void> _restoreSnapshot() async {
+    final snapshotStore = _snapshotStore;
+    if (snapshotStore == null) {
+      return;
+    }
+
+    try {
+      final snapshot = await snapshotStore.read(_cacheKey);
+      if (snapshot == null || isClosed) {
+        return;
+      }
+
+      final lastExportJob = snapshot.payload['lastExportJob'];
+      final accountDeletion = snapshot.payload['accountDeletion'];
+      emit(
+        state.copyWith(
+          isLoading: false,
+          lastExportJob: lastExportJob is Map<String, dynamic>
+              ? PrivacyExportJobDto.fromJson(lastExportJob)
+              : null,
+          accountDeletion: accountDeletion is Map<String, dynamic>
+              ? AccountDeletionStatusDto.fromJson(accountDeletion)
+              : null,
+          isUsingCachedData: true,
+          lastSuccessfulSyncAt: snapshot.updatedAt,
+          clearError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'privacy.restoreSnapshot',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> _writeSnapshot({
+    required PrivacyExportJobDto? lastExportJob,
+    required AccountDeletionStatusDto? accountDeletion,
+    required DateTime syncedAt,
+  }) async {
+    final snapshotStore = _snapshotStore;
+    if (snapshotStore == null) {
+      return;
+    }
+
+    try {
+      await snapshotStore.write(_cacheKey, {
+        'lastExportJob': lastExportJob?.toJson(),
+        'accountDeletion': accountDeletion?.toJson(),
+      }, updatedAt: syncedAt);
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'privacy.writeSnapshot',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  static const _cacheKey = 'privacy/current';
 }

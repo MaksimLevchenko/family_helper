@@ -2,6 +2,7 @@ import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/logging/app_error_logger.dart';
+import '../../../core/offline/offline_snapshot_store.dart';
 import '../../../core/utils/operation_id.dart';
 import '../data/profile_repository.dart';
 
@@ -15,6 +16,10 @@ class ProfileLoadRequested extends ProfileEvent {
 
 class ProfileResetRequested extends ProfileEvent {
   const ProfileResetRequested();
+}
+
+class ProfileSnapshotRestoreRequested extends ProfileEvent {
+  const ProfileSnapshotRestoreRequested();
 }
 
 class ProfileUpdateRequested extends ProfileEvent {
@@ -37,22 +42,33 @@ class ProfileState {
   const ProfileState({
     required this.isLoading,
     this.profile,
+    this.isUsingCachedData = false,
+    this.lastSuccessfulSyncAt,
     this.error,
   });
 
   final bool isLoading;
   final ProfileDto? profile;
+  final bool isUsingCachedData;
+  final DateTime? lastSuccessfulSyncAt;
   final String? error;
 
   ProfileState copyWith({
     bool? isLoading,
     ProfileDto? profile,
+    bool? isUsingCachedData,
+    DateTime? lastSuccessfulSyncAt,
     String? error,
     bool clearError = false,
+    bool clearLastSuccessfulSyncAt = false,
   }) {
     return ProfileState(
       isLoading: isLoading ?? this.isLoading,
       profile: profile ?? this.profile,
+      isUsingCachedData: isUsingCachedData ?? this.isUsingCachedData,
+      lastSuccessfulSyncAt: clearLastSuccessfulSyncAt
+          ? null
+          : (lastSuccessfulSyncAt ?? this.lastSuccessfulSyncAt),
       error: clearError ? null : (error ?? this.error),
     );
   }
@@ -63,15 +79,22 @@ class ProfileState {
 }
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
-  ProfileBloc({required ProfileRepositoryContract repository})
+  ProfileBloc({
+    required ProfileRepositoryContract repository,
+    OfflineSnapshotStore? snapshotStore,
+  })
     : _repository = repository,
+      _snapshotStore = snapshotStore,
       super(ProfileState.initial()) {
     on<ProfileLoadRequested>(_onLoadRequested);
     on<ProfileResetRequested>(_onResetRequested);
     on<ProfileUpdateRequested>(_onUpdateRequested);
+    on<ProfileSnapshotRestoreRequested>(_onSnapshotRestoreRequested);
+    add(const ProfileSnapshotRestoreRequested());
   }
 
   final ProfileRepositoryContract _repository;
+  final OfflineSnapshotStore? _snapshotStore;
 
   Future<void> _onLoadRequested(
     ProfileLoadRequested event,
@@ -80,8 +103,16 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
       final profile = await _repository.me();
+      final syncedAt = DateTime.now().toUtc();
+      await _writeSnapshot(profile, syncedAt);
       emit(
-        state.copyWith(isLoading: false, profile: profile, clearError: true),
+        state.copyWith(
+          isLoading: false,
+          profile: profile,
+          isUsingCachedData: false,
+          lastSuccessfulSyncAt: syncedAt,
+          clearError: true,
+        ),
       );
     } catch (error, stackTrace) {
       AppErrorLogger.logHandled(
@@ -89,7 +120,13 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         error: error,
         stackTrace: stackTrace,
       );
-      emit(state.copyWith(isLoading: false, error: '$error'));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          isUsingCachedData: state.profile != null,
+          error: '$error',
+        ),
+      );
     }
   }
 
@@ -107,8 +144,16 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         clearAvatarMedia: event.clearAvatarMedia,
         analyticsOptIn: event.analyticsOptIn,
       );
+      final syncedAt = DateTime.now().toUtc();
+      await _writeSnapshot(updated, syncedAt);
       emit(
-        state.copyWith(isLoading: false, profile: updated, clearError: true),
+        state.copyWith(
+          isLoading: false,
+          profile: updated,
+          isUsingCachedData: false,
+          lastSuccessfulSyncAt: syncedAt,
+          clearError: true,
+        ),
       );
     } catch (error, stackTrace) {
       AppErrorLogger.logHandled(
@@ -116,7 +161,13 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         error: error,
         stackTrace: stackTrace,
       );
-      emit(state.copyWith(isLoading: false, error: '$error'));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          isUsingCachedData: state.profile != null,
+          error: '$error',
+        ),
+      );
     }
   }
 
@@ -126,4 +177,64 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ) {
     emit(ProfileState.initial());
   }
+
+  Future<void> _onSnapshotRestoreRequested(
+    ProfileSnapshotRestoreRequested event,
+    Emitter<ProfileState> emit,
+  ) async {
+    final snapshotStore = _snapshotStore;
+    if (snapshotStore == null) {
+      return;
+    }
+
+    try {
+      final snapshot = await snapshotStore.read(_cacheKey);
+      if (snapshot == null || isClosed) {
+        return;
+      }
+
+      final profilePayload = snapshot.payload['profile'];
+      if (profilePayload is! Map<String, dynamic>) {
+        return;
+      }
+
+      emit(
+        state.copyWith(
+          isLoading: false,
+          profile: ProfileDto.fromJson(profilePayload),
+          isUsingCachedData: true,
+          lastSuccessfulSyncAt: snapshot.updatedAt,
+          clearError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'profile.restoreSnapshot',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> _writeSnapshot(ProfileDto profile, DateTime syncedAt) async {
+    final snapshotStore = _snapshotStore;
+    if (snapshotStore == null) {
+      return;
+    }
+
+    try {
+      await snapshotStore.write(_cacheKey, {
+        'profile': profile.toJson(),
+      }, updatedAt: syncedAt);
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'profile.writeSnapshot',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'profileId': profile.id},
+      );
+    }
+  }
+
+  static const _cacheKey = 'profile/current';
 }

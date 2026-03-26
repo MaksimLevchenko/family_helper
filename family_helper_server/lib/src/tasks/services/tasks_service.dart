@@ -78,6 +78,14 @@ class TasksService {
       }
 
       final now = clock.nowUtc();
+      await _validateAssignee(
+        session,
+        familyId: familyId,
+        actorProfileId: actorProfileId,
+        isPersonal: isPersonal,
+        assigneeProfileId: assigneeProfileId,
+        transaction: transaction,
+      );
       if (taskId == null) {
         final inserted = await TaskRow.db.insertRow(
           session,
@@ -150,12 +158,11 @@ class TasksService {
         return dto;
       }
 
-      final row = await TaskRow.db.findFirstRow(
+      final row = await _findVisibleTaskRow(
         session,
-        where: (t) =>
-            t.id.equals(taskId) &
-            t.familyId.equals(familyId) &
-            t.deletedAt.equals(null),
+        familyId: familyId,
+        taskId: taskId,
+        viewerProfileId: actorProfileId,
         transaction: transaction,
       );
       if (row == null) {
@@ -245,6 +252,62 @@ class TasksService {
     return rows.map(_mapTask).toList();
   }
 
+  Future<List<TaskHistoryEntryDto>> listTaskHistory(
+    Session session, {
+    required int familyId,
+    required int taskId,
+    int limit = 50,
+  }) async {
+    final profileId = await rbac.ensureFamilyRole(
+      session,
+      familyId: familyId,
+      minRole: 'member',
+    );
+
+    final task = await _findVisibleTaskRow(
+      session,
+      familyId: familyId,
+      taskId: taskId,
+      viewerProfileId: profileId,
+    );
+    if (task == null) {
+      throw FileNotFoundException(message: 'Task not found.');
+    }
+
+    final normalizedLimit = limit <= 0 ? 1 : (limit > 100 ? 100 : limit);
+    final rows = await TaskHistoryRow.db.find(
+      session,
+      where: (t) => t.taskId.equals(taskId),
+      orderBy: (t) => t.createdAt,
+      orderDescending: true,
+      limit: normalizedLimit,
+    );
+    final actorProfileIds = rows.map((row) => row.actorProfileId).toSet();
+    final profiles = actorProfileIds.isEmpty
+        ? <AppProfileRow>[]
+        : await AppProfileRow.db.find(
+            session,
+            where: (t) => t.id.inSet(actorProfileIds),
+          );
+    final profilesById = {for (final profile in profiles) profile.id!: profile};
+
+    return rows
+        .map(
+          (row) => TaskHistoryEntryDto(
+            id: row.id!,
+            taskId: row.taskId,
+            profileId: row.actorProfileId,
+            actorDisplayName:
+                profilesById[row.actorProfileId]?.displayName ??
+                'User #${row.actorProfileId}',
+            eventType: row.eventType,
+            details: row.details ?? '',
+            createdAt: row.createdAt,
+          ),
+        )
+        .toList();
+  }
+
   Future<TaskDto> completeTask(
     Session session, {
     required String clientOperationId,
@@ -277,12 +340,11 @@ class TasksService {
           'familyId': familyId,
         }),
       );
-      final currentRow = await TaskRow.db.findFirstRow(
+      final currentRow = await _findVisibleTaskRow(
         session,
-        where: (t) =>
-            t.id.equals(taskId) &
-            t.familyId.equals(familyId) &
-            t.deletedAt.equals(null),
+        familyId: familyId,
+        taskId: taskId,
+        viewerProfileId: actorProfileId,
         transaction: transaction,
       );
       if (currentRow == null) {
@@ -329,7 +391,7 @@ class TasksService {
           );
           if (existingNext == null) {
             try {
-              await TaskRow.db.insertRow(
+              final nextTask = await TaskRow.db.insertRow(
                 session,
                 TaskRow(
                   familyId: current.familyId,
@@ -350,6 +412,14 @@ class TasksService {
                   deletedAt: null,
                   version: 1,
                 ),
+                transaction: transaction,
+              );
+              await _appendHistory(
+                session,
+                taskId: nextTask.id!,
+                actorProfileId: actorProfileId,
+                eventType: 'created',
+                details: 'Task created from recurrence',
                 transaction: transaction,
               );
             } on DatabaseInsertRowException {
@@ -404,6 +474,63 @@ class TasksService {
       transaction: transaction,
     );
     return _mapTask(row!);
+  }
+
+  Future<TaskRow?> _findVisibleTaskRow(
+    Session session, {
+    required int familyId,
+    required int taskId,
+    required int viewerProfileId,
+    Transaction? transaction,
+  }) {
+    return TaskRow.db.findFirstRow(
+      session,
+      where: (t) =>
+          t.id.equals(taskId) &
+          t.familyId.equals(familyId) &
+          t.deletedAt.equals(null) &
+          (t.isPersonal.equals(false) |
+              t.createdByProfileId.equals(viewerProfileId)),
+      transaction: transaction,
+    );
+  }
+
+  Future<void> _validateAssignee(
+    Session session, {
+    required int familyId,
+    required int actorProfileId,
+    required bool isPersonal,
+    required int? assigneeProfileId,
+    Transaction? transaction,
+  }) async {
+    if (assigneeProfileId == null) {
+      return;
+    }
+
+    if (isPersonal && assigneeProfileId != actorProfileId) {
+      throw ArgumentError.value(
+        assigneeProfileId,
+        'assigneeProfileId',
+        'Personal tasks cannot be assigned to another family member.',
+      );
+    }
+
+    final member = await FamilyMemberRow.db.findFirstRow(
+      session,
+      where: (t) =>
+          t.familyId.equals(familyId) &
+          t.profileId.equals(assigneeProfileId) &
+          t.status.equals('active') &
+          t.deletedAt.equals(null),
+      transaction: transaction,
+    );
+    if (member == null) {
+      throw ArgumentError.value(
+        assigneeProfileId,
+        'assigneeProfileId',
+        'Assignee must be an active family member.',
+      );
+    }
   }
 
   Future<void> _appendHistory(

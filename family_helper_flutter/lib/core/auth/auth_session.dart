@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:serverpod_auth_core_flutter/serverpod_auth_core_flutter.dart';
 
 import '../logging/app_error_logger.dart';
+import '../offline/offline_snapshot_store.dart';
 import '../network/app_api_client.dart';
 
 class AuthSessionState {
@@ -44,9 +45,12 @@ class AuthSessionState {
 }
 
 class AuthCubit extends Cubit<AuthSessionState> {
-  AuthCubit(this._apiClient) : super(AuthSessionState.initial());
+  AuthCubit(this._apiClient, {OfflineSnapshotStore? snapshotStore})
+    : _snapshotStore = snapshotStore,
+      super(AuthSessionState.initial());
 
   final AppApiClient _apiClient;
+  final OfflineSnapshotStore? _snapshotStore;
   void Function()? _removeAuthListener;
   bool _bootstrapped = false;
 
@@ -177,6 +181,7 @@ class AuthCubit extends Cubit<AuthSessionState> {
 
   Future<void> signOut() async {
     await _apiClient.client.auth.signOutDevice();
+    await _clearOfflineSnapshots();
     emit(
       const AuthSessionState(
         isInitializing: false,
@@ -223,6 +228,7 @@ class AuthCubit extends Cubit<AuthSessionState> {
 
   Future<void> _onAuthChanged() async {
     if (!_apiClient.client.auth.isAuthenticated) {
+      await _clearOfflineSnapshots();
       emit(
         const AuthSessionState(
           isInitializing: false,
@@ -237,6 +243,7 @@ class AuthCubit extends Cubit<AuthSessionState> {
 
   Future<void> _initializeSession() async {
     if (!_apiClient.client.auth.isAuthenticated) {
+      await _clearOfflineSnapshots();
       emit(
         const AuthSessionState(
           isInitializing: false,
@@ -273,5 +280,22 @@ class AuthCubit extends Cubit<AuthSessionState> {
   Future<void> close() async {
     _removeAuthListener?.call();
     return super.close();
+  }
+
+  Future<void> _clearOfflineSnapshots() async {
+    final snapshotStore = _snapshotStore;
+    if (snapshotStore == null) {
+      return;
+    }
+
+    try {
+      await snapshotStore.clear();
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'auth.clearOfflineSnapshots',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 }

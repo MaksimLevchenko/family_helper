@@ -9,6 +9,7 @@ import '../../../core/logging/app_error_logger.dart';
 import '../../../core/offline/offline_error_classifier.dart';
 import '../../../core/offline/offline_operation.dart';
 import '../../../core/offline/offline_queue_manager.dart';
+import '../../../core/offline/offline_snapshot_store.dart';
 import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/local_notification_service.dart';
@@ -22,6 +23,8 @@ class NotificationsState {
     required this.preferences,
     required this.permissionStatus,
     this.lastRegisteredPushToken,
+    this.isUsingCachedData = false,
+    this.lastSuccessfulSyncAt,
     this.error,
   });
 
@@ -30,6 +33,8 @@ class NotificationsState {
   final List<NotificationPreferenceDto> preferences;
   final NotificationPermissionStatus permissionStatus;
   final String? lastRegisteredPushToken;
+  final bool isUsingCachedData;
+  final DateTime? lastSuccessfulSyncAt;
   final String? error;
 
   factory NotificationsState.initial() {
@@ -47,8 +52,11 @@ class NotificationsState {
     List<NotificationPreferenceDto>? preferences,
     NotificationPermissionStatus? permissionStatus,
     String? lastRegisteredPushToken,
+    bool? isUsingCachedData,
+    DateTime? lastSuccessfulSyncAt,
     String? error,
     bool clearError = false,
+    bool clearLastSuccessfulSyncAt = false,
   }) {
     return NotificationsState(
       isLoading: isLoading ?? this.isLoading,
@@ -57,6 +65,10 @@ class NotificationsState {
       permissionStatus: permissionStatus ?? this.permissionStatus,
       lastRegisteredPushToken:
           lastRegisteredPushToken ?? this.lastRegisteredPushToken,
+      isUsingCachedData: isUsingCachedData ?? this.isUsingCachedData,
+      lastSuccessfulSyncAt: clearLastSuccessfulSyncAt
+          ? null
+          : (lastSuccessfulSyncAt ?? this.lastSuccessfulSyncAt),
       error: clearError ? null : (error ?? this.error),
     );
   }
@@ -68,20 +80,24 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     required FamilySelectionCubit familySelectionCubit,
     required LocalNotificationService localNotificationService,
     required OfflineQueueManager offlineQueueManager,
+    OfflineSnapshotStore? snapshotStore,
   }) : _repository = repository,
        _familySelectionCubit = familySelectionCubit,
        _localNotificationService = localNotificationService,
        _offlineQueueManager = offlineQueueManager,
+       _snapshotStore = snapshotStore,
        super(NotificationsState.initial()) {
     _familySub = _familySelectionCubit.stream.listen((familyId) {
       unawaited(_handleFamilyChanged(familyId));
     });
+    unawaited(_restoreSnapshot(_familySelectionCubit.state));
   }
 
   final NotificationsRepository _repository;
   final FamilySelectionCubit _familySelectionCubit;
   final LocalNotificationService _localNotificationService;
   final OfflineQueueManager _offlineQueueManager;
+  final OfflineSnapshotStore? _snapshotStore;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   StreamSubscription<int?>? _familySub;
   static const _pushTokenStorageKey = 'notifications_push_token';
@@ -95,6 +111,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     if (familyId == null) {
       return;
     }
+    await _restoreSnapshot(familyId);
     await _replayQueuedOperations();
     await reloadReminders();
   }
@@ -124,10 +141,20 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
       final preferences = await _repository.listPreferences();
+      final syncedAt = DateTime.now().toUtc();
+      await _writeSnapshot(
+        familyId: _familySelectionCubit.state,
+        reminders: state.reminders,
+        preferences: preferences,
+        lastRegisteredPushToken: state.lastRegisteredPushToken,
+        syncedAt: syncedAt,
+      );
       emit(
         state.copyWith(
           isLoading: false,
           preferences: preferences,
+          isUsingCachedData: false,
+          lastSuccessfulSyncAt: syncedAt,
           clearError: true,
         ),
       );
@@ -137,7 +164,14 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         error: error,
         stackTrace: stackTrace,
       );
-      emit(state.copyWith(isLoading: false, error: '$error'));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          isUsingCachedData:
+              state.preferences.isNotEmpty || state.reminders.isNotEmpty,
+          error: '$error',
+        ),
+      );
     }
   }
 
@@ -213,10 +247,20 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         familyId: familyId,
         status: status,
       );
+      final syncedAt = DateTime.now().toUtc();
+      await _writeSnapshot(
+        familyId: familyId,
+        reminders: reminders,
+        preferences: state.preferences,
+        lastRegisteredPushToken: state.lastRegisteredPushToken,
+        syncedAt: syncedAt,
+      );
       emit(
         state.copyWith(
           isLoading: false,
           reminders: reminders,
+          isUsingCachedData: false,
+          lastSuccessfulSyncAt: syncedAt,
           clearError: true,
         ),
       );
@@ -227,7 +271,14 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         stackTrace: stackTrace,
         context: {'familyId': familyId},
       );
-      emit(state.copyWith(isLoading: false, error: '$error'));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          isUsingCachedData:
+              state.preferences.isNotEmpty || state.reminders.isNotEmpty,
+          error: '$error',
+        ),
+      );
     }
   }
 
@@ -262,8 +313,16 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         state.copyWith(
           isLoading: false,
           preferences: _mergePreference(state.preferences, preference),
+          isUsingCachedData: false,
           clearError: true,
         ),
+      );
+      await _writeSnapshot(
+        familyId: _familySelectionCubit.state,
+        reminders: state.reminders,
+        preferences: _mergePreference(state.preferences, preference),
+        lastRegisteredPushToken: state.lastRegisteredPushToken,
+        syncedAt: state.lastSuccessfulSyncAt ?? DateTime.now().toUtc(),
       );
       return true;
     } catch (error, stackTrace) {
@@ -287,6 +346,8 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         emit(
           state.copyWith(
             isLoading: false,
+            isUsingCachedData:
+                state.preferences.isNotEmpty || state.reminders.isNotEmpty,
             error: 'Network unavailable. Preference change queued.',
           ),
         );
@@ -334,6 +395,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         state.copyWith(
           isLoading: false,
           reminders: [...state.reminders, reminder],
+          isUsingCachedData: false,
           clearError: true,
         ),
       );
@@ -365,6 +427,8 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         emit(
           state.copyWith(
             isLoading: false,
+            isUsingCachedData:
+                state.preferences.isNotEmpty || state.reminders.isNotEmpty,
             error: 'Network unavailable. Reminder queued.',
           ),
         );
@@ -375,6 +439,99 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       }
       emit(state.copyWith(isLoading: false, error: '$error'));
       return ReminderActionResult.failure('Unable to save the reminder.');
+    }
+  }
+
+  Future<ReminderActionResult> replaceEntityReminder({
+    required String notificationType,
+    required String entityType,
+    required int entityId,
+    DateTime? remindAt,
+    required String payloadJson,
+    required String title,
+    required String body,
+  }) async {
+    final familyId = _familySelectionCubit.state;
+    if (familyId == null) {
+      emit(state.copyWith(error: 'Family is not selected'));
+      return ReminderActionResult.failure('Family is not selected.');
+    }
+
+    if (remindAt != null) {
+      final permissionStatus = await requestSystemPermissionIfNeeded();
+      if (!permissionStatus.isGranted) {
+        final message = switch (permissionStatus) {
+          NotificationPermissionStatus.notDetermined =>
+            'Allow notifications to receive reminders on this device.',
+          NotificationPermissionStatus.denied =>
+            'Notifications are blocked. Open system settings to enable reminders.',
+          NotificationPermissionStatus.permanentlyDenied =>
+            'Notifications are disabled in system settings. Re-enable them there to get reminders.',
+          NotificationPermissionStatus.granted => null,
+        };
+        return ReminderActionResult.failure(message!);
+      }
+
+      if (!isPreferenceEnabled(notificationType)) {
+        final enabled = await setPreference(
+          notificationType: notificationType,
+          enabled: true,
+        );
+        if (!enabled) {
+          return ReminderActionResult.failure(
+            'Unable to enable reminders right now. Please try again.',
+          );
+        }
+      }
+    }
+
+    emit(state.copyWith(isLoading: true, clearError: true));
+    final clientOperationId = OperationId.next();
+    final activeReminderIds = _activeReminderIdsForEntity(
+      entityType: entityType,
+      entityId: entityId,
+    );
+    try {
+      final reminder = await _repository.replaceReminder(
+        clientOperationId: clientOperationId,
+        familyId: familyId,
+        entityType: entityType,
+        entityId: entityId,
+        remindAt: remindAt,
+        payloadJson: payloadJson,
+      );
+
+      for (final reminderId in activeReminderIds) {
+        await _localNotificationService.cancelReminder(reminderId);
+      }
+      if (reminder != null) {
+        await _localNotificationService.scheduleReminder(
+          id: reminder.id,
+          title: title,
+          body: body,
+          scheduledAt: reminder.remindAt.toLocal(),
+        );
+      }
+
+      await reloadReminders();
+      return ReminderActionResult(
+        success: true,
+        message: reminder == null ? 'Reminder removed.' : null,
+      );
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'notifications.replaceReminder',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'entityType': entityType,
+          'entityId': entityId,
+          'hasRemindAt': remindAt != null,
+        },
+      );
+      emit(state.copyWith(isLoading: false, error: '$error'));
+      return ReminderActionResult.failure('Unable to update the reminder.');
     }
   }
 
@@ -443,8 +600,16 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         state.copyWith(
           isLoading: false,
           lastRegisteredPushToken: token,
+          isUsingCachedData: false,
           clearError: true,
         ),
+      );
+      await _writeSnapshot(
+        familyId: _familySelectionCubit.state,
+        reminders: state.reminders,
+        preferences: state.preferences,
+        lastRegisteredPushToken: token,
+        syncedAt: state.lastSuccessfulSyncAt ?? DateTime.now().toUtc(),
       );
     } catch (error, stackTrace) {
       AppErrorLogger.logHandled(
@@ -467,6 +632,8 @@ class NotificationsCubit extends Cubit<NotificationsState> {
           state.copyWith(
             isLoading: false,
             lastRegisteredPushToken: token,
+            isUsingCachedData:
+                state.preferences.isNotEmpty || state.reminders.isNotEmpty,
             error: 'Network unavailable. Push token registration queued.',
           ),
         );
@@ -531,6 +698,21 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         attempt: 0,
       ),
     );
+  }
+
+  List<int> _activeReminderIdsForEntity({
+    required String entityType,
+    required int entityId,
+  }) {
+    return state.reminders
+        .where(
+          (reminder) =>
+              reminder.entityType == entityType &&
+              reminder.entityId == entityId &&
+              reminder.status == 'scheduled',
+        )
+        .map((reminder) => reminder.id)
+        .toList();
   }
 
   Future<void> _replayQueuedOperations() {
@@ -618,4 +800,86 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     await _familySub?.cancel();
     return super.close();
   }
+
+  Future<void> _restoreSnapshot(int? familyId) async {
+    final snapshotStore = _snapshotStore;
+    if (snapshotStore == null) {
+      return;
+    }
+
+    try {
+      final snapshot = await snapshotStore.read(_cacheKey(familyId));
+      if (snapshot == null || isClosed) {
+        return;
+      }
+
+      final reminders =
+          (snapshot.payload['reminders'] as List<dynamic>? ?? const [])
+              .whereType<Map<String, dynamic>>()
+              .map(ReminderDto.fromJson)
+              .toList();
+      final preferences =
+          (snapshot.payload['preferences'] as List<dynamic>? ?? const [])
+              .whereType<Map<String, dynamic>>()
+              .map(NotificationPreferenceDto.fromJson)
+              .toList();
+      emit(
+        state.copyWith(
+          isLoading: false,
+          reminders: reminders,
+          preferences: preferences,
+          lastRegisteredPushToken:
+              snapshot.payload['lastRegisteredPushToken'] as String?,
+          isUsingCachedData: true,
+          lastSuccessfulSyncAt: snapshot.updatedAt,
+          clearError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'notifications.restoreSnapshot',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
+    }
+  }
+
+  Future<void> _writeSnapshot({
+    required int? familyId,
+    required List<ReminderDto> reminders,
+    required List<NotificationPreferenceDto> preferences,
+    required String? lastRegisteredPushToken,
+    required DateTime syncedAt,
+  }) async {
+    final snapshotStore = _snapshotStore;
+    if (snapshotStore == null) {
+      return;
+    }
+
+    try {
+      await snapshotStore.write(_cacheKey(familyId), {
+        'reminders': reminders.map((reminder) => reminder.toJson()).toList(),
+        'preferences': preferences
+            .map((preference) => preference.toJson())
+            .toList(),
+        'lastRegisteredPushToken': lastRegisteredPushToken,
+      }, updatedAt: syncedAt);
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'notifications.writeSnapshot',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'remindersCount': reminders.length,
+          'preferencesCount': preferences.length,
+        },
+      );
+    }
+  }
+
+  String _cacheKey(int? familyId) => familyId == null
+      ? 'notifications/account'
+      : 'notifications/family/$familyId';
 }

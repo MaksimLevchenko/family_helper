@@ -57,6 +57,24 @@ class NotificationsRepository {
     );
   }
 
+  Future<ReminderDto?> replaceReminder({
+    required String clientOperationId,
+    required int familyId,
+    required String entityType,
+    required int entityId,
+    DateTime? remindAt,
+    required String payloadJson,
+  }) {
+    return _apiClient.client.notifications.replaceReminder(
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      entityType: entityType,
+      entityId: entityId,
+      remindAt: remindAt,
+      payloadJson: payloadJson,
+    );
+  }
+
   Future<List<ReminderDto>> listReminders({
     int? familyId,
     String? status,

@@ -8,6 +8,13 @@ class ListsEndpoint extends Endpoint {
 
   final ListsService service;
 
+  Future<List<FamilyListDto>> listFamilyLists(
+    Session session, {
+    required int familyId,
+  }) {
+    return service.listFamilyLists(session, familyId: familyId);
+  }
+
   Future<FamilyListDto> upsertList(
     Session session, {
     required String clientOperationId,
@@ -52,6 +59,32 @@ class ListsEndpoint extends Endpoint {
     );
   }
 
+  Future<ListItemDto> updateItem(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+    required int itemId,
+    required String title,
+    double qty = 1,
+    String? unit,
+    String? note,
+    int? priceCents,
+    String? category,
+  }) {
+    return service.updateItem(
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      itemId: itemId,
+      title: title,
+      qty: qty,
+      unit: unit,
+      note: note,
+      priceCents: priceCents,
+      category: category,
+    );
+  }
+
   Future<ListItemDto> toggleBought(
     Session session, {
     required String clientOperationId,
@@ -63,6 +96,34 @@ class ListsEndpoint extends Endpoint {
       clientOperationId: clientOperationId,
       familyId: familyId,
       itemId: itemId,
+    );
+  }
+
+  Future<OperationResult> deleteItem(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+    required int itemId,
+  }) {
+    return service.deleteItem(
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      itemId: itemId,
+    );
+  }
+
+  Future<OperationResult> deleteList(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+    required int listId,
+  }) {
+    return service.deleteList(
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      listId: listId,
     );
   }
 

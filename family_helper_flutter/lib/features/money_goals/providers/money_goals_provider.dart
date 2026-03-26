@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/config/app_defaults.dart';
 import '../../../core/logging/app_error_logger.dart';
+import '../../../core/offline/offline_snapshot_store.dart';
 import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/money_goals_repository.dart';
@@ -23,6 +24,8 @@ class MoneyGoalsState {
     required this.goals,
     required this.history,
     this.currentGoalId,
+    this.isUsingCachedData = false,
+    this.lastSuccessfulSyncAt,
     this.error,
   });
 
@@ -38,6 +41,8 @@ class MoneyGoalsState {
   final List<MoneyGoalDto> goals;
   final List<MoneyGoalHistoryEntryDto> history;
   final int? currentGoalId;
+  final bool isUsingCachedData;
+  final DateTime? lastSuccessfulSyncAt;
   final String? error;
 
   factory MoneyGoalsState.initial({bool hasSelectedFamily = false}) {
@@ -69,8 +74,11 @@ class MoneyGoalsState {
     List<MoneyGoalDto>? goals,
     List<MoneyGoalHistoryEntryDto>? history,
     Object? currentGoalId = _unset,
+    bool? isUsingCachedData,
+    DateTime? lastSuccessfulSyncAt,
     Object? error = _unset,
     bool clearError = false,
+    bool clearLastSuccessfulSyncAt = false,
   }) {
     return MoneyGoalsState(
       isInitialLoading: isInitialLoading ?? this.isInitialLoading,
@@ -87,6 +95,10 @@ class MoneyGoalsState {
       currentGoalId: currentGoalId == _unset
           ? this.currentGoalId
           : currentGoalId as int?,
+      isUsingCachedData: isUsingCachedData ?? this.isUsingCachedData,
+      lastSuccessfulSyncAt: clearLastSuccessfulSyncAt
+          ? null
+          : (lastSuccessfulSyncAt ?? this.lastSuccessfulSyncAt),
       error: clearError
           ? null
           : (error == _unset ? this.error : error as String?),
@@ -122,8 +134,10 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
   MoneyGoalsCubit({
     required MoneyGoalsRepository repository,
     required FamilySelectionCubit familySelectionCubit,
+    OfflineSnapshotStore? snapshotStore,
   }) : _repository = repository,
        _familySelectionCubit = familySelectionCubit,
+       _snapshotStore = snapshotStore,
        super(
          MoneyGoalsState.initial(
            hasSelectedFamily: familySelectionCubit.state != null,
@@ -140,6 +154,7 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
 
   final MoneyGoalsRepository _repository;
   final FamilySelectionCubit _familySelectionCubit;
+  final OfflineSnapshotStore? _snapshotStore;
   StreamSubscription<int?>? _familySub;
   int _historyRequestId = 0;
 
@@ -148,6 +163,7 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
     if (familyId == null) {
       return;
     }
+    await _restoreSnapshot(familyId);
     await reload();
   }
 
@@ -188,7 +204,14 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
 
     try {
       final goals = await _repository.listGoals(familyId: familyId);
-      final nextState = _buildLoadedState(goals);
+      final syncedAt = DateTime.now().toUtc();
+      final nextState = _buildLoadedState(
+        goals,
+      ).copyWith(
+        isUsingCachedData: false,
+        lastSuccessfulSyncAt: syncedAt,
+      );
+      await _writeSnapshot(familyId, nextState, syncedAt);
       emit(nextState);
       await _loadHistoryForGoal(nextState.currentGoalId);
     } catch (error, stackTrace) {
@@ -198,7 +221,13 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
         stackTrace: stackTrace,
         context: {'familyId': familyId},
       );
-      emit(state.copyWith(isInitialLoading: false, error: '$error'));
+      emit(
+        state.copyWith(
+          isInitialLoading: false,
+          isUsingCachedData: state.goals.isNotEmpty || state.history.isNotEmpty,
+          error: '$error',
+        ),
+      );
     }
   }
 
@@ -231,7 +260,15 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
       );
 
       final goals = await _repository.listGoals(familyId: familyId);
-      final nextState = _buildLoadedState(goals, preferredGoalId: goal.id);
+      final syncedAt = DateTime.now().toUtc();
+      final nextState = _buildLoadedState(
+        goals,
+        preferredGoalId: goal.id,
+      ).copyWith(
+        isUsingCachedData: false,
+        lastSuccessfulSyncAt: syncedAt,
+      );
+      await _writeSnapshot(familyId, nextState, syncedAt);
       emit(nextState);
       await _loadHistoryForGoal(nextState.currentGoalId);
       return true;
@@ -290,7 +327,15 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
       );
 
       final goals = await _repository.listGoals(familyId: familyId);
-      final nextState = _buildLoadedState(goals, preferredGoalId: goal.id);
+      final syncedAt = DateTime.now().toUtc();
+      final nextState = _buildLoadedState(
+        goals,
+        preferredGoalId: goal.id,
+      ).copyWith(
+        isUsingCachedData: false,
+        lastSuccessfulSyncAt: syncedAt,
+      );
+      await _writeSnapshot(familyId, nextState, syncedAt);
       emit(nextState);
       await _loadHistoryForGoal(nextState.currentGoalId);
       return true;
@@ -385,7 +430,15 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
       );
 
       final goals = await _repository.listGoals(familyId: familyId);
-      final nextState = _buildLoadedState(goals, preferredGoalId: goalId);
+      final syncedAt = DateTime.now().toUtc();
+      final nextState = _buildLoadedState(
+        goals,
+        preferredGoalId: goalId,
+      ).copyWith(
+        isUsingCachedData: false,
+        lastSuccessfulSyncAt: syncedAt,
+      );
+      await _writeSnapshot(familyId, nextState, syncedAt);
       emit(nextState);
       await _loadHistoryForGoal(nextState.currentGoalId);
       return true;
@@ -422,10 +475,15 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
       );
 
       final goals = await _repository.listGoals(familyId: familyId);
+      final syncedAt = DateTime.now().toUtc();
       final nextState = _buildLoadedState(
         goals,
         preferredGoalId: goals.any((goal) => goal.id == goalId) ? goalId : null,
+      ).copyWith(
+        isUsingCachedData: false,
+        lastSuccessfulSyncAt: syncedAt,
       );
+      await _writeSnapshot(familyId, nextState, syncedAt);
       emit(nextState);
       await _loadHistoryForGoal(nextState.currentGoalId);
       return true;
@@ -467,7 +525,15 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
       await call(familyId: familyId, goalId: goalId);
 
       final goals = await _repository.listGoals(familyId: familyId);
-      final nextState = _buildLoadedState(goals, preferredGoalId: goalId);
+      final syncedAt = DateTime.now().toUtc();
+      final nextState = _buildLoadedState(
+        goals,
+        preferredGoalId: goalId,
+      ).copyWith(
+        isUsingCachedData: false,
+        lastSuccessfulSyncAt: syncedAt,
+      );
+      await _writeSnapshot(familyId, nextState, syncedAt);
       emit(nextState);
       await _loadHistoryForGoal(nextState.currentGoalId);
       return true;
@@ -548,11 +614,19 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
     }
 
     final requestId = ++_historyRequestId;
-    if (!state.isHistoryLoading || state.currentGoalId != goalId) {
+    if (state.currentGoalId != goalId) {
       emit(
         state.copyWith(
           currentGoalId: goalId,
           history: const [],
+          isHistoryLoading: true,
+          clearError: true,
+        ),
+      );
+    } else if (!state.isHistoryLoading) {
+      emit(
+        state.copyWith(
+          currentGoalId: goalId,
           isHistoryLoading: true,
           clearError: true,
         ),
@@ -578,6 +652,15 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
           clearError: true,
         ),
       );
+      await _writeSnapshot(
+        familyId,
+        state.copyWith(
+          history: history,
+          isHistoryLoading: false,
+          isUsingCachedData: false,
+        ),
+        state.lastSuccessfulSyncAt ?? DateTime.now().toUtc(),
+      );
     } catch (error, stackTrace) {
       AppErrorLogger.logHandled(
         scope: 'moneyGoals.listGoalHistory',
@@ -597,8 +680,8 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
 
       emit(
         state.copyWith(
-          history: const [],
           isHistoryLoading: false,
+          isUsingCachedData: state.goals.isNotEmpty || state.history.isNotEmpty,
           error: '$error',
         ),
       );
@@ -610,4 +693,80 @@ class MoneyGoalsCubit extends Cubit<MoneyGoalsState> {
     await _familySub?.cancel();
     return super.close();
   }
+
+  Future<void> _restoreSnapshot(int familyId) async {
+    final snapshotStore = _snapshotStore;
+    if (snapshotStore == null) {
+      return;
+    }
+
+    try {
+      final snapshot = await snapshotStore.read(_cacheKey(familyId));
+      if (snapshot == null || isClosed) {
+        return;
+      }
+
+      final goals = (snapshot.payload['goals'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(MoneyGoalDto.fromJson)
+          .toList();
+      final history =
+          (snapshot.payload['history'] as List<dynamic>? ?? const [])
+              .whereType<Map<String, dynamic>>()
+              .map(MoneyGoalHistoryEntryDto.fromJson)
+              .toList();
+      emit(
+        state.copyWith(
+          isInitialLoading: false,
+          hasSelectedFamily: true,
+          goals: goals,
+          history: history,
+          currentGoalId: snapshot.payload['currentGoalId'] as int?,
+          isHistoryLoading: false,
+          isUsingCachedData: true,
+          lastSuccessfulSyncAt: snapshot.updatedAt,
+          clearError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'moneyGoals.restoreSnapshot',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
+    }
+  }
+
+  Future<void> _writeSnapshot(
+    int familyId,
+    MoneyGoalsState snapshotState,
+    DateTime syncedAt,
+  ) async {
+    final snapshotStore = _snapshotStore;
+    if (snapshotStore == null) {
+      return;
+    }
+
+    try {
+      await snapshotStore.write(_cacheKey(familyId), {
+        'currentGoalId': snapshotState.currentGoalId,
+        'goals': snapshotState.goals.map((goal) => goal.toJson()).toList(),
+        'history': snapshotState.history.map((entry) => entry.toJson()).toList(),
+      }, updatedAt: syncedAt);
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'moneyGoals.writeSnapshot',
+        error: error,
+        stackTrace: stackTrace,
+        context: {
+          'familyId': familyId,
+          'goalsCount': snapshotState.goals.length,
+          'historyCount': snapshotState.history.length,
+        },
+      );
+    }
+  }
+
+  String _cacheKey(int familyId) => 'money_goals/family/$familyId';
 }

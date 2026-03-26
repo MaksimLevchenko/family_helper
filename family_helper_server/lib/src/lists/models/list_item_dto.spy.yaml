@@ -11,6 +11,7 @@ fields:
   positionIndex: int
   isBought: bool
   boughtByProfileId: int?
+  boughtByDisplayName: String?
   boughtAt: DateTime?
   updatedAt: DateTime
   version: int
