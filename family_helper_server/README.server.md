@@ -31,6 +31,18 @@ Recommended local values:
 mediaUrlSignSecret: 'replace-me'
 ```
 
+For FCM push, add one of these to `config/passwords.yaml` for the active environment:
+
+```yaml
+firebaseServiceAccountJsonPath: './firebase-service-account.json'
+```
+
+or
+
+```yaml
+firebaseServiceAccountJson: '{"type":"service_account",...}'
+```
+
 ## Local Infra
 From `family_helper_server/`:
 

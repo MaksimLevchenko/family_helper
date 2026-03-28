@@ -18,9 +18,15 @@ abstract class PushTokenRow implements _i1.SerializableModel {
     required this.profileId,
     required this.token,
     required this.platform,
+    this.provider,
+    this.deviceId,
+    this.appVersion,
     required this.createdAt,
     required this.updatedAt,
+    this.lastSeenAt,
+    this.lastErrorAt,
     this.deletedAt,
+    this.disabledAt,
     required this.version,
   });
 
@@ -29,9 +35,15 @@ abstract class PushTokenRow implements _i1.SerializableModel {
     required int profileId,
     required String token,
     required String platform,
+    String? provider,
+    String? deviceId,
+    String? appVersion,
     required DateTime createdAt,
     required DateTime updatedAt,
+    DateTime? lastSeenAt,
+    DateTime? lastErrorAt,
     DateTime? deletedAt,
+    DateTime? disabledAt,
     required int version,
   }) = _PushTokenRowImpl;
 
@@ -41,15 +53,29 @@ abstract class PushTokenRow implements _i1.SerializableModel {
       profileId: jsonSerialization['profileId'] as int,
       token: jsonSerialization['token'] as String,
       platform: jsonSerialization['platform'] as String,
+      provider: jsonSerialization['provider'] as String?,
+      deviceId: jsonSerialization['deviceId'] as String?,
+      appVersion: jsonSerialization['appVersion'] as String?,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
       updatedAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['updatedAt'],
       ),
+      lastSeenAt: jsonSerialization['lastSeenAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['lastSeenAt']),
+      lastErrorAt: jsonSerialization['lastErrorAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['lastErrorAt'],
+            ),
       deletedAt: jsonSerialization['deletedAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['deletedAt']),
+      disabledAt: jsonSerialization['disabledAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['disabledAt']),
       version: jsonSerialization['version'] as int,
     );
   }
@@ -65,11 +91,23 @@ abstract class PushTokenRow implements _i1.SerializableModel {
 
   String platform;
 
+  String? provider;
+
+  String? deviceId;
+
+  String? appVersion;
+
   DateTime createdAt;
 
   DateTime updatedAt;
 
+  DateTime? lastSeenAt;
+
+  DateTime? lastErrorAt;
+
   DateTime? deletedAt;
+
+  DateTime? disabledAt;
 
   int version;
 
@@ -81,9 +119,15 @@ abstract class PushTokenRow implements _i1.SerializableModel {
     int? profileId,
     String? token,
     String? platform,
+    String? provider,
+    String? deviceId,
+    String? appVersion,
     DateTime? createdAt,
     DateTime? updatedAt,
+    DateTime? lastSeenAt,
+    DateTime? lastErrorAt,
     DateTime? deletedAt,
+    DateTime? disabledAt,
     int? version,
   });
   @override
@@ -94,9 +138,15 @@ abstract class PushTokenRow implements _i1.SerializableModel {
       'profileId': profileId,
       'token': token,
       'platform': platform,
+      if (provider != null) 'provider': provider,
+      if (deviceId != null) 'deviceId': deviceId,
+      if (appVersion != null) 'appVersion': appVersion,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
+      if (lastSeenAt != null) 'lastSeenAt': lastSeenAt?.toJson(),
+      if (lastErrorAt != null) 'lastErrorAt': lastErrorAt?.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
+      if (disabledAt != null) 'disabledAt': disabledAt?.toJson(),
       'version': version,
     };
   }
@@ -115,18 +165,30 @@ class _PushTokenRowImpl extends PushTokenRow {
     required int profileId,
     required String token,
     required String platform,
+    String? provider,
+    String? deviceId,
+    String? appVersion,
     required DateTime createdAt,
     required DateTime updatedAt,
+    DateTime? lastSeenAt,
+    DateTime? lastErrorAt,
     DateTime? deletedAt,
+    DateTime? disabledAt,
     required int version,
   }) : super._(
          id: id,
          profileId: profileId,
          token: token,
          platform: platform,
+         provider: provider,
+         deviceId: deviceId,
+         appVersion: appVersion,
          createdAt: createdAt,
          updatedAt: updatedAt,
+         lastSeenAt: lastSeenAt,
+         lastErrorAt: lastErrorAt,
          deletedAt: deletedAt,
+         disabledAt: disabledAt,
          version: version,
        );
 
@@ -139,9 +201,15 @@ class _PushTokenRowImpl extends PushTokenRow {
     int? profileId,
     String? token,
     String? platform,
+    Object? provider = _Undefined,
+    Object? deviceId = _Undefined,
+    Object? appVersion = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
+    Object? lastSeenAt = _Undefined,
+    Object? lastErrorAt = _Undefined,
     Object? deletedAt = _Undefined,
+    Object? disabledAt = _Undefined,
     int? version,
   }) {
     return PushTokenRow(
@@ -149,9 +217,15 @@ class _PushTokenRowImpl extends PushTokenRow {
       profileId: profileId ?? this.profileId,
       token: token ?? this.token,
       platform: platform ?? this.platform,
+      provider: provider is String? ? provider : this.provider,
+      deviceId: deviceId is String? ? deviceId : this.deviceId,
+      appVersion: appVersion is String? ? appVersion : this.appVersion,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      lastSeenAt: lastSeenAt is DateTime? ? lastSeenAt : this.lastSeenAt,
+      lastErrorAt: lastErrorAt is DateTime? ? lastErrorAt : this.lastErrorAt,
       deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,
+      disabledAt: disabledAt is DateTime? ? disabledAt : this.disabledAt,
       version: version ?? this.version,
     );
   }

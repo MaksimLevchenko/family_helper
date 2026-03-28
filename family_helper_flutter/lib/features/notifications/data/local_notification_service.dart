@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -7,26 +8,41 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'browser_notification_service.dart';
 import '../domain/notification_models.dart';
 
 class LocalNotificationService {
   LocalNotificationService({
     FlutterSecureStorage storage = const FlutterSecureStorage(),
+    BrowserNotificationService? browserNotificationService,
   }) : _plugin = FlutterLocalNotificationsPlugin(),
-       _storage = storage;
+       _storage = storage,
+       _browserNotificationService =
+           browserNotificationService ?? BrowserNotificationService();
 
   static const _permissionChannel = MethodChannel(
     'family_helper/notification_permissions',
   );
   static const _permissionRequestedKey =
       'notifications_permission_requested_once';
+  static const _exactAlarmsNotPermittedCode = 'exact_alarms_not_permitted';
 
   final FlutterLocalNotificationsPlugin _plugin;
   final FlutterSecureStorage _storage;
+  final BrowserNotificationService _browserNotificationService;
+  final StreamController<String> _notificationResponses =
+      StreamController<String>.broadcast();
   bool _initialized = false;
+
+  Stream<String> get notificationResponses => _notificationResponses.stream;
 
   Future<void> initialize() async {
     if (_initialized) {
+      return;
+    }
+
+    if (kIsWeb) {
+      _initialized = true;
       return;
     }
 
@@ -44,7 +60,15 @@ class LocalNotificationService {
       iOS: darwinSettings,
       macOS: darwinSettings,
     );
-    await _plugin.initialize(settings);
+    await _plugin.initialize(
+      settings,
+      onDidReceiveNotificationResponse: (response) {
+        final payload = response.payload;
+        if (payload != null && payload.isNotEmpty) {
+          _notificationResponses.add(payload);
+        }
+      },
+    );
     _initialized = true;
   }
 
@@ -52,7 +76,9 @@ class LocalNotificationService {
     await initialize();
 
     if (kIsWeb) {
-      return NotificationPermissionStatus.granted;
+      return mapBrowserPermissionStatus(
+        _browserNotificationService.permissionStatus,
+      );
     }
 
     switch (defaultTargetPlatform) {
@@ -73,7 +99,8 @@ class LocalNotificationService {
     await initialize();
 
     if (kIsWeb) {
-      return NotificationPermissionStatus.granted;
+      final status = await _browserNotificationService.requestPermission();
+      return mapBrowserPermissionStatus(status);
     }
 
     switch (defaultTargetPlatform) {
@@ -134,14 +161,22 @@ class LocalNotificationService {
     required String title,
     required String body,
     required DateTime scheduledAt,
+    String? payload,
   }) async {
     await initialize();
-
-    final androidDetails = const AndroidNotificationDetails(
-      'reminders',
-      'Reminders',
-      importance: Importance.high,
-      priority: Priority.high,
+    if (kIsWeb) {
+      await _browserNotificationService.schedule(
+        id: id,
+        title: title,
+        body: body,
+        scheduledAt: scheduledAt,
+        payload: payload,
+      );
+      return;
+    }
+    final details = _defaultNotificationDetails(
+      channelId: 'reminders',
+      channelName: 'Reminders',
     );
 
     final now = DateTime.now();
@@ -150,23 +185,77 @@ class LocalNotificationService {
         id,
         title,
         body,
-        NotificationDetails(android: androidDetails),
+        details,
+        payload: payload,
       );
       return;
     }
 
-    await _plugin.zonedSchedule(
+    final scheduledDate = tz.TZDateTime.from(scheduledAt, tz.local);
+    try {
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDate,
+        details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: payload,
+      );
+    } on PlatformException catch (error) {
+      if (!_shouldFallbackToInexactSchedule(error)) {
+        rethrow;
+      }
+      debugPrint(
+        'Exact alarms are not permitted on this device. '
+        'Falling back to inexact reminder scheduling.',
+      );
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDate,
+        details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        payload: payload,
+      );
+    }
+  }
+
+  Future<void> showImmediateNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    await initialize();
+    if (kIsWeb) {
+      await _browserNotificationService.show(
+        id: id,
+        title: title,
+        body: body,
+        payload: payload,
+      );
+      return;
+    }
+    await _plugin.show(
       id,
       title,
       body,
-      tz.TZDateTime.from(scheduledAt, tz.local),
-      NotificationDetails(android: androidDetails),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      _defaultNotificationDetails(
+        channelId: 'family_helper_inbox',
+        channelName: 'Family notifications',
+      ),
+      payload: payload,
     );
   }
 
   Future<void> cancelReminder(int id) async {
     await initialize();
+    if (kIsWeb) {
+      await _browserNotificationService.cancel(id);
+      return;
+    }
     await _plugin.cancel(id);
   }
 
@@ -274,6 +363,48 @@ class LocalNotificationService {
       'permanentlyDenied' => NotificationPermissionStatus.permanentlyDenied,
       _ => NotificationPermissionStatus.notDetermined,
     };
+  }
+
+  static NotificationPermissionStatus mapBrowserPermissionStatus(
+    String? status,
+  ) {
+    return switch (status) {
+      'granted' => NotificationPermissionStatus.granted,
+      'denied' => NotificationPermissionStatus.denied,
+      'unsupported' => NotificationPermissionStatus.denied,
+      _ => NotificationPermissionStatus.notDetermined,
+    };
+  }
+
+  NotificationDetails _defaultNotificationDetails({
+    required String channelId,
+    required String channelName,
+  }) {
+    const darwinDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    final androidDetails = AndroidNotificationDetails(
+      channelId,
+      channelName,
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    return NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+      macOS: darwinDetails,
+    );
+  }
+
+  Future<void> dispose() async {
+    await _notificationResponses.close();
+  }
+
+  bool _shouldFallbackToInexactSchedule(PlatformException error) {
+    return defaultTargetPlatform == TargetPlatform.android &&
+        error.code == _exactAlarmsNotPermittedCode;
   }
 }
 

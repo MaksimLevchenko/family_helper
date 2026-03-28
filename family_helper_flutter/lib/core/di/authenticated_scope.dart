@@ -79,6 +79,7 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,
       localNotificationService: getIt(),
+      pushNotificationService: getIt(),
       offlineQueueManager: getIt(),
       snapshotStore: snapshotStore,
     );
@@ -119,6 +120,7 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
         }
         if (features.contains('notifications')) {
           reloads.add(_notificationsCubit.reloadReminders());
+          reloads.add(_notificationsCubit.reloadInbox());
         }
         if (reloads.isEmpty) {
           return;

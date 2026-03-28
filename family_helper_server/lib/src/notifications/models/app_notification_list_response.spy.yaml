@@ -1,0 +1,4 @@
+class: AppNotificationListResponse
+fields:
+  items: List<AppNotificationDto>
+  hasMore: bool

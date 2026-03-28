@@ -44,4 +44,19 @@ void main() {
       NotificationPermissionStatus.denied,
     );
   });
+
+  test('maps browser notification permission states', () {
+    expect(
+      LocalNotificationService.mapBrowserPermissionStatus('granted'),
+      NotificationPermissionStatus.granted,
+    );
+    expect(
+      LocalNotificationService.mapBrowserPermissionStatus('denied'),
+      NotificationPermissionStatus.denied,
+    );
+    expect(
+      LocalNotificationService.mapBrowserPermissionStatus('default'),
+      NotificationPermissionStatus.notDetermined,
+    );
+  });
 }

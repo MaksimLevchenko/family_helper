@@ -1,0 +1,23 @@
+class: AppNotificationRow
+table: app_notification
+fields:
+  profileId: int
+  familyId: int
+  category: String
+  title: String
+  body: String
+  entityType: String
+  entityId: int
+  route: String?
+  payloadJson: String
+  isRead: bool
+  readAt: DateTime?
+  createdAt: DateTime
+  pushedAt: DateTime?
+  pushStatus: String
+  version: int
+indexes:
+  app_notification_profile_family_created_idx:
+    fields: profileId, familyId, createdAt
+  app_notification_profile_family_read_idx:
+    fields: profileId, familyId, isRead

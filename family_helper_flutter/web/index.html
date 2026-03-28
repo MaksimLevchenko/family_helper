@@ -193,6 +193,19 @@
     </div>
   </div>
   <script>
+    window.__fhFirebaseMessagingSwRegistration = null;
+    if ("serviceWorker" in navigator) {
+      window.__fhFirebaseMessagingSwRegistration = navigator.serviceWorker
+        .register("/firebase-messaging-sw.js")
+        .catch(function (error) {
+          console.error(
+            "Failed to register firebase messaging service worker early.",
+            error,
+          );
+          return null;
+        });
+    }
+
     window.addEventListener("flutter-first-frame", function () {
       const splash = document.getElementById("startup-splash");
       if (!splash) {

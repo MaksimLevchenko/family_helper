@@ -1,10 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/di/service_locator.dart';
 import '../../../core/realtime/realtime_provider.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../family_invites/providers/family_provider.dart';
+import '../../notifications/data/notification_navigation_service.dart';
+import '../../notifications/data/push_notification_service.dart';
 import '../../notifications/providers/notifications_provider.dart';
 
 class HomeShellScreen extends StatefulWidget {
@@ -18,6 +23,8 @@ class HomeShellScreen extends StatefulWidget {
 
 class _HomeShellScreenState extends State<HomeShellScreen>
     with WidgetsBindingObserver {
+  StreamSubscription<NotificationOpenTarget>? _notificationOpenSub;
+
   @override
   void initState() {
     super.initState();
@@ -25,12 +32,25 @@ class _HomeShellScreenState extends State<HomeShellScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<RealtimeCubit>().start();
       context.read<NotificationsCubit>().refreshPermissionStatus();
+      if (getIt.isRegistered<PushNotificationService>()) {
+        _notificationOpenSub = getIt<PushNotificationService>().openTargets.listen(
+          (target) {
+            unawaited(_openNotificationTarget(target));
+          },
+        );
+        final initialTarget = getIt<PushNotificationService>()
+            .takePendingInitialOpen();
+        if (initialTarget != null) {
+          unawaited(_openNotificationTarget(initialTarget));
+        }
+      }
     });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    unawaited(_notificationOpenSub?.cancel());
     super.dispose();
   }
 
@@ -39,6 +59,21 @@ class _HomeShellScreenState extends State<HomeShellScreen>
     if (state == AppLifecycleState.resumed && mounted) {
       context.read<NotificationsCubit>().refreshPermissionStatus();
     }
+  }
+
+  Future<void> _openNotificationTarget(NotificationOpenTarget target) async {
+    if (!mounted) {
+      return;
+    }
+    if (target.notificationId != null) {
+      await context.read<NotificationsCubit>().markNotificationRead(
+        target.notificationId!,
+      );
+    }
+    if (!mounted) {
+      return;
+    }
+    await NotificationNavigationService.openTarget(context, target);
   }
 
   @override

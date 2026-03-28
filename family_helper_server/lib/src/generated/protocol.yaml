@@ -57,12 +57,17 @@ moneyGoals:
   - listGoals:
 notifications:
   - registerPushToken:
+  - sendTestPush:
   - upsertPreference:
   - listPreferences:
   - scheduleReminder:
   - replaceReminder:
   - listReminders:
   - processDueReminders:
+  - listInbox:
+  - markRead:
+  - markAllRead:
+  - unreadCount:
 privacy:
   - requestExport:
   - requestAccountDeletion:

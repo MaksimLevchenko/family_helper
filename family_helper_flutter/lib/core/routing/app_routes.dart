@@ -16,6 +16,7 @@ class AppRoutes {
 
   static const profile = '/home/settings/profile';
   static const family = '/home/settings/family';
+  static const notifications = '/home/settings/notifications';
   static const localReminders = '/home/settings/local-reminders';
   static const privacy = '/home/settings/privacy';
 

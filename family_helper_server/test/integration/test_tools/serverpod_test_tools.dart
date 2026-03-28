@@ -46,24 +46,28 @@ import 'package:family_helper_server/src/generated/money_goals/models/money_cont
     as _i18;
 import 'package:family_helper_server/src/generated/money_goals/models/money_goal_history_entry_dto.dart'
     as _i19;
-import 'package:family_helper_server/src/generated/notifications/models/notification_preference_dto.dart'
+import 'package:family_helper_server/src/generated/notifications/models/app_notification_dto.dart'
     as _i20;
-import 'package:family_helper_server/src/generated/notifications/models/reminder_dto.dart'
+import 'package:family_helper_server/src/generated/notifications/models/notification_preference_dto.dart'
     as _i21;
-import 'package:family_helper_server/src/generated/privacy/models/privacy_export_job_dto.dart'
+import 'package:family_helper_server/src/generated/notifications/models/reminder_dto.dart'
     as _i22;
-import 'package:family_helper_server/src/generated/privacy/models/account_deletion_status_dto.dart'
+import 'package:family_helper_server/src/generated/notifications/models/app_notification_list_response.dart'
     as _i23;
-import 'package:family_helper_server/src/generated/privacy/models/privacy_status_dto.dart'
+import 'package:family_helper_server/src/generated/privacy/models/privacy_export_job_dto.dart'
     as _i24;
-import 'package:family_helper_server/src/generated/realtime/models/family_realtime_event.dart'
+import 'package:family_helper_server/src/generated/privacy/models/account_deletion_status_dto.dart'
     as _i25;
-import 'package:family_helper_server/src/generated/sync/models/sync_changes_response.dart'
+import 'package:family_helper_server/src/generated/privacy/models/privacy_status_dto.dart'
     as _i26;
-import 'package:family_helper_server/src/generated/tasks/models/task_dto.dart'
+import 'package:family_helper_server/src/generated/realtime/models/family_realtime_event.dart'
     as _i27;
-import 'package:family_helper_server/src/generated/tasks/models/task_history_entry_dto.dart'
+import 'package:family_helper_server/src/generated/sync/models/sync_changes_response.dart'
     as _i28;
+import 'package:family_helper_server/src/generated/tasks/models/task_dto.dart'
+    as _i29;
+import 'package:family_helper_server/src/generated/tasks/models/task_history_entry_dto.dart'
+    as _i30;
 import 'package:family_helper_server/src/generated/protocol.dart';
 import 'package:family_helper_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -2137,6 +2141,9 @@ class _NotificationsEndpoint {
     required String clientOperationId,
     required String token,
     required String platform,
+    String? provider,
+    String? deviceId,
+    String? appVersion,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -2153,6 +2160,9 @@ class _NotificationsEndpoint {
             'clientOperationId': clientOperationId,
             'token': token,
             'platform': platform,
+            'provider': provider,
+            'deviceId': deviceId,
+            'appVersion': appVersion,
           }),
           serializationManager: _serializationManager,
         );
@@ -2169,7 +2179,42 @@ class _NotificationsEndpoint {
     });
   }
 
-  _i3.Future<_i20.NotificationPreferenceDto> upsertPreference(
+  _i3.Future<_i20.AppNotificationDto> sendTestPush(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required String clientOperationId,
+    required int familyId,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'notifications',
+            method: 'sendTestPush',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'notifications',
+          methodName: 'sendTestPush',
+          parameters: _i1.testObjectToJson({
+            'clientOperationId': clientOperationId,
+            'familyId': familyId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i20.AppNotificationDto>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i21.NotificationPreferenceDto> upsertPreference(
     _i1.TestSessionBuilder sessionBuilder, {
     required String clientOperationId,
     required String notificationType,
@@ -2202,7 +2247,7 @@ class _NotificationsEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i20.NotificationPreferenceDto>);
+                as _i3.Future<_i21.NotificationPreferenceDto>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2210,7 +2255,7 @@ class _NotificationsEndpoint {
     });
   }
 
-  _i3.Future<List<_i20.NotificationPreferenceDto>> listPreferences(
+  _i3.Future<List<_i21.NotificationPreferenceDto>> listPreferences(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -2232,7 +2277,7 @@ class _NotificationsEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i20.NotificationPreferenceDto>>);
+                as _i3.Future<List<_i21.NotificationPreferenceDto>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2240,7 +2285,7 @@ class _NotificationsEndpoint {
     });
   }
 
-  _i3.Future<_i21.ReminderDto> scheduleReminder(
+  _i3.Future<_i22.ReminderDto> scheduleReminder(
     _i1.TestSessionBuilder sessionBuilder, {
     required String clientOperationId,
     required int familyId,
@@ -2275,7 +2320,7 @@ class _NotificationsEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i21.ReminderDto>);
+                as _i3.Future<_i22.ReminderDto>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2283,7 +2328,7 @@ class _NotificationsEndpoint {
     });
   }
 
-  _i3.Future<_i21.ReminderDto?> replaceReminder(
+  _i3.Future<_i22.ReminderDto?> replaceReminder(
     _i1.TestSessionBuilder sessionBuilder, {
     required String clientOperationId,
     required int familyId,
@@ -2318,7 +2363,7 @@ class _NotificationsEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i21.ReminderDto?>);
+                as _i3.Future<_i22.ReminderDto?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2326,7 +2371,7 @@ class _NotificationsEndpoint {
     });
   }
 
-  _i3.Future<List<_i21.ReminderDto>> listReminders(
+  _i3.Future<List<_i22.ReminderDto>> listReminders(
     _i1.TestSessionBuilder sessionBuilder, {
     int? familyId,
     String? status,
@@ -2355,7 +2400,7 @@ class _NotificationsEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i21.ReminderDto>>);
+                as _i3.Future<List<_i22.ReminderDto>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2392,6 +2437,138 @@ class _NotificationsEndpoint {
       }
     });
   }
+
+  _i3.Future<_i23.AppNotificationListResponse> listInbox(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required int familyId,
+    required bool unreadOnly,
+    required int limit,
+    DateTime? before,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'notifications',
+            method: 'listInbox',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'notifications',
+          methodName: 'listInbox',
+          parameters: _i1.testObjectToJson({
+            'familyId': familyId,
+            'unreadOnly': unreadOnly,
+            'limit': limit,
+            'before': before,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i23.AppNotificationListResponse>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i7.OperationResult> markRead(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required int notificationId,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'notifications',
+            method: 'markRead',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'notifications',
+          methodName: 'markRead',
+          parameters: _i1.testObjectToJson({'notificationId': notificationId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i7.OperationResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i7.OperationResult> markAllRead(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required int familyId,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'notifications',
+            method: 'markAllRead',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'notifications',
+          methodName: 'markAllRead',
+          parameters: _i1.testObjectToJson({'familyId': familyId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i7.OperationResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<int> unreadCount(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required int familyId,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'notifications',
+            method: 'unreadCount',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'notifications',
+          methodName: 'unreadCount',
+          parameters: _i1.testObjectToJson({'familyId': familyId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<int>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 }
 
 class _PrivacyEndpoint {
@@ -2404,7 +2581,7 @@ class _PrivacyEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i22.PrivacyExportJobDto> requestExport(
+  _i3.Future<_i24.PrivacyExportJobDto> requestExport(
     _i1.TestSessionBuilder sessionBuilder, {
     required String clientOperationId,
   }) async {
@@ -2429,7 +2606,7 @@ class _PrivacyEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i22.PrivacyExportJobDto>);
+                as _i3.Future<_i24.PrivacyExportJobDto>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2437,7 +2614,7 @@ class _PrivacyEndpoint {
     });
   }
 
-  _i3.Future<_i23.AccountDeletionStatusDto> requestAccountDeletion(
+  _i3.Future<_i25.AccountDeletionStatusDto> requestAccountDeletion(
     _i1.TestSessionBuilder sessionBuilder, {
     required String clientOperationId,
   }) async {
@@ -2462,7 +2639,7 @@ class _PrivacyEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i23.AccountDeletionStatusDto>);
+                as _i3.Future<_i25.AccountDeletionStatusDto>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2470,7 +2647,7 @@ class _PrivacyEndpoint {
     });
   }
 
-  _i3.Future<_i23.AccountDeletionStatusDto> cancelAccountDeletion(
+  _i3.Future<_i25.AccountDeletionStatusDto> cancelAccountDeletion(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -2492,7 +2669,7 @@ class _PrivacyEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i23.AccountDeletionStatusDto>);
+                as _i3.Future<_i25.AccountDeletionStatusDto>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2500,7 +2677,7 @@ class _PrivacyEndpoint {
     });
   }
 
-  _i3.Future<_i24.PrivacyStatusDto> getStatus(
+  _i3.Future<_i26.PrivacyStatusDto> getStatus(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -2522,7 +2699,7 @@ class _PrivacyEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i24.PrivacyStatusDto>);
+                as _i3.Future<_i26.PrivacyStatusDto>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2601,12 +2778,12 @@ class _RealtimeEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Stream<_i25.FamilyRealtimeEvent> watchFamilyEvents(
+  _i3.Stream<_i27.FamilyRealtimeEvent> watchFamilyEvents(
     _i1.TestSessionBuilder sessionBuilder, {
     required int familyId,
   }) {
     var _localTestStreamManager =
-        _i1.TestStreamManager<_i25.FamilyRealtimeEvent>();
+        _i1.TestStreamManager<_i27.FamilyRealtimeEvent>();
     _i1.callStreamFunctionAndHandleExceptions(
       () async {
         var _localUniqueSession =
@@ -2645,7 +2822,7 @@ class _SyncEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i26.SyncChangesResponse> changes(
+  _i3.Future<_i28.SyncChangesResponse> changes(
     _i1.TestSessionBuilder sessionBuilder, {
     required DateTime since,
     int? familyId,
@@ -2676,7 +2853,7 @@ class _SyncEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i26.SyncChangesResponse>);
+                as _i3.Future<_i28.SyncChangesResponse>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2695,7 +2872,7 @@ class _TasksEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i27.TaskDto> upsertTask(
+  _i3.Future<_i29.TaskDto> upsertTask(
     _i1.TestSessionBuilder sessionBuilder, {
     required String clientOperationId,
     int? taskId,
@@ -2746,7 +2923,7 @@ class _TasksEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i27.TaskDto>);
+                as _i3.Future<_i29.TaskDto>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2754,7 +2931,7 @@ class _TasksEndpoint {
     });
   }
 
-  _i3.Future<List<_i27.TaskDto>> listTasks(
+  _i3.Future<List<_i29.TaskDto>> listTasks(
     _i1.TestSessionBuilder sessionBuilder, {
     required int familyId,
   }) async {
@@ -2777,7 +2954,7 @@ class _TasksEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i27.TaskDto>>);
+                as _i3.Future<List<_i29.TaskDto>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2785,7 +2962,7 @@ class _TasksEndpoint {
     });
   }
 
-  _i3.Future<List<_i28.TaskHistoryEntryDto>> listTaskHistory(
+  _i3.Future<List<_i30.TaskHistoryEntryDto>> listTaskHistory(
     _i1.TestSessionBuilder sessionBuilder, {
     required int familyId,
     required int taskId,
@@ -2814,7 +2991,7 @@ class _TasksEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i28.TaskHistoryEntryDto>>);
+                as _i3.Future<List<_i30.TaskHistoryEntryDto>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2822,7 +2999,7 @@ class _TasksEndpoint {
     });
   }
 
-  _i3.Future<_i27.TaskDto> completeTask(
+  _i3.Future<_i29.TaskDto> completeTask(
     _i1.TestSessionBuilder sessionBuilder, {
     required String clientOperationId,
     required int familyId,
@@ -2851,7 +3028,7 @@ class _TasksEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i27.TaskDto>);
+                as _i3.Future<_i29.TaskDto>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

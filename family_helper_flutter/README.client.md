@@ -30,7 +30,15 @@ Debug note:
 - For a physical device, keep using `--dart-define=SERVER_URL=http://<your-lan-ip>:8080/`.
 
 ## Notifications
-The app schedules local reminders on-device. No Firebase setup is required.
+The app supports:
+- local reminders on-device
+- Firebase Cloud Messaging for remote push
+
+Setup notes:
+- Firebase app config is taken from `lib/firebase_options.dart`
+- Web push VAPID key is configured in `lib/firebase_web_push_options.dart`
+- Android still requires `android/app/google-services.json`
+- iOS still requires `ios/Runner/GoogleService-Info.plist`
 
 ## Offline Queue
 - Interface: `OfflineOperationQueue`

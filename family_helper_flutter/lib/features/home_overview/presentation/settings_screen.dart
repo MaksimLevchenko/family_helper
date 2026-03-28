@@ -95,7 +95,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           AppTile(
             title: 'Notifications',
             subtitle: _notificationsSummary(notificationsState),
-            onTap: () => context.go(AppRoutes.localReminders),
+            onTap: () => context.go(AppRoutes.notifications),
           ),
           AppTile(
             title: 'Privacy',

@@ -56,6 +56,16 @@ void run(List<String> args) async {
   // Checks if the flutter web app has been built and serves it if it has.
   final appDir = Directory(Uri(path: 'web/app').toFilePath());
   if (appDir.existsSync()) {
+    final messagingServiceWorker = File(
+      Uri(path: 'web/app/firebase-messaging-sw.js').toFilePath(),
+    );
+    if (messagingServiceWorker.existsSync()) {
+      pod.webServer.addRoute(
+        StaticRoute.file(messagingServiceWorker),
+        '/firebase-messaging-sw.js',
+      );
+    }
+
     // Serve the flutter web app under the /app path.
     pod.webServer.addRoute(
       FlutterRoute(

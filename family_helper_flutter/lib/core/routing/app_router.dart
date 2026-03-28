@@ -107,8 +107,12 @@ GoRouter createAppRouter(
                 builder: (context, state) => const FamilyScreen(),
               ),
               GoRoute(
-                path: 'local-reminders',
+                path: 'notifications',
                 builder: (context, state) => const NotificationsScreen(),
+              ),
+              GoRoute(
+                path: 'local-reminders',
+                redirect: (context, state) => AppRoutes.notifications,
               ),
               GoRoute(
                 path: 'privacy',

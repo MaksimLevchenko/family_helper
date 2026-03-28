@@ -45,7 +45,21 @@ class _TestNotificationsCubit extends Cubit<NotificationsState>
   Future<bool> openSystemNotificationSettings() async => true;
 
   @override
+  Future<void> markAllNotificationsRead() async {}
+
+  @override
+  Future<void> markNotificationRead(int notificationId) async {}
+
+  @override
   Future<void> reloadReminders({String? status}) async {}
+
+  @override
+  Future<void> reloadInbox({
+    bool unreadOnly = false,
+    DateTime? before,
+    bool append = false,
+    int limit = 50,
+  }) async {}
 
   @override
   Future<ReminderActionResult> replaceEntityReminder({
@@ -129,6 +143,14 @@ class _TestNotificationsCubit extends Cubit<NotificationsState>
   Future<NotificationPermissionStatus> requestSystemPermissionIfNeeded() async {
     return state.permissionStatus;
   }
+
+  @override
+  Future<ReminderActionResult> scheduleDebugNotification() async {
+    return const ReminderActionResult(
+      success: true,
+      message: 'Test push sent. It should arrive shortly.',
+    );
+  }
 }
 
 void main() {
@@ -175,6 +197,7 @@ void main() {
       expect(find.text('Allow notifications'), findsOneWidget);
       expect(find.text('Task reminders'), findsOneWidget);
       expect(find.text('Calendar reminders'), findsOneWidget);
+      expect(find.text('Send test push'), findsOneWidget);
       expect(find.textContaining('push token'), findsNothing);
       expect(find.textContaining('entity id'), findsNothing);
       expect(cubit.didLoadPreferences, isTrue);

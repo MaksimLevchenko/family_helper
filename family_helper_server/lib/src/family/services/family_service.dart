@@ -10,6 +10,7 @@ import '../../core/rbac/ensure_family_role_service.dart';
 import '../../core/realtime/realtime_publisher.dart';
 import '../../core/sync/change_feed_service.dart';
 import '../../generated/protocol.dart';
+import '../../notifications/services/app_notification_service.dart';
 
 class FamilyService {
   FamilyService({
@@ -20,7 +21,8 @@ class FamilyService {
     this.changeFeed = const ChangeFeedService(),
     this.realtime = const RealtimePublisher(),
     this.audit = const AuditService(),
-  });
+    AppNotificationService? appNotifications,
+  }) : appNotifications = appNotifications ?? AppNotificationService();
 
   final AuthContext authContext;
   final ClockService clock;
@@ -29,6 +31,7 @@ class FamilyService {
   final ChangeFeedService changeFeed;
   final RealtimePublisher realtime;
   final AuditService audit;
+  final AppNotificationService appNotifications;
 
   Future<FamilyDto> createFamily(
     Session session, {
@@ -436,6 +439,26 @@ class FamilyService {
         ),
       );
 
+      await appNotifications.createForFamilyMembers(
+        session,
+        familyId: familyId,
+        category: 'family_invite_created',
+        title: 'Family invite created',
+        body: email?.trim().isNotEmpty == true
+            ? 'Invite ready for ${email!.trim()}'
+            : 'A new family invite is ready to share.',
+        entityType: 'invite',
+        entityId: invite.id,
+        route: '/home/settings/family',
+        payload: {
+          'category': 'family_invite_created',
+          'familyId': familyId,
+          'inviteId': invite.id,
+          'inviteType': invite.inviteType,
+        },
+        transaction: transaction,
+      );
+
       return invite;
     });
   }
@@ -564,6 +587,24 @@ class FamilyService {
           eventType: 'family.updated',
           changedAt: clock.nowUtc(),
         ),
+      );
+
+      await appNotifications.createForFamilyMembers(
+        session,
+        familyId: inviteDto.familyId,
+        category: 'family_invite_accepted',
+        title: 'Family member joined',
+        body: '${profile?.displayName ?? 'Someone'} joined the family.',
+        entityType: 'invite',
+        entityId: inviteDto.id,
+        route: '/home/settings/family',
+        payload: {
+          'category': 'family_invite_accepted',
+          'familyId': inviteDto.familyId,
+          'inviteId': inviteDto.id,
+          'joinedProfileId': profileId,
+        },
+        transaction: transaction,
       );
 
       return _mapMember(member!, profile);

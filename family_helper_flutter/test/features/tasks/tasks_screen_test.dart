@@ -108,6 +108,12 @@ class _NotificationsCubitStub extends Cubit<NotificationsState>
   Future<bool> openSystemNotificationSettings() async => true;
 
   @override
+  Future<void> markAllNotificationsRead() async {}
+
+  @override
+  Future<void> markNotificationRead(int notificationId) async {}
+
+  @override
   Future<NotificationPermissionStatus> requestSystemPermission() async {
     return state.permissionStatus;
   }
@@ -118,12 +124,28 @@ class _NotificationsCubitStub extends Cubit<NotificationsState>
   }
 
   @override
+  Future<ReminderActionResult> scheduleDebugNotification() async {
+    return const ReminderActionResult(
+      success: true,
+      message: 'Test push sent. It should arrive shortly.',
+    );
+  }
+
+  @override
   Future<void> refreshPermissionStatus() async {}
 
   @override
   Future<void> registerPushToken({
     required String token,
     String? platform,
+  }) async {}
+
+  @override
+  Future<void> reloadInbox({
+    bool unreadOnly = false,
+    DateTime? before,
+    bool append = false,
+    int limit = 50,
   }) async {}
 
   @override
