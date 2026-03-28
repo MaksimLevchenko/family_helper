@@ -1,5 +1,6 @@
 import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
+
 import '../../core/auth/auth_context.dart';
 import '../../core/clock/clock_service.dart';
 import '../../core/idempotency/idempotency_service.dart';
@@ -7,6 +8,10 @@ import '../../core/rbac/ensure_family_role_service.dart';
 import '../../core/realtime/realtime_publisher.dart';
 import '../../core/sync/change_feed_service.dart';
 import '../../generated/protocol.dart';
+
+part 'lists_service_helpers.dart';
+part 'lists_service_items.dart';
+part 'lists_service_lists.dart';
 
 class ListsService {
   ListsService({
@@ -28,45 +33,8 @@ class ListsService {
   Future<List<FamilyListDto>> listFamilyLists(
     Session session, {
     required int familyId,
-  }) async {
-    await rbac.ensureFamilyRole(session, familyId: familyId, minRole: 'member');
-
-    final rows = await FamilyListRow.db.find(
-      session,
-      where: (t) => t.familyId.equals(familyId) & t.deletedAt.equals(null),
-      orderByList: (t) => [
-        Order(column: t.updatedAt, orderDescending: true),
-        Order(column: t.id, orderDescending: true),
-      ],
-    );
-
-    final listIds = rows.map((row) => row.id!).toSet();
-    final items = listIds.isEmpty
-        ? const <ListItemRow>[]
-        : await ListItemRow.db.find(
-            session,
-            where: (t) => t.listId.inSet(listIds) & t.deletedAt.equals(null),
-          );
-    final pendingItemsByListId = <int, int>{};
-    for (final item in items) {
-      if (item.isBought) {
-        continue;
-      }
-      pendingItemsByListId.update(
-        item.listId,
-        (value) => value + 1,
-        ifAbsent: () => 1,
-      );
-    }
-
-    return rows
-        .map(
-          (row) => _mapList(
-            row,
-            pendingItemsCount: pendingItemsByListId[row.id!] ?? 0,
-          ),
-        )
-        .toList();
+  }) {
+    return _listFamilyListsImpl(this, session, familyId: familyId);
   }
 
   Future<FamilyListDto> upsertList(
@@ -76,117 +44,16 @@ class ListsService {
     required int familyId,
     required String title,
     required String listType,
-  }) async {
-    final authUserId = authContext.requireAuthUserId(session).uuid;
-
-    return session.db.transaction((transaction) async {
-      final profileId = await rbac.ensureFamilyRole(
-        session,
-        familyId: familyId,
-        minRole: 'member',
-        transaction: transaction,
-      );
-
-      final isFresh = await idempotency.tryBegin(
-        session,
-        actorAuthUserId: authUserId,
-        action: 'lists.upsertList',
-        clientOperationId: clientOperationId,
-        transaction: transaction,
-      );
-
-      if (!isFresh && listId != null) {
-        return _findList(session, listId, transaction: transaction);
-      }
-      if (!isFresh) {
-        final binding = await idempotency.getBinding(
-          session,
-          actorAuthUserId: authUserId,
-          action: 'lists.upsertList',
-          clientOperationId: clientOperationId,
-          transaction: transaction,
-        );
-        if (binding?.resourceType == 'family_list') {
-          return _findList(
-            session,
-            binding!.resourceId,
-            transaction: transaction,
-          );
-        }
-      }
-
-      final now = clock.nowUtc();
-      if (listId == null) {
-        final inserted = await FamilyListRow.db.insertRow(
-          session,
-          FamilyListRow(
-            familyId: familyId,
-            title: title,
-            listType: listType,
-            createdByProfileId: profileId,
-            createdAt: now,
-            updatedAt: now,
-            deletedAt: null,
-            version: 1,
-          ),
-          transaction: transaction,
-        );
-        final dto = _mapList(inserted);
-        await idempotency.bindResource(
-          session,
-          actorAuthUserId: authUserId,
-          action: 'lists.upsertList',
-          clientOperationId: clientOperationId,
-          resourceType: 'family_list',
-          resourceId: dto.id,
-          transaction: transaction,
-        );
-        await _emitListChange(
-          session,
-          familyId: familyId,
-          entityType: 'list',
-          entityId: dto.id,
-          transaction: transaction,
-        );
-        return dto;
-      }
-
-      final row = await FamilyListRow.db.findFirstRow(
-        session,
-        where: (t) =>
-            t.id.equals(listId) &
-            t.familyId.equals(familyId) &
-            t.deletedAt.equals(null),
-        transaction: transaction,
-      );
-      if (row == null) {
-        throw FileNotFoundException(message: 'List not found.');
-      }
-      await FamilyListRow.db.updateRow(
-        session,
-        row.copyWith(
-          title: title,
-          listType: listType,
-          updatedAt: now,
-          version: row.version + 1,
-        ),
-        transaction: transaction,
-      );
-
-      final updated = await _findList(
-        session,
-        listId,
-        transaction: transaction,
-      );
-      await _emitListChange(
-        session,
-        familyId: familyId,
-        entityType: 'list',
-        entityId: updated.id,
-        transaction: transaction,
-      );
-      return updated;
-    });
+  }) {
+    return _upsertListImpl(
+      this,
+      session,
+      clientOperationId: clientOperationId,
+      listId: listId,
+      familyId: familyId,
+      title: title,
+      listType: listType,
+    );
   }
 
   Future<ListItemDto> addItem(
@@ -200,98 +67,20 @@ class ListsService {
     String? note,
     int? priceCents,
     String? category,
-  }) async {
-    final authUserId = authContext.requireAuthUserId(session).uuid;
-
-    return session.db.transaction((transaction) async {
-      final actorProfileId = await rbac.ensureFamilyRole(
-        session,
-        familyId: familyId,
-        minRole: 'member',
-        transaction: transaction,
-      );
-
-      final isFresh = await idempotency.tryBegin(
-        session,
-        actorAuthUserId: authUserId,
-        action: 'lists.addItem',
-        clientOperationId: clientOperationId,
-        transaction: transaction,
-      );
-
-      if (!isFresh) {
-        final latest = await ListItemRow.db.findFirstRow(
-          session,
-          where: (t) => t.listId.equals(listId) & t.deletedAt.equals(null),
-          orderBy: (t) => t.id,
-          orderDescending: true,
-          transaction: transaction,
-        );
-        if (latest != null) {
-          return _mapItem(latest);
-        }
-      }
-
-      final now = clock.nowUtc();
-      await session.db.unsafeQuery(
-        'SELECT "id" FROM "family_list" WHERE "id" = @listId FOR UPDATE',
-        transaction: transaction,
-        parameters: QueryParameters.named({'listId': listId}),
-      );
-      final existingItems = await ListItemRow.db.find(
-        session,
-        where: (t) => t.listId.equals(listId),
-        transaction: transaction,
-      );
-      final maxPos = existingItems.isEmpty
-          ? 0
-          : existingItems
-                .map((e) => e.positionIndex)
-                .reduce((a, b) => a > b ? a : b);
-      final nextPosition = maxPos + 1;
-
-      final inserted = await ListItemRow.db.insertRow(
-        session,
-        ListItemRow(
-          listId: listId,
-          title: title,
-          qty: qty,
-          unit: unit,
-          note: note,
-          priceCents: priceCents,
-          category: category,
-          positionIndex: nextPosition,
-          isBought: false,
-          boughtByProfileId: null,
-          boughtAt: null,
-          createdByProfileId: actorProfileId,
-          createdAt: now,
-          updatedAt: now,
-          deletedAt: null,
-          version: 1,
-        ),
-        transaction: transaction,
-      );
-
-      final item = _mapItem(inserted);
-      await _appendItemHistory(
-        session,
-        itemId: item.id,
-        actorProfileId: actorProfileId,
-        eventType: 'created',
-        transaction: transaction,
-      );
-
-      await _emitListChange(
-        session,
-        familyId: familyId,
-        entityType: 'list_item',
-        entityId: item.id,
-        transaction: transaction,
-      );
-
-      return item;
-    });
+  }) {
+    return _addItemImpl(
+      this,
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      listId: listId,
+      title: title,
+      qty: qty,
+      unit: unit,
+      note: note,
+      priceCents: priceCents,
+      category: category,
+    );
   }
 
   Future<ListItemDto> updateItem(
@@ -305,97 +94,20 @@ class ListsService {
     String? note,
     int? priceCents,
     String? category,
-  }) async {
-    final authUserId = authContext.requireAuthUserId(session).uuid;
-
-    return session.db.transaction((transaction) async {
-      final actorProfileId = await rbac.ensureFamilyRole(
-        session,
-        familyId: familyId,
-        minRole: 'member',
-        transaction: transaction,
-      );
-
-      final isFresh = await idempotency.tryBegin(
-        session,
-        actorAuthUserId: authUserId,
-        action: 'lists.updateItem',
-        clientOperationId: clientOperationId,
-        transaction: transaction,
-      );
-
-      await session.db.unsafeQuery(
-        'SELECT "id" FROM "list_item" WHERE "id" = @itemId AND "deletedAt" IS NULL FOR UPDATE',
-        transaction: transaction,
-        parameters: QueryParameters.named({'itemId': itemId}),
-      );
-      final currentRow = await ListItemRow.db.findFirstRow(
-        session,
-        where: (li) => li.id.equals(itemId) & li.deletedAt.equals(null),
-        transaction: transaction,
-      );
-      if (currentRow == null) {
-        throw FileNotFoundException(message: 'List item not found.');
-      }
-      final list = await FamilyListRow.db.findById(
-        session,
-        currentRow.listId,
-        transaction: transaction,
-      );
-      if (list == null || list.familyId != familyId || list.deletedAt != null) {
-        throw FileNotFoundException(message: 'List item not found.');
-      }
-
-      if (!isFresh) {
-        return _mapItem(
-          currentRow,
-          boughtByDisplayName: await _buyerDisplayNameForRow(
-            session,
-            currentRow,
-            transaction: transaction,
-          ),
-        );
-      }
-
-      final updatedRow = await ListItemRow.db.updateRow(
-        session,
-        currentRow.copyWith(
-          title: title,
-          qty: qty,
-          unit: unit,
-          note: note,
-          priceCents: priceCents,
-          category: category,
-          updatedAt: clock.nowUtc(),
-          version: currentRow.version + 1,
-        ),
-        transaction: transaction,
-      );
-
-      await _appendItemHistory(
-        session,
-        itemId: itemId,
-        actorProfileId: actorProfileId,
-        eventType: 'updated',
-        transaction: transaction,
-      );
-      await _emitListChange(
-        session,
-        familyId: familyId,
-        entityType: 'list_item',
-        entityId: itemId,
-        transaction: transaction,
-      );
-
-      return _mapItem(
-        updatedRow,
-        boughtByDisplayName: await _buyerDisplayNameForRow(
-          session,
-          updatedRow,
-          transaction: transaction,
-        ),
-      );
-    });
+  }) {
+    return _updateItemImpl(
+      this,
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      itemId: itemId,
+      title: title,
+      qty: qty,
+      unit: unit,
+      note: note,
+      priceCents: priceCents,
+      category: category,
+    );
   }
 
   Future<ListItemDto> toggleBought(
@@ -403,91 +115,14 @@ class ListsService {
     required String clientOperationId,
     required int familyId,
     required int itemId,
-  }) async {
-    final authUserId = authContext.requireAuthUserId(session).uuid;
-
-    return session.db.transaction((transaction) async {
-      final actorProfileId = await rbac.ensureFamilyRole(
-        session,
-        familyId: familyId,
-        minRole: 'member',
-        transaction: transaction,
-      );
-
-      final isFresh = await idempotency.tryBegin(
-        session,
-        actorAuthUserId: authUserId,
-        action: 'lists.toggleBought',
-        clientOperationId: clientOperationId,
-        transaction: transaction,
-      );
-
-      await session.db.unsafeQuery(
-        'SELECT "id" FROM "list_item" WHERE "id" = @itemId AND "deletedAt" IS NULL FOR UPDATE',
-        transaction: transaction,
-        parameters: QueryParameters.named({'itemId': itemId}),
-      );
-      final currentRow = await ListItemRow.db.findFirstRow(
-        session,
-        where: (li) => li.id.equals(itemId) & li.deletedAt.equals(null),
-        transaction: transaction,
-      );
-      if (currentRow == null) {
-        throw FileNotFoundException(message: 'List item not found.');
-      }
-      final list = await FamilyListRow.db.findById(
-        session,
-        currentRow.listId,
-        transaction: transaction,
-      );
-      if (list == null || list.familyId != familyId) {
-        throw FileNotFoundException(message: 'List item not found.');
-      }
-
-      final current = currentRow;
-      if (!isFresh) {
-        return _mapItem(currentRow);
-      }
-
-      final now = clock.nowUtc();
-      final nextBought = !current.isBought;
-      final updatedRow = await ListItemRow.db.updateRow(
-        session,
-        current.copyWith(
-          isBought: nextBought,
-          boughtByProfileId: nextBought ? actorProfileId : null,
-          boughtAt: nextBought ? now : null,
-          updatedAt: now,
-          version: current.version + 1,
-        ),
-        transaction: transaction,
-      );
-
-      await _appendItemHistory(
-        session,
-        itemId: itemId,
-        actorProfileId: actorProfileId,
-        eventType: nextBought ? 'bought' : 'unbought',
-        transaction: transaction,
-      );
-
-      await _emitListChange(
-        session,
-        familyId: familyId,
-        entityType: 'list_item',
-        entityId: itemId,
-        transaction: transaction,
-      );
-
-      return _mapItem(
-        updatedRow,
-        boughtByDisplayName: await _buyerDisplayNameForRow(
-          session,
-          updatedRow,
-          transaction: transaction,
-        ),
-      );
-    });
+  }) {
+    return _toggleBoughtImpl(
+      this,
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      itemId: itemId,
+    );
   }
 
   Future<OperationResult> deleteItem(
@@ -495,88 +130,14 @@ class ListsService {
     required String clientOperationId,
     required int familyId,
     required int itemId,
-  }) async {
-    final authUserId = authContext.requireAuthUserId(session).uuid;
-
-    return session.db.transaction((transaction) async {
-      final actorProfileId = await rbac.ensureFamilyRole(
-        session,
-        familyId: familyId,
-        minRole: 'member',
-        transaction: transaction,
-      );
-
-      final isFresh = await idempotency.tryBegin(
-        session,
-        actorAuthUserId: authUserId,
-        action: 'lists.deleteItem',
-        clientOperationId: clientOperationId,
-        transaction: transaction,
-      );
-
-      final row = await ListItemRow.db.findById(
-        session,
-        itemId,
-        transaction: transaction,
-      );
-      if (row == null) {
-        throw FileNotFoundException(message: 'List item not found.');
-      }
-      final list = await FamilyListRow.db.findById(
-        session,
-        row.listId,
-        transaction: transaction,
-      );
-      if (list == null || list.familyId != familyId) {
-        throw FileNotFoundException(message: 'List item not found.');
-      }
-      if (row.deletedAt != null || !isFresh) {
-        return OperationResult(success: true, message: 'Already deleted');
-      }
-
-      await session.db.unsafeQuery(
-        'SELECT "id" FROM "list_item" WHERE "id" = @itemId AND "deletedAt" IS NULL FOR UPDATE',
-        transaction: transaction,
-        parameters: QueryParameters.named({'itemId': itemId}),
-      );
-      final currentRow = await ListItemRow.db.findFirstRow(
-        session,
-        where: (li) => li.id.equals(itemId) & li.deletedAt.equals(null),
-        transaction: transaction,
-      );
-      if (currentRow == null) {
-        return OperationResult(success: true, message: 'Already deleted');
-      }
-
-      final now = clock.nowUtc();
-      await ListItemRow.db.updateRow(
-        session,
-        currentRow.copyWith(
-          deletedAt: now,
-          updatedAt: now,
-          version: currentRow.version + 1,
-        ),
-        transaction: transaction,
-      );
-      await _appendItemHistory(
-        session,
-        itemId: itemId,
-        actorProfileId: actorProfileId,
-        eventType: 'deleted',
-        transaction: transaction,
-      );
-      await _emitListChange(
-        session,
-        familyId: familyId,
-        entityType: 'list_item',
-        entityId: itemId,
-        operation: 'deleted',
-        tombstone: true,
-        transaction: transaction,
-      );
-
-      return OperationResult(success: true, message: 'Item deleted');
-    });
+  }) {
+    return _deleteItemImpl(
+      this,
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      itemId: itemId,
+    );
   }
 
   Future<OperationResult> deleteList(
@@ -584,94 +145,14 @@ class ListsService {
     required String clientOperationId,
     required int familyId,
     required int listId,
-  }) async {
-    final authUserId = authContext.requireAuthUserId(session).uuid;
-
-    return session.db.transaction((transaction) async {
-      await rbac.ensureFamilyRole(
-        session,
-        familyId: familyId,
-        minRole: 'member',
-        transaction: transaction,
-      );
-
-      final isFresh = await idempotency.tryBegin(
-        session,
-        actorAuthUserId: authUserId,
-        action: 'lists.deleteList',
-        clientOperationId: clientOperationId,
-        transaction: transaction,
-      );
-
-      final row = await FamilyListRow.db.findById(
-        session,
-        listId,
-        transaction: transaction,
-      );
-      if (row == null || row.familyId != familyId) {
-        throw FileNotFoundException(message: 'List not found.');
-      }
-      if (row.deletedAt != null || !isFresh) {
-        return OperationResult(success: true, message: 'Already deleted');
-      }
-
-      await session.db.unsafeQuery(
-        'SELECT "id" FROM "family_list" WHERE "id" = @listId AND "deletedAt" IS NULL FOR UPDATE',
-        transaction: transaction,
-        parameters: QueryParameters.named({'listId': listId}),
-      );
-      final currentRow = await FamilyListRow.db.findFirstRow(
-        session,
-        where: (t) =>
-            t.id.equals(listId) &
-            t.familyId.equals(familyId) &
-            t.deletedAt.equals(null),
-        transaction: transaction,
-      );
-      if (currentRow == null) {
-        return OperationResult(success: true, message: 'Already deleted');
-      }
-
-      final now = clock.nowUtc();
-      await FamilyListRow.db.updateRow(
-        session,
-        currentRow.copyWith(
-          deletedAt: now,
-          updatedAt: now,
-          version: currentRow.version + 1,
-        ),
-        transaction: transaction,
-      );
-
-      final items = await ListItemRow.db.find(
-        session,
-        where: (t) => t.listId.equals(listId) & t.deletedAt.equals(null),
-        transaction: transaction,
-      );
-      for (final item in items) {
-        await ListItemRow.db.updateRow(
-          session,
-          item.copyWith(
-            deletedAt: now,
-            updatedAt: now,
-            version: item.version + 1,
-          ),
-          transaction: transaction,
-        );
-      }
-
-      await _emitListChange(
-        session,
-        familyId: familyId,
-        entityType: 'list',
-        entityId: listId,
-        operation: 'deleted',
-        tombstone: true,
-        transaction: transaction,
-      );
-
-      return OperationResult(success: true, message: 'List deleted');
-    });
+  }) {
+    return _deleteListImpl(
+      this,
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      listId: listId,
+    );
   }
 
   Future<OperationResult> reorderItems(
@@ -680,233 +161,22 @@ class ListsService {
     required int familyId,
     required int listId,
     required List<int> orderedItemIds,
-  }) async {
-    final authUserId = authContext.requireAuthUserId(session).uuid;
-
-    return session.db.transaction((transaction) async {
-      await rbac.ensureFamilyRole(
-        session,
-        familyId: familyId,
-        minRole: 'member',
-        transaction: transaction,
-      );
-
-      final isFresh = await idempotency.tryBegin(
-        session,
-        actorAuthUserId: authUserId,
-        action: 'lists.reorderItems',
-        clientOperationId: clientOperationId,
-        transaction: transaction,
-      );
-
-      if (!isFresh) {
-        return OperationResult(success: true, message: 'Already processed');
-      }
-
-      for (int i = 0; i < orderedItemIds.length; i++) {
-        final row = await ListItemRow.db.findFirstRow(
-          session,
-          where: (t) =>
-              t.id.equals(orderedItemIds[i]) &
-              t.listId.equals(listId) &
-              t.deletedAt.equals(null),
-          transaction: transaction,
-        );
-        if (row != null) {
-          await ListItemRow.db.updateRow(
-            session,
-            row.copyWith(
-              positionIndex: i + 1,
-              updatedAt: clock.nowUtc(),
-              version: row.version + 1,
-            ),
-            transaction: transaction,
-          );
-        }
-      }
-
-      await _emitListChange(
-        session,
-        familyId: familyId,
-        entityType: 'list',
-        entityId: listId,
-        transaction: transaction,
-      );
-
-      return OperationResult(success: true, message: 'Reordered');
-    });
+  }) {
+    return _reorderItemsImpl(
+      this,
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
+      listId: listId,
+      orderedItemIds: orderedItemIds,
+    );
   }
 
   Future<List<ListItemDto>> listItems(
     Session session, {
     required int familyId,
     required int listId,
-  }) async {
-    await rbac.ensureFamilyRole(session, familyId: familyId, minRole: 'member');
-
-    final list = await FamilyListRow.db.findById(session, listId);
-    if (list == null || list.familyId != familyId || list.deletedAt != null) {
-      return const <ListItemDto>[];
-    }
-
-    final rows = await ListItemRow.db.find(
-      session,
-      where: (li) => li.listId.equals(listId) & li.deletedAt.equals(null),
-      orderByList: (li) => [
-        Order(column: li.positionIndex),
-        Order(column: li.id),
-      ],
-    );
-
-    final buyerProfileIds = rows
-        .map((row) => row.boughtByProfileId)
-        .whereType<int>()
-        .toSet();
-    final profilesById = buyerProfileIds.isEmpty
-        ? const <int, AppProfileRow>{}
-        : {
-            for (final profile in await AppProfileRow.db.find(
-              session,
-              where: (t) => t.id.inSet(buyerProfileIds),
-            ))
-              profile.id!: profile,
-          };
-
-    return rows
-        .map(
-          (row) => _mapItem(
-            row,
-            boughtByDisplayName: row.boughtByProfileId == null
-                ? null
-                : (profilesById[row.boughtByProfileId!]?.displayName ??
-                      'User #${row.boughtByProfileId}'),
-          ),
-        )
-        .toList();
-  }
-
-  Future<FamilyListDto> _findList(
-    Session session,
-    int listId, {
-    Transaction? transaction,
-  }) async {
-    final row = await FamilyListRow.db.findById(
-      session,
-      listId,
-      transaction: transaction,
-    );
-
-    return _mapList(row!);
-  }
-
-  Future<void> _appendItemHistory(
-    Session session, {
-    required int itemId,
-    required int actorProfileId,
-    required String eventType,
-    Transaction? transaction,
-  }) async {
-    await ListItemHistoryRow.db.insertRow(
-      session,
-      ListItemHistoryRow(
-        itemId: itemId,
-        actorProfileId: actorProfileId,
-        eventType: eventType,
-        createdAt: clock.nowUtc(),
-      ),
-      transaction: transaction,
-    );
-  }
-
-  Future<void> _emitListChange(
-    Session session, {
-    required int familyId,
-    required String entityType,
-    required int entityId,
-    String operation = 'upserted',
-    bool tombstone = false,
-    Transaction? transaction,
-  }) async {
-    await changeFeed.appendChange(
-      session,
-      feature: 'lists',
-      entityType: entityType,
-      entityId: entityId,
-      operation: operation,
-      familyId: familyId,
-      version: 1,
-      tombstone: tombstone,
-      transaction: transaction,
-    );
-
-    await realtime.publish(
-      session,
-      familyId: familyId,
-      event: FamilyRealtimeEvent(
-        familyId: familyId,
-        feature: 'lists',
-        entityType: entityType,
-        entityId: entityId,
-        eventType: operation == 'deleted' ? 'lists.deleted' : 'lists.updated',
-        changedAt: clock.nowUtc(),
-      ),
-    );
-  }
-
-  Future<String?> _buyerDisplayNameForRow(
-    Session session,
-    ListItemRow row, {
-    Transaction? transaction,
-  }) async {
-    final buyerProfileId = row.boughtByProfileId;
-    if (buyerProfileId == null) {
-      return null;
-    }
-
-    final profile = await AppProfileRow.db.findById(
-      session,
-      buyerProfileId,
-      transaction: transaction,
-    );
-    return profile?.displayName ?? 'User #$buyerProfileId';
-  }
-
-  FamilyListDto _mapList(
-    FamilyListRow row, {
-    int? pendingItemsCount,
   }) {
-    return FamilyListDto(
-      id: row.id!,
-      familyId: row.familyId,
-      title: row.title,
-      listType: row.listType,
-      createdByProfileId: row.createdByProfileId,
-      pendingItemsCount: pendingItemsCount,
-      updatedAt: row.updatedAt,
-      version: row.version,
-    );
-  }
-
-  ListItemDto _mapItem(
-    ListItemRow row, {
-    String? boughtByDisplayName,
-  }) {
-    return ListItemDto(
-      id: row.id!,
-      listId: row.listId,
-      title: row.title,
-      qty: row.qty,
-      unit: row.unit,
-      note: row.note,
-      priceCents: row.priceCents,
-      category: row.category,
-      positionIndex: row.positionIndex,
-      isBought: row.isBought,
-      boughtByProfileId: row.boughtByProfileId,
-      boughtByDisplayName: boughtByDisplayName,
-      boughtAt: row.boughtAt,
-      updatedAt: row.updatedAt,
-      version: row.version,
-    );
+    return _listItemsImpl(this, session, familyId: familyId, listId: listId);
   }
 }

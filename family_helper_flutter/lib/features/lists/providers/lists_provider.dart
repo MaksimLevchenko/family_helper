@@ -10,6 +10,8 @@ import '../../../core/utils/operation_id.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/lists_repository.dart';
 
+part 'lists_provider_cache.dart';
+
 class ListsState {
   const ListsState({
     required this.isLoadingLists,
@@ -119,7 +121,7 @@ class ListsCubit extends Cubit<ListsState> {
     if (familyId == null) {
       return;
     }
-    await _restoreSnapshot(familyId);
+    await _restoreListsSnapshot(this, familyId);
     await loadLists();
   }
 
@@ -190,14 +192,16 @@ class ListsCubit extends Cubit<ListsState> {
 
     try {
       final lists = await _repository.listFamilyLists(familyId: familyId);
-      final nextSelectedListId = _resolveSelectedListId(
+      final nextSelectedListId = _resolveListsSelectedListId(
         lists,
         preferredSelectedListId: preferredSelectedListId,
+        currentSelectedListId: state.selectedListId,
       );
 
       final syncedAt = DateTime.now().toUtc();
       if (nextSelectedListId == null) {
-        await _writeSnapshot(
+        await _writeListsSnapshot(
+          this,
           familyId: familyId,
           lists: lists,
           selectedListId: null,
@@ -235,7 +239,8 @@ class ListsCubit extends Cubit<ListsState> {
       if (loadSelectedItems) {
         await loadItemsForSelectedList(showLoading: shouldShowItemsLoading);
       } else {
-        await _writeSnapshot(
+        await _writeListsSnapshot(
+          this,
           familyId: familyId,
           lists: lists,
           selectedListId: nextSelectedListId,
@@ -301,7 +306,8 @@ class ListsCubit extends Cubit<ListsState> {
         listId: listId,
       );
       final syncedAt = DateTime.now().toUtc();
-      await _writeSnapshot(
+      await _writeListsSnapshot(
+        this,
         familyId: familyId,
         lists: state.lists,
         selectedListId: listId,
@@ -698,101 +704,13 @@ class ListsCubit extends Cubit<ListsState> {
     }
   }
 
+  void _emitState(ListsState nextState) {
+    emit(nextState);
+  }
+
   @override
   Future<void> close() async {
     await _familySub?.cancel();
     return super.close();
-  }
-
-  Future<void> _restoreSnapshot(int familyId) async {
-    final snapshotStore = _snapshotStore;
-    if (snapshotStore == null) {
-      return;
-    }
-
-    try {
-      final snapshot = await snapshotStore.read(_cacheKey(familyId));
-      if (snapshot == null || isClosed) {
-        return;
-      }
-
-      final lists = (snapshot.payload['lists'] as List<dynamic>? ?? const [])
-          .whereType<Map<String, dynamic>>()
-          .map(FamilyListDto.fromJson)
-          .toList();
-      final items = (snapshot.payload['items'] as List<dynamic>? ?? const [])
-          .whereType<Map<String, dynamic>>()
-          .map(ListItemDto.fromJson)
-          .toList();
-      emit(
-        state.copyWith(
-          isLoadingLists: false,
-          isLoadingItems: false,
-          lists: lists,
-          selectedListId: snapshot.payload['selectedListId'] as int?,
-          items: items,
-          isUsingCachedData: true,
-          lastSuccessfulSyncAt: snapshot.updatedAt,
-          clearError: true,
-        ),
-      );
-    } catch (error, stackTrace) {
-      AppErrorLogger.logHandled(
-        scope: 'lists.restoreSnapshot',
-        error: error,
-        stackTrace: stackTrace,
-        context: {'familyId': familyId},
-      );
-    }
-  }
-
-  Future<void> _writeSnapshot({
-    required int familyId,
-    required List<FamilyListDto> lists,
-    required int? selectedListId,
-    required List<ListItemDto> items,
-    required DateTime syncedAt,
-  }) async {
-    final snapshotStore = _snapshotStore;
-    if (snapshotStore == null) {
-      return;
-    }
-
-    try {
-      await snapshotStore.write(_cacheKey(familyId), {
-        'lists': lists.map((list) => list.toJson()).toList(),
-        'selectedListId': selectedListId,
-        'items': items.map((item) => item.toJson()).toList(),
-      }, updatedAt: syncedAt);
-    } catch (error, stackTrace) {
-      AppErrorLogger.logHandled(
-        scope: 'lists.writeSnapshot',
-        error: error,
-        stackTrace: stackTrace,
-        context: {
-          'familyId': familyId,
-          'selectedListId': selectedListId,
-          'listsCount': lists.length,
-          'itemsCount': items.length,
-        },
-      );
-    }
-  }
-
-  String _cacheKey(int familyId) => 'lists/family/$familyId';
-
-  int? _resolveSelectedListId(
-    List<FamilyListDto> lists, {
-    int? preferredSelectedListId,
-  }) {
-    if (lists.isEmpty) {
-      return null;
-    }
-
-    final preferredId = preferredSelectedListId ?? state.selectedListId;
-    if (preferredId != null && lists.any((list) => list.id == preferredId)) {
-      return preferredId;
-    }
-    return lists.first.id;
   }
 }
