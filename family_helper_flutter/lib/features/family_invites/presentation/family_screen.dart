@@ -92,125 +92,181 @@ class _FamilyScreenState extends State<FamilyScreen> {
             );
           }
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              CachedDataStatus(
-                isUsingCachedData: state.isUsingCachedData,
-                lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
-              ),
-              if (state.error != null) ...[
-                AppBanner(text: state.error!, isError: true),
-                const SizedBox(height: 12),
-              ],
-              if (!hasFamily) ...[
-                _EmptyFamilySection(
-                  familyTitleController: _createFamilyTitleController,
-                  inviteCodeController: _inviteCodeController,
-                  isLoading: state.isLoading,
-                  isOffline: isOffline,
-                ),
-              ] else ...[
-                _FamilySummaryCard(
-                  title: state.family?.title ?? 'Family',
-                  memberCount: state.members.length,
-                  canRename: isOwner,
-                  renameController: _renameFamilyTitleController,
-                  isLoading: state.isLoading,
-                  onRename: () async {
+          final summaryCard = _FamilySummaryCard(
+            title: state.family?.title ?? 'Family',
+            memberCount: state.members.length,
+            canRename: isOwner,
+            renameController: _renameFamilyTitleController,
+            isLoading: state.isLoading,
+            onRename: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final renamed = await context
+                  .read<FamilyMembersCubit>()
+                  .renameFamily(
+                    _renameFamilyTitleController.text,
+                  );
+              if (!mounted || renamed == null) {
+                return;
+              }
+              messenger.showSnackBar(
+                const SnackBar(content: Text('Family name updated')),
+              );
+            },
+          );
+
+          final inviteSection = _InviteSection(
+            inviteEmailController: _inviteEmailController,
+            lastInviteCode: state.lastInviteCode,
+            isOffline: isOffline,
+            onCreateEmailInvite: () async {
+              await context.read<FamilyMembersCubit>().createInvite(
+                inviteType: 'email',
+                email: _inviteEmailController.text.trim(),
+              );
+            },
+            onCreateCodeInvite: () async {
+              await context.read<FamilyMembersCubit>().createInvite(
+                inviteType: 'code',
+              );
+            },
+            onCopyCode: state.lastInviteCode == null
+                ? null
+                : () async {
                     final messenger = ScaffoldMessenger.of(context);
-                    final renamed = await context
-                        .read<FamilyMembersCubit>()
-                        .renameFamily(_renameFamilyTitleController.text);
-                    if (!mounted || renamed == null) {
+                    await Clipboard.setData(
+                      ClipboardData(text: state.lastInviteCode!),
+                    );
+                    if (!mounted) {
                       return;
                     }
                     messenger.showSnackBar(
-                      const SnackBar(content: Text('Family name updated')),
+                      const SnackBar(content: Text('Invite code copied')),
                     );
                   },
-                ),
-                const SizedBox(height: 16),
-                _InviteSection(
-                  inviteEmailController: _inviteEmailController,
-                  lastInviteCode: state.lastInviteCode,
-                  isOffline: isOffline,
-                  onCreateEmailInvite: () async {
-                    await context.read<FamilyMembersCubit>().createInvite(
-                      inviteType: 'email',
-                      email: _inviteEmailController.text.trim(),
+          );
+
+          final membersSection = _MembersSection(
+            currentProfileId: currentProfileId,
+            members: state.members,
+          );
+
+          final transferSection = _TransferOwnershipSection(
+            members: state.members,
+            selectedProfileId: _selectedNewOwnerProfileId,
+            isLoading: state.isLoading,
+            onSelected: (value) {
+              setState(() {
+                _selectedNewOwnerProfileId = value;
+              });
+            },
+            onTransfer: _selectedNewOwnerProfileId == null
+                ? null
+                : () async {
+                    await context.read<FamilyMembersCubit>().transferOwnership(
+                      newOwnerProfileId: _selectedNewOwnerProfileId!,
                     );
                   },
-                  onCreateCodeInvite: () async {
-                    await context.read<FamilyMembersCubit>().createInvite(
-                      inviteType: 'code',
-                    );
-                  },
-                  onCopyCode: state.lastInviteCode == null
-                      ? null
-                      : () async {
-                          final messenger = ScaffoldMessenger.of(context);
-                          await Clipboard.setData(
-                            ClipboardData(text: state.lastInviteCode!),
-                          );
-                          if (!mounted) {
-                            return;
-                          }
-                          messenger.showSnackBar(
-                            const SnackBar(content: Text('Invite code copied')),
-                          );
-                        },
-                ),
-                const SizedBox(height: 16),
-                _MembersSection(
-                  currentProfileId: currentProfileId,
-                  members: state.members,
-                ),
-                if (isOwner) ...[
-                  const SizedBox(height: 16),
-                  _TransferOwnershipSection(
-                    members: state.members,
-                    selectedProfileId: _selectedNewOwnerProfileId,
-                    isLoading: state.isLoading,
-                    onSelected: (value) {
-                      setState(() {
-                        _selectedNewOwnerProfileId = value;
-                      });
-                    },
-                    onTransfer: _selectedNewOwnerProfileId == null
-                        ? null
-                        : () async {
-                            await context
-                                .read<FamilyMembersCubit>()
-                                .transferOwnership(
-                                  newOwnerProfileId:
-                                      _selectedNewOwnerProfileId!,
-                                );
-                          },
+          );
+
+          return ResponsiveContentLayout(
+            builder: (context, isWide) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CachedDataStatus(
+                    isUsingCachedData: state.isUsingCachedData,
+                    lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
                   ),
+                  if (state.error != null) ...[
+                    AppBanner(text: state.error!, isError: true),
+                    const SizedBox(height: 12),
+                  ],
+                  if (!hasFamily)
+                    _EmptyFamilySection(
+                      familyTitleController: _createFamilyTitleController,
+                      inviteCodeController: _inviteCodeController,
+                      isLoading: state.isLoading,
+                      isOffline: isOffline,
+                      isWide: isWide,
+                    )
+                  else if (isWide)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              summaryCard,
+                              if (isOwner) ...[
+                                const SizedBox(height: 16),
+                                inviteSection,
+                              ],
+                              const SizedBox(height: 16),
+                              _FamilyActionCard(
+                                isOwner: isOwner,
+                                onLeave: () async {
+                                  await context
+                                      .read<FamilyMembersCubit>()
+                                      .leaveFamily();
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          flex: 6,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              membersSection,
+                              if (isOwner) ...[
+                                const SizedBox(height: 16),
+                                transferSection,
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  else ...[
+                    summaryCard,
+                    const SizedBox(height: 16),
+                    if (isOwner) ...[
+                      inviteSection,
+                      const SizedBox(height: 16),
+                    ],
+                    membersSection,
+                    if (isOwner) ...[
+                      const SizedBox(height: 16),
+                      transferSection,
+                    ],
+                    const SizedBox(height: 16),
+                    AppButton(
+                      label: 'Leave family',
+                      variant: AppButtonVariant.danger,
+                      onPressed: isOwner
+                          ? null
+                          : () async {
+                              await context
+                                  .read<FamilyMembersCubit>()
+                                  .leaveFamily();
+                            },
+                    ),
+                    if (isOwner) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Transfer ownership before leaving the family.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ],
                 ],
-                const SizedBox(height: 16),
-                AppButton(
-                  label: 'Leave family',
-                  variant: AppButtonVariant.danger,
-                  onPressed: isOwner
-                      ? null
-                      : () async {
-                          await context
-                              .read<FamilyMembersCubit>()
-                              .leaveFamily();
-                        },
-                ),
-                if (isOwner) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    'Transfer ownership before leaving the family.',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ],
-            ],
+              );
+            },
           );
         },
       ),
@@ -224,91 +280,149 @@ class _EmptyFamilySection extends StatelessWidget {
     required this.inviteCodeController,
     required this.isLoading,
     required this.isOffline,
+    required this.isWide,
   });
 
   final TextEditingController familyTitleController;
   final TextEditingController inviteCodeController;
   final bool isLoading;
   final bool isOffline;
+  final bool isWide;
 
   @override
   Widget build(BuildContext context) {
+    final createCard = _CreateFamilyCard(
+      familyTitleController: familyTitleController,
+      isLoading: isLoading,
+      isOffline: isOffline,
+    );
+    final joinCard = _JoinFamilyCard(
+      inviteCodeController: inviteCodeController,
+      isOffline: isOffline,
+    );
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const EmptyState(
           title: 'No family connected',
           message: 'Create a family or join one with an invite code.',
         ),
         const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Create a family',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  controller: familyTitleController,
-                  label: 'Family name',
-                ),
-                const SizedBox(height: 12),
-                AppButton(
-                  label: 'Create family',
-                  isLoading: isLoading,
-                  onPressed: isOffline
-                      ? null
-                      : () async {
-                    final title = familyTitleController.text.trim();
-                    if (title.isEmpty) {
-                      return;
-                    }
-                    await context.read<FamilyMembersCubit>().createFamily(
-                      title,
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Join with an invite',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  controller: inviteCodeController,
-                  label: 'Invite code',
-                ),
-                const SizedBox(height: 12),
-                AppButton(
-                  label: 'Join family',
-                  onPressed: isOffline
-                      ? null
-                      : () async {
-                    final code = inviteCodeController.text.trim();
-                    if (code.isEmpty) {
-                      return;
-                    }
-                    await context.read<FamilyMembersCubit>().acceptInvite(code);
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
+        if (isWide)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: createCard),
+              const SizedBox(width: 24),
+              Expanded(child: joinCard),
+            ],
+          )
+        else ...[
+          createCard,
+          const SizedBox(height: 16),
+          joinCard,
+        ],
       ],
+    );
+  }
+}
+
+class _CreateFamilyCard extends StatelessWidget {
+  const _CreateFamilyCard({
+    required this.familyTitleController,
+    required this.isLoading,
+    required this.isOffline,
+  });
+
+  final TextEditingController familyTitleController;
+  final bool isLoading;
+  final bool isOffline;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Create a family',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            AppTextField(
+              controller: familyTitleController,
+              label: 'Family name',
+            ),
+            const SizedBox(height: 12),
+            AppButton(
+              label: 'Create family',
+              isLoading: isLoading,
+              onPressed: isOffline
+                  ? null
+                  : () async {
+                      final title = familyTitleController.text.trim();
+                      if (title.isEmpty) {
+                        return;
+                      }
+                      await context.read<FamilyMembersCubit>().createFamily(
+                        title,
+                      );
+                    },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _JoinFamilyCard extends StatelessWidget {
+  const _JoinFamilyCard({
+    required this.inviteCodeController,
+    required this.isOffline,
+  });
+
+  final TextEditingController inviteCodeController;
+  final bool isOffline;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Join with an invite',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            AppTextField(
+              controller: inviteCodeController,
+              label: 'Invite code',
+            ),
+            const SizedBox(height: 12),
+            AppButton(
+              label: 'Join family',
+              onPressed: isOffline
+                  ? null
+                  : () async {
+                      final code = inviteCodeController.text.trim();
+                      if (code.isEmpty) {
+                        return;
+                      }
+                      await context.read<FamilyMembersCubit>().acceptInvite(
+                        code,
+                      );
+                    },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -410,8 +524,8 @@ class _InviteSection extends StatelessWidget {
               onPressed: isOffline
                   ? null
                   : () async {
-                await onCreateEmailInvite();
-              },
+                      await onCreateEmailInvite();
+                    },
             ),
             const SizedBox(height: 12),
             AppButton(
@@ -420,8 +534,8 @@ class _InviteSection extends StatelessWidget {
               onPressed: isOffline
                   ? null
                   : () async {
-                await onCreateCodeInvite();
-              },
+                      await onCreateCodeInvite();
+                    },
             ),
             if (lastInviteCode != null) ...[
               const SizedBox(height: 12),
@@ -573,6 +687,47 @@ class _TransferOwnershipSection extends StatelessWidget {
                       await onTransfer!();
                     },
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FamilyActionCard extends StatelessWidget {
+  const _FamilyActionCard({
+    required this.isOwner,
+    required this.onLeave,
+  });
+
+  final bool isOwner;
+  final Future<void> Function() onLeave;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppButton(
+              label: 'Leave family',
+              variant: AppButtonVariant.danger,
+              onPressed: isOwner
+                  ? null
+                  : () async {
+                      await onLeave();
+                    },
+            ),
+            if (isOwner) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Transfer ownership before leaving the family.',
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ],
           ],
         ),
       ),

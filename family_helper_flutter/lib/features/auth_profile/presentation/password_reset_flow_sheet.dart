@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/auth/auth_error_mapper.dart';
+import '../../../core/auth/auth_input_validator.dart';
 import '../../../core/logging/app_error_logger.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../ui_kit/ui_kit.dart';
@@ -264,9 +265,10 @@ class _PasswordResetFlowSheetState extends State<PasswordResetFlowSheet> {
 
   Future<void> _submitEmailStep() async {
     final email = _emailController.text.trim();
-    if (email.isEmpty) {
+    final emailValidationError = AuthInputValidator.validateEmail(email);
+    if (emailValidationError != null) {
       setState(() {
-        _error = 'Email is required';
+        _error = emailValidationError;
       });
       return;
     }
@@ -323,9 +325,13 @@ class _PasswordResetFlowSheetState extends State<PasswordResetFlowSheet> {
       });
       return;
     }
-    if (newPassword.isEmpty) {
+    final passwordValidationError = AuthInputValidator.validatePassword(
+      newPassword,
+      requiredMessage: 'New password is required',
+    );
+    if (passwordValidationError != null) {
       setState(() {
-        _error = 'New password is required';
+        _error = passwordValidationError;
       });
       return;
     }

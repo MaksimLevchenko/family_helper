@@ -55,6 +55,13 @@ class NotificationsService {
       );
 
       final now = clock.nowUtc();
+      await _deactivateTokenForOtherProfiles(
+        session,
+        profileId: profileId,
+        token: token,
+        now: now,
+        transaction: transaction,
+      );
       final existing = await _findPushTokenRow(
         session,
         profileId: profileId,
@@ -220,6 +227,35 @@ class NotificationsService {
       now: now,
       transaction: transaction,
     );
+  }
+
+  Future<void> _deactivateTokenForOtherProfiles(
+    Session session, {
+    required int profileId,
+    required String token,
+    required DateTime now,
+    Transaction? transaction,
+  }) async {
+    final duplicates = await PushTokenRow.db.find(
+      session,
+      where: (t) =>
+          t.token.equals(token) &
+          t.profileId.notEquals(profileId) &
+          t.deletedAt.equals(null),
+      transaction: transaction,
+    );
+    for (final duplicate in buildDeactivatedDuplicatePushTokens(
+      tokens: duplicates,
+      profileId: profileId,
+      token: token,
+      now: now,
+    )) {
+      await PushTokenRow.db.updateRow(
+        session,
+        duplicate,
+        transaction: transaction,
+      );
+    }
   }
 
   Future<void> _updatePushTokenRow(
@@ -818,4 +854,27 @@ class NotificationsService {
       ),
     );
   }
+}
+
+List<PushTokenRow> buildDeactivatedDuplicatePushTokens({
+  required List<PushTokenRow> tokens,
+  required int profileId,
+  required String token,
+  required DateTime now,
+}) {
+  return tokens
+      .where(
+        (entry) =>
+            entry.token == token &&
+            entry.profileId != profileId &&
+            entry.deletedAt == null,
+      )
+      .map(
+        (entry) => entry.copyWith(
+          deletedAt: now,
+          updatedAt: now,
+          version: entry.version + 1,
+        ),
+      )
+      .toList();
 }

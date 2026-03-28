@@ -189,12 +189,19 @@ final class EmailCodeDispatcher {
     final runMode = session.server.serverpod.runMode;
     final injectedSender = sender;
     final smtpSender = injectedSender ?? _buildSmtpSender(session);
-    if (smtpSender == null ||
-        (runMode == ServerpodRunMode.test && injectedSender == null)) {
-      // Dev/test fallback when SMTP is not configured.
+    if (shouldDisplayEmailCodeForRunMode(
+      runMode: runMode,
+      hasSender: smtpSender != null,
+      hasInjectedSender: injectedSender != null,
+    )) {
       session.log(
         '[EmailIdp] ${kind.name} code for $email: $verificationCode',
       );
+    }
+
+    if (smtpSender == null ||
+        (runMode == ServerpodRunMode.test && injectedSender == null)) {
+      // Dev/test fallback when SMTP is not configured.
       return;
     }
 
@@ -226,6 +233,16 @@ final class EmailCodeDispatcher {
 
     return SmtpEmailCodeSender(settings: settings);
   }
+}
+
+bool shouldDisplayEmailCodeForRunMode({
+  required String runMode,
+  required bool hasSender,
+  required bool hasInjectedSender,
+}) {
+  return runMode == ServerpodRunMode.development ||
+      !hasSender ||
+      (runMode == ServerpodRunMode.test && !hasInjectedSender);
 }
 
 bool _isBlank(String? value) => value == null || value.trim().isEmpty;

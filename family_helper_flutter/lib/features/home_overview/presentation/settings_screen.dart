@@ -18,6 +18,9 @@ import '../../notifications/providers/notifications_provider.dart';
 import '../../privacy_security/providers/privacy_provider.dart';
 import '../../tasks/providers/tasks_provider.dart';
 
+const _wideLayoutBreakpoint = 920.0;
+const _maxContentWidth = 1120.0;
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -78,104 +81,130 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       appBar: serverStatusAppBar(context, title: const Text('Settings')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const _SectionTitle('Account'),
-          AppTile(
-            title: 'Profile',
-            subtitle: _profileSummary(profileState),
-            onTap: () => context.go(AppRoutes.profile),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= _wideLayoutBreakpoint;
+            final content = isWide
+                ? _buildWideContent(
+                    profileState: profileState,
+                    familyState: familyState,
+                    notificationsState: notificationsState,
+                    privacyState: privacyState,
+                    themeMode: themeMode,
+                  )
+                : _buildNarrowContent(
+                    profileState: profileState,
+                    familyState: familyState,
+                    notificationsState: notificationsState,
+                    privacyState: privacyState,
+                    themeMode: themeMode,
+                  );
+
+            return Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isWide ? _maxContentWidth : double.infinity,
+                ),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(isWide ? 24 : 16),
+                  child: content,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNarrowContent({
+    required ProfileState profileState,
+    required FamilyMembersState familyState,
+    required NotificationsState notificationsState,
+    required PrivacyState privacyState,
+    required ThemeMode themeMode,
+  }) {
+    return Column(
+      key: const ValueKey('settings-layout-narrow'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _AccountSection(
+          profileSummary: _profileSummary(profileState),
+          familySummary: _familySummary(familyState),
+          notificationsSummary: _notificationsSummary(notificationsState),
+          privacySummary: _privacySummary(
+            privacyState: privacyState,
+            profileState: profileState,
           ),
-          AppTile(
-            title: 'Family',
-            subtitle: _familySummary(familyState),
-            onTap: () => context.go(AppRoutes.family),
-          ),
-          AppTile(
-            title: 'Notifications',
-            subtitle: _notificationsSummary(notificationsState),
-            onTap: () => context.push(AppRoutes.notificationCenter),
-          ),
-          AppTile(
-            title: 'Privacy',
-            subtitle: _privacySummary(
+        ),
+        const SizedBox(height: 16),
+        _AppearanceCard(themeMode: themeMode),
+        const SizedBox(height: 24),
+        _SignOutButton(onPressed: _handleSignOut),
+      ],
+    );
+  }
+
+  Widget _buildWideContent({
+    required ProfileState profileState,
+    required FamilyMembersState familyState,
+    required NotificationsState notificationsState,
+    required PrivacyState privacyState,
+    required ThemeMode themeMode,
+  }) {
+    return Row(
+      key: const ValueKey('settings-layout-wide'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 6,
+          child: _AccountSection(
+            key: const ValueKey('settings-account-column'),
+            profileSummary: _profileSummary(profileState),
+            familySummary: _familySummary(familyState),
+            notificationsSummary: _notificationsSummary(notificationsState),
+            privacySummary: _privacySummary(
               privacyState: privacyState,
               profileState: profileState,
             ),
-            onTap: () => context.go(AppRoutes.privacy),
           ),
-          const SizedBox(height: 16),
-          const _SectionTitle('Appearance'),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Theme',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Current mode: ${_themeModeLabel(themeMode)}',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 16),
-                  SegmentedButton<ThemeMode>(
-                    segments: const [
-                      ButtonSegment<ThemeMode>(
-                        value: ThemeMode.system,
-                        label: Text('System'),
-                      ),
-                      ButtonSegment<ThemeMode>(
-                        value: ThemeMode.light,
-                        label: Text('Light'),
-                      ),
-                      ButtonSegment<ThemeMode>(
-                        value: ThemeMode.dark,
-                        label: Text('Dark'),
-                      ),
-                    ],
-                    selected: {themeMode},
-                    onSelectionChanged: (selection) async {
-                      await context.read<ThemeCubit>().setThemeMode(
-                        selection.first,
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
+        ),
+        const SizedBox(width: 24),
+        Expanded(
+          flex: 5,
+          child: Column(
+            key: const ValueKey('settings-secondary-column'),
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _AppearanceCard(themeMode: themeMode),
+              const SizedBox(height: 24),
+              _SignOutCard(onPressed: _handleSignOut),
+            ],
           ),
-          const SizedBox(height: 24),
-          AppButton(
-            label: 'Sign out',
-            variant: AppButtonVariant.danger,
-            onPressed: () async {
-              final familySelectionCubit = context
-                  .read<FamilySelectionCubit?>();
-              context.read<NotificationsCubit?>()?.reset();
-              context.read<MediaCubit?>()?.reset();
-              context.read<PrivacyCubit?>()?.reset();
-              context.read<ListsCubit?>()?.reset();
-              context.read<MoneyGoalsCubit?>()?.reset();
-              context.read<TasksCubit?>()?.reset();
-              context.read<CalendarCubit?>()?.reset();
-              context.read<FamilyMembersCubit?>()?.reset();
-              context.read<ProfileBloc?>()?.add(const ProfileResetRequested());
-              final authCubit = context.read<AuthCubit?>();
-              if (familySelectionCubit == null || authCubit == null) {
-                return;
-              }
-              await familySelectionCubit.clear();
-              await authCubit.signOut();
-            },
-          ),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+
+  Future<void> _handleSignOut() async {
+    final familySelectionCubit = context.read<FamilySelectionCubit?>();
+    context.read<NotificationsCubit?>()?.reset();
+    context.read<MediaCubit?>()?.reset();
+    context.read<PrivacyCubit?>()?.reset();
+    context.read<ListsCubit?>()?.reset();
+    context.read<MoneyGoalsCubit?>()?.reset();
+    context.read<TasksCubit?>()?.reset();
+    context.read<CalendarCubit?>()?.reset();
+    context.read<FamilyMembersCubit?>()?.reset();
+    context.read<ProfileBloc?>()?.add(const ProfileResetRequested());
+    final authCubit = context.read<AuthCubit?>();
+    if (familySelectionCubit == null || authCubit == null) {
+      return;
+    }
+    await familySelectionCubit.clear();
+    await authCubit.signOut();
   }
 
   String _profileSummary(ProfileState state) {
@@ -276,6 +305,144 @@ class _SectionTitle extends StatelessWidget {
         title,
         style: Theme.of(context).textTheme.titleMedium,
       ),
+    );
+  }
+}
+
+class _AccountSection extends StatelessWidget {
+  const _AccountSection({
+    required this.profileSummary,
+    required this.familySummary,
+    required this.notificationsSummary,
+    required this.privacySummary,
+    super.key,
+  });
+
+  final String profileSummary;
+  final String familySummary;
+  final String notificationsSummary;
+  final String privacySummary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _SectionTitle('Account'),
+        AppTile(
+          title: 'Profile',
+          subtitle: profileSummary,
+          onTap: () => context.go(AppRoutes.profile),
+        ),
+        AppTile(
+          title: 'Family',
+          subtitle: familySummary,
+          onTap: () => context.go(AppRoutes.family),
+        ),
+        AppTile(
+          title: 'Notifications',
+          subtitle: notificationsSummary,
+          onTap: () => context.push(AppRoutes.notificationSettings),
+        ),
+        AppTile(
+          title: 'Privacy',
+          subtitle: privacySummary,
+          onTap: () => context.go(AppRoutes.privacy),
+        ),
+      ],
+    );
+  }
+}
+
+class _AppearanceCard extends StatelessWidget {
+  const _AppearanceCard({required this.themeMode});
+
+  final ThemeMode themeMode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _SectionTitle('Appearance'),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Theme',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Current mode: ${_SettingsScreenState._themeModeLabel(themeMode)}',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                SegmentedButton<ThemeMode>(
+                  segments: const [
+                    ButtonSegment<ThemeMode>(
+                      value: ThemeMode.system,
+                      label: Text('System'),
+                    ),
+                    ButtonSegment<ThemeMode>(
+                      value: ThemeMode.light,
+                      label: Text('Light'),
+                    ),
+                    ButtonSegment<ThemeMode>(
+                      value: ThemeMode.dark,
+                      label: Text('Dark'),
+                    ),
+                  ],
+                  selected: {themeMode},
+                  onSelectionChanged: (selection) async {
+                    await context.read<ThemeCubit>().setThemeMode(
+                      selection.first,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SignOutCard extends StatelessWidget {
+  const _SignOutCard({required this.onPressed});
+
+  final Future<void> Function() onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: _SignOutButton(onPressed: onPressed),
+      ),
+    );
+  }
+}
+
+class _SignOutButton extends StatelessWidget {
+  const _SignOutButton({this.onPressed});
+
+  final Future<void> Function()? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppButton(
+      label: 'Sign out',
+      variant: AppButtonVariant.danger,
+      onPressed: onPressed == null
+          ? null
+          : () async {
+              await onPressed!();
+            },
     );
   }
 }

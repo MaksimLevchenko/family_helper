@@ -1,4 +1,5 @@
 import 'package:family_helper_server/src/auth/email_code_dispatcher.dart';
+import 'package:serverpod/serverpod.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -47,6 +48,38 @@ void main() {
       });
 
       expect(settings, isNull);
+    });
+  });
+
+  group('shouldDisplayEmailCodeForRunMode', () {
+    test('returns true in development even when sender is configured', () {
+      final shouldDisplay = shouldDisplayEmailCodeForRunMode(
+        runMode: ServerpodRunMode.development,
+        hasSender: true,
+        hasInjectedSender: false,
+      );
+
+      expect(shouldDisplay, isTrue);
+    });
+
+    test('returns false in production when sender is configured', () {
+      final shouldDisplay = shouldDisplayEmailCodeForRunMode(
+        runMode: ServerpodRunMode.production,
+        hasSender: true,
+        hasInjectedSender: false,
+      );
+
+      expect(shouldDisplay, isFalse);
+    });
+
+    test('returns true in test without injected sender', () {
+      final shouldDisplay = shouldDisplayEmailCodeForRunMode(
+        runMode: ServerpodRunMode.test,
+        hasSender: true,
+        hasInjectedSender: false,
+      );
+
+      expect(shouldDisplay, isTrue);
     });
   });
 }

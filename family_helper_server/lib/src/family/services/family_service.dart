@@ -12,6 +12,7 @@ import '../../core/realtime/realtime_publisher.dart';
 import '../../core/sync/change_feed_service.dart';
 import '../../generated/protocol.dart';
 import '../../notifications/services/app_notification_service.dart';
+import 'family_invite_email_dispatcher.dart';
 
 class FamilyService {
   FamilyService({
@@ -338,135 +339,186 @@ class FamilyService {
     required String inviteType,
     String? email,
   }) async {
-    final authUserId = authContext.requireAuthUserId(session).uuid;
-
-    return session.db.transaction((transaction) async {
-      final actorProfileId = await rbac.ensureFamilyRole(
-        session,
-        familyId: familyId,
-        minRole: 'owner',
-        transaction: transaction,
-      );
-
-      final isFresh = await idempotency.tryBegin(
-        session,
-        actorAuthUserId: authUserId,
-        action: 'family.createInvite',
-        clientOperationId: clientOperationId,
-        transaction: transaction,
-      );
-
-      if (!isFresh) {
-        final binding = await idempotency.getBinding(
-          session,
-          actorAuthUserId: authUserId,
-          action: 'family.createInvite',
-          clientOperationId: clientOperationId,
-          transaction: transaction,
-        );
-        if (binding?.resourceType == 'family_invite') {
-          return _findInvite(
+    final authUser = authContext.requireAuthUserId(session);
+    final authUserId = authUser.uuid;
+    final result = await session.db
+        .transaction<({FamilyInviteDto invite, String familyTitle})>((
+          transaction,
+        ) async {
+          final actorProfileId = await rbac.ensureFamilyRole(
             session,
-            binding!.resourceId,
+            familyId: familyId,
+            minRole: 'owner',
             transaction: transaction,
           );
-        }
-      }
 
-      final now = clock.nowUtc();
-      final normalizedInviteType = inviteType.trim().toLowerCase();
-      final normalizedEmail = _normalizeInviteEmail(
-        inviteType: normalizedInviteType,
-        email: email,
-      );
-      final inviteCode = _randomCode(8);
-      final token = _randomCode(32);
+          final isFresh = await idempotency.tryBegin(
+            session,
+            actorAuthUserId: authUserId,
+            action: 'family.createInvite',
+            clientOperationId: clientOperationId,
+            transaction: transaction,
+          );
 
-      final inserted = await FamilyInviteRow.db.insertRow(
+          if (!isFresh) {
+            final binding = await idempotency.getBinding(
+              session,
+              actorAuthUserId: authUserId,
+              action: 'family.createInvite',
+              clientOperationId: clientOperationId,
+              transaction: transaction,
+            );
+            if (binding?.resourceType == 'family_invite') {
+              final invite = await _findInvite(
+                session,
+                binding!.resourceId,
+                transaction: transaction,
+              );
+              final family = await FamilyRow.db.findById(
+                session,
+                familyId,
+                transaction: transaction,
+              );
+              if (family == null || family.deletedAt != null) {
+                throw FileNotFoundException(message: 'Family not found.');
+              }
+              return (invite: invite, familyTitle: family.title);
+            }
+          }
+
+          final now = clock.nowUtc();
+          final normalizedInviteType = inviteType.trim().toLowerCase();
+          final normalizedEmail = _normalizeInviteEmail(
+            inviteType: normalizedInviteType,
+            email: email,
+          );
+          final family = await FamilyRow.db.findById(
+            session,
+            familyId,
+            transaction: transaction,
+          );
+          if (family == null || family.deletedAt != null) {
+            throw FileNotFoundException(message: 'Family not found.');
+          }
+          final inviteCode = _randomCode(8);
+          final token = _randomCode(32);
+
+          final inserted = await FamilyInviteRow.db.insertRow(
+            session,
+            FamilyInviteRow(
+              familyId: familyId,
+              inviteType: normalizedInviteType,
+              email: normalizedEmail,
+              inviteCode: inviteCode,
+              token: token,
+              expiresAt: now.add(const Duration(days: 7)),
+              acceptedAt: null,
+              createdAt: now,
+              updatedAt: now,
+              version: 1,
+            ),
+            transaction: transaction,
+          );
+
+          final invite = _mapInvite(inserted);
+
+          await idempotency.bindResource(
+            session,
+            actorAuthUserId: authUserId,
+            action: 'family.createInvite',
+            clientOperationId: clientOperationId,
+            resourceType: 'family_invite',
+            resourceId: invite.id,
+            transaction: transaction,
+          );
+
+          await changeFeed.appendChange(
+            session,
+            feature: 'family',
+            entityType: 'invite',
+            entityId: invite.id,
+            operation: 'created',
+            familyId: familyId,
+            version: 1,
+            payload: {'inviteType': inviteType},
+            transaction: transaction,
+          );
+
+          await audit.append(
+            session,
+            familyId: familyId,
+            actorProfileId: actorProfileId,
+            action: 'family.invite.create',
+            payload: {'inviteId': invite.id, 'inviteType': inviteType},
+            transaction: transaction,
+          );
+
+          await realtime.publish(
+            session,
+            familyId: familyId,
+            event: FamilyRealtimeEvent(
+              familyId: familyId,
+              feature: 'family',
+              entityType: 'invite',
+              entityId: invite.id,
+              eventType: 'family.updated',
+              changedAt: now,
+            ),
+          );
+
+          final inviteEmailAccount = normalizedInviteType == 'email'
+              ? await EmailAccount.db.findFirstRow(
+                  session,
+                  where: (t) => t.authUserId.equals(authUser),
+                  transaction: transaction,
+                )
+              : null;
+          final normalizedInviteEmailAccount = inviteEmailAccount?.email
+              .trim()
+              .toLowerCase();
+          final excludeProfileIds =
+              normalizedInviteType == 'email' &&
+                  normalizedEmail != null &&
+                  normalizedEmail != normalizedInviteEmailAccount
+              ? {actorProfileId}
+              : const <int>{};
+
+          await appNotifications.createForFamilyMembers(
+            session,
+            familyId: familyId,
+            excludeProfileIds: excludeProfileIds,
+            category: 'family_invite_created',
+            title: 'Family invite created',
+            body: normalizedEmail != null
+                ? 'Invite ready for $normalizedEmail'
+                : 'A new family invite is ready to share.',
+            entityType: 'invite',
+            entityId: invite.id,
+            route: '/home/settings/family',
+            payload: {
+              'category': 'family_invite_created',
+              'familyId': familyId,
+              'inviteId': invite.id,
+              'inviteType': invite.inviteType,
+            },
+            transaction: transaction,
+          );
+
+          return (invite: invite, familyTitle: family.title);
+        });
+
+    final invite = result.invite;
+    if (invite.inviteType == 'email' && invite.email != null) {
+      await FamilyInviteEmailDispatcher.instance.sendInvite(
         session,
-        FamilyInviteRow(
-          familyId: familyId,
-          inviteType: normalizedInviteType,
-          email: normalizedEmail,
-          inviteCode: inviteCode,
-          token: token,
-          expiresAt: now.add(const Duration(days: 7)),
-          acceptedAt: null,
-          createdAt: now,
-          updatedAt: now,
-          version: 1,
-        ),
-        transaction: transaction,
+        recipientEmail: invite.email!,
+        familyTitle: result.familyTitle,
+        inviteCode: invite.inviteCode,
+        expiresAt: invite.expiresAt,
       );
+    }
 
-      final invite = _mapInvite(inserted);
-
-      await idempotency.bindResource(
-        session,
-        actorAuthUserId: authUserId,
-        action: 'family.createInvite',
-        clientOperationId: clientOperationId,
-        resourceType: 'family_invite',
-        resourceId: invite.id,
-        transaction: transaction,
-      );
-
-      await changeFeed.appendChange(
-        session,
-        feature: 'family',
-        entityType: 'invite',
-        entityId: invite.id,
-        operation: 'created',
-        familyId: familyId,
-        version: 1,
-        payload: {'inviteType': inviteType},
-        transaction: transaction,
-      );
-
-      await audit.append(
-        session,
-        familyId: familyId,
-        actorProfileId: actorProfileId,
-        action: 'family.invite.create',
-        payload: {'inviteId': invite.id, 'inviteType': inviteType},
-        transaction: transaction,
-      );
-
-      await realtime.publish(
-        session,
-        familyId: familyId,
-        event: FamilyRealtimeEvent(
-          familyId: familyId,
-          feature: 'family',
-          entityType: 'invite',
-          entityId: invite.id,
-          eventType: 'family.updated',
-          changedAt: now,
-        ),
-      );
-
-      await appNotifications.createForFamilyMembers(
-        session,
-        familyId: familyId,
-        category: 'family_invite_created',
-        title: 'Family invite created',
-        body: normalizedEmail != null
-            ? 'Invite ready for $normalizedEmail'
-            : 'A new family invite is ready to share.',
-        entityType: 'invite',
-        entityId: invite.id,
-        route: '/home/settings/family',
-        payload: {
-          'category': 'family_invite_created',
-          'familyId': familyId,
-          'inviteId': invite.id,
-          'inviteType': invite.inviteType,
-        },
-        transaction: transaction,
-      );
-
-      return invite;
-    });
+    return invite;
   }
 
   Future<FamilyMemberDto> acceptInvite(

@@ -92,86 +92,93 @@ class _ProfileScreenState extends State<ProfileScreen> {
             );
           }
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              CachedDataStatus(
-                isUsingCachedData: state.isUsingCachedData,
-                lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
-              ),
-              if (state.error != null) ...[
-                AppBanner(text: state.error!, isError: true),
-                const SizedBox(height: 12),
-              ],
-              if (mediaState.error != null) ...[
-                AppBanner(text: mediaState.error!, isError: true),
-                const SizedBox(height: 12),
-              ],
-              _AvatarCard(
-                avatarMediaId: profile.avatarMediaId,
-                avatarUrlFuture: _avatarUrlFuture,
-                isLoading: mediaState.isLoading || state.isLoading,
-                onChangePhoto: isOffline
-                    ? null
-                    : () async {
-                  final mediaCubit = context.read<MediaCubit>();
-                  final profileBloc = context.read<ProfileBloc>();
-                  final mediaId = await mediaCubit.uploadAvatar();
-                  if (!mounted || mediaId == null) {
-                    return;
-                  }
-                  profileBloc.add(
-                    ProfileUpdateRequested(avatarMediaId: mediaId),
-                  );
-                },
-                onRemovePhoto: isOffline || profile.avatarMediaId == null
-                    ? null
-                    : () {
-                        context.read<ProfileBloc>().add(
-                          const ProfileUpdateRequested(clearAvatarMedia: true),
-                        );
-                      },
-              ),
-              const SizedBox(height: 16),
-              AppTextField(controller: _nameController, label: 'Display name'),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                key: ValueKey(_selectedTimezone ?? 'UTC'),
-                initialValue: _selectedTimezone ?? 'UTC',
-                decoration: const InputDecoration(labelText: 'Timezone'),
-                items: _timezones
-                    .map(
-                      (timezone) => DropdownMenuItem<String>(
-                        value: timezone,
-                        child: Text(timezone),
-                      ),
+          final avatarCard = _AvatarCard(
+            avatarMediaId: profile.avatarMediaId,
+            avatarUrlFuture: _avatarUrlFuture,
+            isLoading: mediaState.isLoading || state.isLoading,
+            onChangePhoto: isOffline
+                ? null
+                : () async {
+                    final mediaCubit = context.read<MediaCubit>();
+                    final profileBloc = context.read<ProfileBloc>();
+                    final mediaId = await mediaCubit.uploadAvatar();
+                    if (!mounted || mediaId == null) {
+                      return;
+                    }
+                    profileBloc.add(
+                      ProfileUpdateRequested(avatarMediaId: mediaId),
+                    );
+                  },
+            onRemovePhoto: isOffline || profile.avatarMediaId == null
+                ? null
+                : () {
+                    context.read<ProfileBloc>().add(
+                      const ProfileUpdateRequested(clearAvatarMedia: true),
+                    );
+                  },
+          );
+
+          final detailsSection = _ProfileDetailsSection(
+            nameController: _nameController,
+            selectedTimezone: _selectedTimezone ?? 'UTC',
+            isOffline: isOffline,
+            isLoading: state.isLoading,
+            timezones: _timezones,
+            onTimezoneChanged: (value) {
+              if (value == null) {
+                return;
+              }
+              setState(() {
+                _selectedTimezone = value;
+              });
+            },
+            onSave: () {
+              context.read<ProfileBloc>().add(
+                ProfileUpdateRequested(
+                  displayName: _nameController.text.trim(),
+                  timezone: _selectedTimezone ?? 'UTC',
+                ),
+              );
+            },
+          );
+
+          return ResponsiveContentLayout(
+            builder: (context, isWide) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CachedDataStatus(
+                    isUsingCachedData: state.isUsingCachedData,
+                    lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+                  ),
+                  if (state.error != null) ...[
+                    AppBanner(text: state.error!, isError: true),
+                    const SizedBox(height: 12),
+                  ],
+                  if (mediaState.error != null) ...[
+                    AppBanner(text: mediaState.error!, isError: true),
+                    const SizedBox(height: 12),
+                  ],
+                  if (isWide)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 5, child: avatarCard),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          flex: 6,
+                          child: _ProfileFormCard(child: detailsSection),
+                        ),
+                      ],
                     )
-                    .toList(),
-                onChanged: isOffline ? null : (value) {
-                  if (value == null) {
-                    return;
-                  }
-                  setState(() {
-                    _selectedTimezone = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              AppButton(
-                label: 'Save profile',
-                isLoading: state.isLoading,
-                onPressed: isOffline
-                    ? null
-                    : () {
-                  context.read<ProfileBloc>().add(
-                    ProfileUpdateRequested(
-                      displayName: _nameController.text.trim(),
-                      timezone: _selectedTimezone ?? 'UTC',
-                    ),
-                  );
-                },
-              ),
-            ],
+                  else ...[
+                    avatarCard,
+                    const SizedBox(height: 16),
+                    detailsSection,
+                  ],
+                ],
+              );
+            },
           );
         },
       ),
@@ -186,6 +193,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _avatarUrlFuture = profile.avatarMediaId == null
         ? null
         : context.read<MediaCubit>().loadSignedUrl(profile.avatarMediaId!);
+  }
+}
+
+class _ProfileFormCard extends StatelessWidget {
+  const _ProfileFormCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _ProfileDetailsSection extends StatelessWidget {
+  const _ProfileDetailsSection({
+    required this.nameController,
+    required this.selectedTimezone,
+    required this.isOffline,
+    required this.isLoading,
+    required this.timezones,
+    required this.onTimezoneChanged,
+    required this.onSave,
+  });
+
+  final TextEditingController nameController;
+  final String selectedTimezone;
+  final bool isOffline;
+  final bool isLoading;
+  final List<String> timezones;
+  final ValueChanged<String?> onTimezoneChanged;
+  final VoidCallback onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppTextField(controller: nameController, label: 'Display name'),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          key: ValueKey(selectedTimezone),
+          initialValue: selectedTimezone,
+          decoration: const InputDecoration(labelText: 'Timezone'),
+          items: timezones
+              .map(
+                (timezone) => DropdownMenuItem<String>(
+                  value: timezone,
+                  child: Text(timezone),
+                ),
+              )
+              .toList(),
+          onChanged: isOffline ? null : onTimezoneChanged,
+        ),
+        const SizedBox(height: 16),
+        AppButton(
+          label: 'Save profile',
+          isLoading: isLoading,
+          onPressed: isOffline ? null : onSave,
+        ),
+      ],
+    );
   }
 }
 

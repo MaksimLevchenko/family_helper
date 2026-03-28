@@ -5,6 +5,7 @@ import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
 import 'src/auth/email_code_dispatcher.dart';
+import 'src/auth/auth_input_policy.dart';
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
 import 'src/workers/future_call_registry.dart';
@@ -30,6 +31,7 @@ void run(List<String> args) async {
       EmailIdpConfigFromPasswords(
         sendRegistrationVerificationCode: _sendRegistrationCode,
         sendPasswordResetVerificationCode: _sendPasswordResetCode,
+        passwordValidationFunction: AuthInputPolicy.isValidPassword,
       ),
     ],
   );

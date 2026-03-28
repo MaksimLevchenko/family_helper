@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/auth_error_mapper.dart';
+import '../../../core/auth/auth_input_validator.dart';
 import '../../../core/auth/auth_session.dart';
 import '../../../core/logging/app_error_logger.dart';
 import '../../../core/routing/app_routes.dart';
@@ -67,9 +68,10 @@ class _RegistrationEmailStepScreenState
 
   Future<void> _submit() async {
     final email = _emailController.text.trim();
-    if (email.isEmpty) {
+    final emailValidationError = AuthInputValidator.validateEmail(email);
+    if (emailValidationError != null) {
       setState(() {
-        _error = 'Email is required';
+        _error = emailValidationError;
       });
       return;
     }
@@ -370,9 +372,12 @@ class _RegistrationPasswordStepScreenState
       });
       return;
     }
-    if (password.isEmpty) {
+    final passwordValidationError = AuthInputValidator.validatePassword(
+      password,
+    );
+    if (passwordValidationError != null) {
       setState(() {
-        _error = 'Password is required';
+        _error = passwordValidationError;
       });
       return;
     }

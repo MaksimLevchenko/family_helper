@@ -47,66 +47,95 @@ class _NotificationSettingsScreenState
             AppDefaults.calendarNotificationType,
           );
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              CachedDataStatus(
-                isUsingCachedData: state.isUsingCachedData,
-                lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
-              ),
-              if (state.error != null) ...[
-                const SizedBox(height: 12),
-                AppBanner(text: state.error!, isError: true),
-              ],
-              const SizedBox(height: 12),
-              _IntroCard(permissionStatus: state.permissionStatus),
+          final reminderCards = <Widget>[
+            _PreferenceCard(
+              value: taskRemindersEnabled,
+              onChanged: (value) async {
+                await context.read<NotificationsCubit>().setPreference(
+                  notificationType: AppDefaults.taskNotificationType,
+                  enabled: value,
+                );
+              },
+              title: 'Task reminders',
+              subtitle: state.permissionStatus.isGranted
+                  ? (taskRemindersEnabled
+                        ? 'You will receive reminders for upcoming tasks.'
+                        : 'Task reminders are currently turned off.')
+                  : 'Turn on device notifications to receive task reminders.',
+            ),
+            const SizedBox(height: 12),
+            _PreferenceCard(
+              value: calendarRemindersEnabled,
+              onChanged: (value) async {
+                await context.read<NotificationsCubit>().setPreference(
+                  notificationType: AppDefaults.calendarNotificationType,
+                  enabled: value,
+                );
+              },
+              title: 'Calendar reminders',
+              subtitle: state.permissionStatus.isGranted
+                  ? (calendarRemindersEnabled
+                        ? 'You will receive reminders for upcoming events.'
+                        : 'Calendar reminders are currently turned off.')
+                  : 'Turn on device notifications to receive calendar reminders.',
+            ),
+            if (kDebugMode) ...[
               const SizedBox(height: 16),
-              _PermissionCard(state: state),
-              const SizedBox(height: 16),
-              Card(
-                child: SwitchListTile(
-                  value: taskRemindersEnabled,
-                  onChanged: (value) async {
-                    await context.read<NotificationsCubit>().setPreference(
-                      notificationType: AppDefaults.taskNotificationType,
-                      enabled: value,
-                    );
-                  },
-                  title: const Text('Task reminders'),
-                  subtitle: Text(
-                    state.permissionStatus.isGranted
-                        ? (taskRemindersEnabled
-                              ? 'You will receive reminders for upcoming tasks.'
-                              : 'Task reminders are currently turned off.')
-                        : 'Turn on device notifications to receive task reminders.',
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Card(
-                child: SwitchListTile(
-                  value: calendarRemindersEnabled,
-                  onChanged: (value) async {
-                    await context.read<NotificationsCubit>().setPreference(
-                      notificationType: AppDefaults.calendarNotificationType,
-                      enabled: value,
-                    );
-                  },
-                  title: const Text('Calendar reminders'),
-                  subtitle: Text(
-                    state.permissionStatus.isGranted
-                        ? (calendarRemindersEnabled
-                              ? 'You will receive reminders for upcoming events.'
-                              : 'Calendar reminders are currently turned off.')
-                        : 'Turn on device notifications to receive calendar reminders.',
-                  ),
-                ),
-              ),
-              if (kDebugMode) ...[
-                const SizedBox(height: 16),
-                _DebugToolsCard(state: state),
-              ],
+              _DebugToolsCard(state: state),
             ],
+          ];
+
+          return ResponsiveContentLayout(
+            builder: (context, isWide) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CachedDataStatus(
+                    isUsingCachedData: state.isUsingCachedData,
+                    lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+                  ),
+                  if (state.error != null) ...[
+                    const SizedBox(height: 12),
+                    AppBanner(text: state.error!, isError: true),
+                  ],
+                  const SizedBox(height: 12),
+                  if (isWide)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _IntroCard(
+                                permissionStatus: state.permissionStatus,
+                              ),
+                              const SizedBox(height: 16),
+                              _PermissionCard(state: state),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          flex: 6,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: reminderCards,
+                          ),
+                        ),
+                      ],
+                    )
+                  else ...[
+                    _IntroCard(permissionStatus: state.permissionStatus),
+                    const SizedBox(height: 16),
+                    _PermissionCard(state: state),
+                    const SizedBox(height: 16),
+                    ...reminderCards,
+                  ],
+                ],
+              );
+            },
           );
         },
       ),
@@ -120,6 +149,32 @@ class _NotificationSettingsScreenState
     return preferences.any(
       (preference) =>
           preference.notificationType == notificationType && preference.enabled,
+    );
+  }
+}
+
+class _PreferenceCard extends StatelessWidget {
+  const _PreferenceCard({
+    required this.value,
+    required this.onChanged,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: SwitchListTile(
+        value: value,
+        onChanged: onChanged,
+        title: Text(title),
+        subtitle: Text(subtitle),
+      ),
     );
   }
 }

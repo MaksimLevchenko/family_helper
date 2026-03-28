@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/auth_error_mapper.dart';
+import '../../../core/auth/auth_input_validator.dart';
 import '../../../core/auth/auth_session.dart';
 import '../../../core/logging/app_error_logger.dart';
 import '../../../core/routing/app_routes.dart';
@@ -181,16 +182,8 @@ class _SignInScreenState extends State<SignInScreen> {
     required String email,
     required String password,
   }) {
-    if (email.isEmpty) {
-      return 'Email is required';
-    }
-    if (!email.contains('@')) {
-      return 'Enter a valid email address';
-    }
-    if (password.isEmpty) {
-      return 'Password is required';
-    }
-    return null;
+    return AuthInputValidator.validateEmail(email) ??
+        AuthInputValidator.validatePassword(password);
   }
 
   Future<void> _showPasswordResetFlow() async {

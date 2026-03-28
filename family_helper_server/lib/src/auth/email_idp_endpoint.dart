@@ -3,6 +3,7 @@ import 'package:crypto/crypto.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
+import 'auth_input_policy.dart';
 import '../core/security/security_event_service.dart';
 import '../generated/protocol.dart';
 
@@ -18,6 +19,12 @@ class EmailIdpEndpoint extends EmailIdpBaseEndpoint {
     Session session, {
     required String email,
   }) async {
+    if (!AuthInputPolicy.isValidEmail(email)) {
+      throw EmailAccountRequestException(
+        reason: EmailAccountRequestExceptionReason.policyViolation,
+      );
+    }
+
     final normalizedEmail = email.trim().toLowerCase();
     final existingAccount = await EmailAccount.db.findFirstRow(
       session,
@@ -39,6 +46,13 @@ class EmailIdpEndpoint extends EmailIdpBaseEndpoint {
     required String email,
     required String password,
   }) async {
+    if (!AuthInputPolicy.isValidEmail(email) ||
+        !AuthInputPolicy.isValidPassword(password)) {
+      throw EmailAccountLoginException(
+        reason: EmailAccountLoginExceptionReason.invalidCredentials,
+      );
+    }
+
     try {
       final auth = await super.login(
         session,

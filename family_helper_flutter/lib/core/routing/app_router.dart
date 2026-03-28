@@ -119,7 +119,7 @@ GoRouter createAppRouter(
               ),
               GoRoute(
                 path: 'notifications',
-                redirect: (context, state) => AppRoutes.notificationCenter,
+                redirect: (context, state) => AppRoutes.notificationSettings,
               ),
               GoRoute(
                 path: 'local-reminders',

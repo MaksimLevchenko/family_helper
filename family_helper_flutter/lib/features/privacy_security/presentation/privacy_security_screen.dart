@@ -58,21 +58,9 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
               profileState.profile?.analyticsOptIn ?? false;
           final canRequestDeletion = !state.hasActiveDeletionRequest;
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
+          final privacyControls = Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              CachedDataStatus(
-                isUsingCachedData: state.isUsingCachedData,
-                lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
-              ),
-              if (state.error != null) ...[
-                AppBanner(text: state.error!, isError: true),
-                const SizedBox(height: 12),
-              ],
-              if (profileState.error != null) ...[
-                AppBanner(text: profileState.error!, isError: true),
-                const SizedBox(height: 12),
-              ],
               Card(
                 child: SwitchListTile(
                   value: analyticsEnabled,
@@ -90,97 +78,105 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Your data',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 12),
-                      AppButton(
-                        label: 'Request data export',
-                        isLoading: state.isLoading,
-                        onPressed: () async {
-                          await context.read<PrivacyCubit>().requestExport();
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      AppButton(
-                        label: 'Request account deletion',
-                        variant: AppButtonVariant.danger,
-                        isLoading: state.isLoading,
-                        onPressed: !canRequestDeletion
-                            ? null
-                            : () async {
-                                await context
-                                    .read<PrivacyCubit>()
-                                    .requestAccountDeletion();
-                              },
-                      ),
-                      if (state.hasActiveDeletionRequest) ...[
-                        const SizedBox(height: 12),
-                        AppButton(
-                          label: 'Cancel deletion request',
-                          variant: AppButtonVariant.secondary,
-                          onPressed: isOffline
-                              ? null
-                              : () async {
-                            final messenger = ScaffoldMessenger.of(context);
-                            await context
-                                .read<PrivacyCubit>()
-                                .cancelAccountDeletion();
-                            if (!mounted) {
-                              return;
-                            }
-                            messenger.showSnackBar(
-                              const SnackBar(
-                                content: Text('Deletion request cancelled'),
-                              ),
-                            );
-                          },
+              _DataActionsCard(
+                isLoading: state.isLoading,
+                canRequestDeletion: canRequestDeletion,
+                hasActiveDeletionRequest: state.hasActiveDeletionRequest,
+                isOffline: isOffline,
+                onRequestExport: () async {
+                  await context.read<PrivacyCubit>().requestExport();
+                },
+                onRequestDeletion: () async {
+                  await context.read<PrivacyCubit>().requestAccountDeletion();
+                },
+                onCancelDeletion: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  await context.read<PrivacyCubit>().cancelAccountDeletion();
+                  if (!mounted) {
+                    return;
+                  }
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Deletion request cancelled'),
+                    ),
+                  );
+                },
+              ),
+            ],
+          );
+
+          final statusCards = <Widget>[
+            if (state.lastExportJob != null)
+              _StatusCard(
+                title: 'Data export',
+                subtitle: _exportSubtitle(state.lastExportJob!),
+                actionLabel: state.canDownloadExport ? 'Download export' : null,
+                onAction:
+                    !state.canDownloadExport ||
+                        state.lastExportJob!.signedUrl == null
+                    ? null
+                    : () async {
+                        await _openDownloadUrl(
+                          context,
+                          state.lastExportJob!.signedUrl!,
+                        );
+                      },
+              ),
+            if (state.shouldShowDeletionCard) ...[
+              if (state.lastExportJob != null) const SizedBox(height: 16),
+              _StatusCard(
+                title: 'Account deletion',
+                subtitle: _deletionSubtitle(state.accountDeletion!),
+              ),
+            ],
+            if (!state.hasVisiblePrivacyRequest)
+              const EmptyState(
+                title: 'No active privacy requests',
+                message:
+                    'Request an export or account deletion when you need it.',
+              ),
+          ];
+
+          return ResponsiveContentLayout(
+            builder: (context, isWide) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CachedDataStatus(
+                    isUsingCachedData: state.isUsingCachedData,
+                    lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+                  ),
+                  if (state.error != null) ...[
+                    AppBanner(text: state.error!, isError: true),
+                    const SizedBox(height: 12),
+                  ],
+                  if (profileState.error != null) ...[
+                    AppBanner(text: profileState.error!, isError: true),
+                    const SizedBox(height: 12),
+                  ],
+                  if (isWide)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 5, child: privacyControls),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          flex: 4,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: statusCards,
+                          ),
                         ),
                       ],
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (state.lastExportJob != null)
-                _StatusCard(
-                  title: 'Data export',
-                  subtitle: _exportSubtitle(state.lastExportJob!),
-                  actionLabel: state.canDownloadExport
-                      ? 'Download export'
-                      : null,
-                  onAction:
-                      !state.canDownloadExport ||
-                          state.lastExportJob!.signedUrl == null
-                      ? null
-                      : () async {
-                          await _openDownloadUrl(
-                            context,
-                            state.lastExportJob!.signedUrl!,
-                          );
-                        },
-                ),
-              if (state.shouldShowDeletionCard) ...[
-                const SizedBox(height: 16),
-                _StatusCard(
-                  title: 'Account deletion',
-                  subtitle: _deletionSubtitle(state.accountDeletion!),
-                ),
-              ],
-              if (!state.hasVisiblePrivacyRequest)
-                const EmptyState(
-                  title: 'No active privacy requests',
-                  message:
-                      'Request an export or account deletion when you need it.',
-                ),
-            ],
+                    )
+                  else ...[
+                    privacyControls,
+                    const SizedBox(height: 16),
+                    ...statusCards,
+                  ],
+                ],
+              );
+            },
           );
         },
       ),
@@ -276,6 +272,75 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
       return;
     }
     await _showDownloadDialog(context, url);
+  }
+}
+
+class _DataActionsCard extends StatelessWidget {
+  const _DataActionsCard({
+    required this.isLoading,
+    required this.canRequestDeletion,
+    required this.hasActiveDeletionRequest,
+    required this.isOffline,
+    required this.onRequestExport,
+    required this.onRequestDeletion,
+    required this.onCancelDeletion,
+  });
+
+  final bool isLoading;
+  final bool canRequestDeletion;
+  final bool hasActiveDeletionRequest;
+  final bool isOffline;
+  final Future<void> Function() onRequestExport;
+  final Future<void> Function() onRequestDeletion;
+  final Future<void> Function() onCancelDeletion;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your data',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            AppButton(
+              label: 'Request data export',
+              isLoading: isLoading,
+              onPressed: () async {
+                await onRequestExport();
+              },
+            ),
+            const SizedBox(height: 12),
+            AppButton(
+              label: 'Request account deletion',
+              variant: AppButtonVariant.danger,
+              isLoading: isLoading,
+              onPressed: !canRequestDeletion
+                  ? null
+                  : () async {
+                      await onRequestDeletion();
+                    },
+            ),
+            if (hasActiveDeletionRequest) ...[
+              const SizedBox(height: 12),
+              AppButton(
+                label: 'Cancel deletion request',
+                variant: AppButtonVariant.secondary,
+                onPressed: isOffline
+                    ? null
+                    : () async {
+                        await onCancelDeletion();
+                      },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 
