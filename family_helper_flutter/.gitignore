@@ -32,6 +32,10 @@
 /build/
 
 # Web related
+lib/firebase_options.dart
+lib/firebase_web_push_options.dart
+web/firebase-messaging-sw.js
+android/app/google-services.json
 
 # Symbolization related
 app.*.symbols

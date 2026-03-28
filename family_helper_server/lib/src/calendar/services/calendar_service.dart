@@ -10,6 +10,7 @@ import '../../core/rbac/ensure_family_role_service.dart';
 import '../../core/realtime/realtime_publisher.dart';
 import '../../core/sync/change_feed_service.dart';
 import '../../generated/protocol.dart';
+import '../../notifications/services/app_notification_service.dart';
 
 class CalendarService {
   CalendarService({
@@ -19,7 +20,8 @@ class CalendarService {
     this.rbac = const EnsureFamilyRoleService(),
     this.changeFeed = const ChangeFeedService(),
     this.realtime = const RealtimePublisher(),
-  });
+    AppNotificationService? appNotifications,
+  }) : appNotifications = appNotifications ?? AppNotificationService();
 
   static const _calendarReminderEntityType = 'calendar';
   static const _reminderSyncHorizon = Duration(days: 30);
@@ -31,6 +33,7 @@ class CalendarService {
   final EnsureFamilyRoleService rbac;
   final ChangeFeedService changeFeed;
   final RealtimePublisher realtime;
+  final AppNotificationService appNotifications;
 
   Future<CalendarEventDto> getEvent(
     Session session, {
@@ -230,6 +233,20 @@ class CalendarService {
         ),
       );
 
+      await _notifyCalendarEvent(
+        session,
+        actorProfileId: profileId,
+        familyId: familyId,
+        eventId: dto.id,
+        title: dto.title,
+        category: eventId == null ? 'calendar_created' : 'calendar_updated',
+        notificationTitle: eventId == null
+            ? 'Calendar event created'
+            : 'Calendar event updated',
+        occurrenceStart: dto.startsAt,
+        transaction: transaction,
+      );
+
       return dto;
     });
   }
@@ -381,6 +398,20 @@ class CalendarService {
         ),
       );
 
+      await _notifyCalendarEvent(
+        session,
+        actorProfileId: profileId,
+        familyId: familyId,
+        eventId: eventId,
+        title: event.title,
+        category: cancelled ? 'calendar_cancelled' : 'calendar_updated',
+        notificationTitle: cancelled
+            ? 'Calendar occurrence cancelled'
+            : 'Calendar occurrence updated',
+        occurrenceStart: keyStart,
+        transaction: transaction,
+      );
+
       return OperationResult(success: true, message: 'Occurrence updated');
     });
   }
@@ -498,6 +529,18 @@ class CalendarService {
           eventType: 'calendar.updated',
           changedAt: now,
         ),
+      );
+
+      await _notifyCalendarEvent(
+        session,
+        actorProfileId: profileId,
+        familyId: familyId,
+        eventId: eventId,
+        title: event.title,
+        category: 'calendar_cancelled',
+        notificationTitle: 'Calendar event cancelled',
+        occurrenceStart: anchor ?? event.startsAt,
+        transaction: transaction,
       );
 
       return OperationResult(success: true, message: 'Event deleted');
@@ -1418,6 +1461,36 @@ class CalendarService {
     required DateTime occurrenceKeyStart,
   }) {
     return 'calendar:$profileId:$eventId:${occurrenceKeyStart.toUtc().toIso8601String()}';
+  }
+
+  Future<void> _notifyCalendarEvent(
+    Session session, {
+    required int actorProfileId,
+    required int familyId,
+    required int eventId,
+    required String title,
+    required String category,
+    required String notificationTitle,
+    required DateTime occurrenceStart,
+    Transaction? transaction,
+  }) async {
+    await appNotifications.createForFamilyMembers(
+      session,
+      familyId: familyId,
+      category: category,
+      title: notificationTitle,
+      body: title,
+      entityType: 'calendar',
+      entityId: eventId,
+      route: '/home/calendar',
+      payload: {
+        'category': category,
+        'familyId': familyId,
+        'eventId': eventId,
+        'occurrenceStart': occurrenceStart.toIso8601String(),
+      },
+      transaction: transaction,
+    );
   }
 }
 

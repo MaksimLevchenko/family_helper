@@ -53,49 +53,52 @@ import 'money_goals/models/money_contribution_row.dart' as _i38;
 import 'money_goals/models/money_goal_dto.dart' as _i39;
 import 'money_goals/models/money_goal_history_entry_dto.dart' as _i40;
 import 'money_goals/models/money_goal_row.dart' as _i41;
-import 'notifications/models/notification_preference_dto.dart' as _i42;
-import 'notifications/models/notification_preference_row.dart' as _i43;
-import 'notifications/models/push_token_row.dart' as _i44;
-import 'notifications/models/reminder_dto.dart' as _i45;
-import 'notifications/models/reminder_row.dart' as _i46;
-import 'privacy/models/account_deletion_request_row.dart' as _i47;
-import 'privacy/models/account_deletion_status_dto.dart' as _i48;
-import 'privacy/models/privacy_export_job_dto.dart' as _i49;
-import 'privacy/models/privacy_export_job_row.dart' as _i50;
-import 'privacy/models/privacy_status_dto.dart' as _i51;
-import 'realtime/models/family_realtime_event.dart' as _i52;
-import 'sync/models/sync_change_dto.dart' as _i53;
-import 'sync/models/sync_changes_response.dart' as _i54;
-import 'tasks/models/task_dto.dart' as _i55;
-import 'tasks/models/task_history_entry_dto.dart' as _i56;
-import 'tasks/models/task_history_row.dart' as _i57;
-import 'tasks/models/task_row.dart' as _i58;
-import 'workers/models/account_deletion_payload.dart' as _i59;
-import 'workers/models/media_cleanup_payload.dart' as _i60;
-import 'workers/models/notifications_due_payload.dart' as _i61;
-import 'workers/models/privacy_export_payload.dart' as _i62;
+import 'notifications/models/app_notification_dto.dart' as _i42;
+import 'notifications/models/app_notification_list_response.dart' as _i43;
+import 'notifications/models/app_notification_row.dart' as _i44;
+import 'notifications/models/notification_preference_dto.dart' as _i45;
+import 'notifications/models/notification_preference_row.dart' as _i46;
+import 'notifications/models/push_token_row.dart' as _i47;
+import 'notifications/models/reminder_dto.dart' as _i48;
+import 'notifications/models/reminder_row.dart' as _i49;
+import 'privacy/models/account_deletion_request_row.dart' as _i50;
+import 'privacy/models/account_deletion_status_dto.dart' as _i51;
+import 'privacy/models/privacy_export_job_dto.dart' as _i52;
+import 'privacy/models/privacy_export_job_row.dart' as _i53;
+import 'privacy/models/privacy_status_dto.dart' as _i54;
+import 'realtime/models/family_realtime_event.dart' as _i55;
+import 'sync/models/sync_change_dto.dart' as _i56;
+import 'sync/models/sync_changes_response.dart' as _i57;
+import 'tasks/models/task_dto.dart' as _i58;
+import 'tasks/models/task_history_entry_dto.dart' as _i59;
+import 'tasks/models/task_history_row.dart' as _i60;
+import 'tasks/models/task_row.dart' as _i61;
+import 'workers/models/account_deletion_payload.dart' as _i62;
+import 'workers/models/media_cleanup_payload.dart' as _i63;
+import 'workers/models/notifications_due_payload.dart' as _i64;
+import 'workers/models/privacy_export_payload.dart' as _i65;
 import 'package:family_helper_server/src/generated/calendar/models/calendar_instance_dto.dart'
-    as _i63;
-import 'package:family_helper_server/src/generated/family/models/family_member_dto.dart'
-    as _i64;
-import 'package:family_helper_server/src/generated/lists/models/family_list_dto.dart'
-    as _i65;
-import 'package:family_helper_server/src/generated/lists/models/list_item_dto.dart'
     as _i66;
-import 'package:family_helper_server/src/generated/media/models/media_object_dto.dart'
+import 'package:family_helper_server/src/generated/family/models/family_member_dto.dart'
     as _i67;
-import 'package:family_helper_server/src/generated/money_goals/models/money_goal_history_entry_dto.dart'
+import 'package:family_helper_server/src/generated/lists/models/family_list_dto.dart'
     as _i68;
-import 'package:family_helper_server/src/generated/money_goals/models/money_goal_dto.dart'
+import 'package:family_helper_server/src/generated/lists/models/list_item_dto.dart'
     as _i69;
-import 'package:family_helper_server/src/generated/notifications/models/notification_preference_dto.dart'
+import 'package:family_helper_server/src/generated/media/models/media_object_dto.dart'
     as _i70;
-import 'package:family_helper_server/src/generated/notifications/models/reminder_dto.dart'
+import 'package:family_helper_server/src/generated/money_goals/models/money_goal_history_entry_dto.dart'
     as _i71;
-import 'package:family_helper_server/src/generated/tasks/models/task_dto.dart'
+import 'package:family_helper_server/src/generated/money_goals/models/money_goal_dto.dart'
     as _i72;
-import 'package:family_helper_server/src/generated/tasks/models/task_history_entry_dto.dart'
+import 'package:family_helper_server/src/generated/notifications/models/notification_preference_dto.dart'
     as _i73;
+import 'package:family_helper_server/src/generated/notifications/models/reminder_dto.dart'
+    as _i74;
+import 'package:family_helper_server/src/generated/tasks/models/task_dto.dart'
+    as _i75;
+import 'package:family_helper_server/src/generated/tasks/models/task_history_entry_dto.dart'
+    as _i76;
 export 'auth/models/auth_registration_exception.dart';
 export 'auth/models/auth_registration_exception_reason.dart';
 export 'auth_profile/models/profile_dto.dart';
@@ -133,6 +136,9 @@ export 'money_goals/models/money_contribution_row.dart';
 export 'money_goals/models/money_goal_dto.dart';
 export 'money_goals/models/money_goal_history_entry_dto.dart';
 export 'money_goals/models/money_goal_row.dart';
+export 'notifications/models/app_notification_dto.dart';
+export 'notifications/models/app_notification_list_response.dart';
+export 'notifications/models/app_notification_row.dart';
 export 'notifications/models/notification_preference_dto.dart';
 export 'notifications/models/notification_preference_row.dart';
 export 'notifications/models/push_token_row.dart';
@@ -234,6 +240,170 @@ class Protocol extends _i1.SerializationManagerServer {
           ],
           type: 'btree',
           isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'app_notification',
+      dartName: 'AppNotificationRow',
+      schema: 'public',
+      module: 'family_helper',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'app_notification_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'profileId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'familyId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'category',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'title',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'body',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'entityType',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'entityId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'route',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'payloadJson',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isRead',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'readAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'pushedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'pushStatus',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'version',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'app_notification_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'app_notification_profile_family_created_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'profileId',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'familyId',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'createdAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'app_notification_profile_family_read_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'profileId',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'familyId',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'isRead',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
           isPrimary: false,
         ),
       ],
@@ -1913,6 +2083,24 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'String',
         ),
         _i2.ColumnDefinition(
+          name: 'provider',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'deviceId',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'appVersion',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
           name: 'createdAt',
           columnType: _i2.ColumnType.timestampWithoutTimeZone,
           isNullable: false,
@@ -1925,7 +2113,25 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'DateTime',
         ),
         _i2.ColumnDefinition(
+          name: 'lastSeenAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'lastErrorAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
           name: 'deletedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'disabledAt',
           columnType: _i2.ColumnType.timestampWithoutTimeZone,
           isNullable: true,
           dartType: 'DateTime?',
@@ -2483,68 +2689,77 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i41.MoneyGoalRow) {
       return _i41.MoneyGoalRow.fromJson(data) as T;
     }
-    if (t == _i42.NotificationPreferenceDto) {
-      return _i42.NotificationPreferenceDto.fromJson(data) as T;
+    if (t == _i42.AppNotificationDto) {
+      return _i42.AppNotificationDto.fromJson(data) as T;
     }
-    if (t == _i43.NotificationPreferenceRow) {
-      return _i43.NotificationPreferenceRow.fromJson(data) as T;
+    if (t == _i43.AppNotificationListResponse) {
+      return _i43.AppNotificationListResponse.fromJson(data) as T;
     }
-    if (t == _i44.PushTokenRow) {
-      return _i44.PushTokenRow.fromJson(data) as T;
+    if (t == _i44.AppNotificationRow) {
+      return _i44.AppNotificationRow.fromJson(data) as T;
     }
-    if (t == _i45.ReminderDto) {
-      return _i45.ReminderDto.fromJson(data) as T;
+    if (t == _i45.NotificationPreferenceDto) {
+      return _i45.NotificationPreferenceDto.fromJson(data) as T;
     }
-    if (t == _i46.ReminderRow) {
-      return _i46.ReminderRow.fromJson(data) as T;
+    if (t == _i46.NotificationPreferenceRow) {
+      return _i46.NotificationPreferenceRow.fromJson(data) as T;
     }
-    if (t == _i47.AccountDeletionRequestRow) {
-      return _i47.AccountDeletionRequestRow.fromJson(data) as T;
+    if (t == _i47.PushTokenRow) {
+      return _i47.PushTokenRow.fromJson(data) as T;
     }
-    if (t == _i48.AccountDeletionStatusDto) {
-      return _i48.AccountDeletionStatusDto.fromJson(data) as T;
+    if (t == _i48.ReminderDto) {
+      return _i48.ReminderDto.fromJson(data) as T;
     }
-    if (t == _i49.PrivacyExportJobDto) {
-      return _i49.PrivacyExportJobDto.fromJson(data) as T;
+    if (t == _i49.ReminderRow) {
+      return _i49.ReminderRow.fromJson(data) as T;
     }
-    if (t == _i50.PrivacyExportJobRow) {
-      return _i50.PrivacyExportJobRow.fromJson(data) as T;
+    if (t == _i50.AccountDeletionRequestRow) {
+      return _i50.AccountDeletionRequestRow.fromJson(data) as T;
     }
-    if (t == _i51.PrivacyStatusDto) {
-      return _i51.PrivacyStatusDto.fromJson(data) as T;
+    if (t == _i51.AccountDeletionStatusDto) {
+      return _i51.AccountDeletionStatusDto.fromJson(data) as T;
     }
-    if (t == _i52.FamilyRealtimeEvent) {
-      return _i52.FamilyRealtimeEvent.fromJson(data) as T;
+    if (t == _i52.PrivacyExportJobDto) {
+      return _i52.PrivacyExportJobDto.fromJson(data) as T;
     }
-    if (t == _i53.SyncChangeDto) {
-      return _i53.SyncChangeDto.fromJson(data) as T;
+    if (t == _i53.PrivacyExportJobRow) {
+      return _i53.PrivacyExportJobRow.fromJson(data) as T;
     }
-    if (t == _i54.SyncChangesResponse) {
-      return _i54.SyncChangesResponse.fromJson(data) as T;
+    if (t == _i54.PrivacyStatusDto) {
+      return _i54.PrivacyStatusDto.fromJson(data) as T;
     }
-    if (t == _i55.TaskDto) {
-      return _i55.TaskDto.fromJson(data) as T;
+    if (t == _i55.FamilyRealtimeEvent) {
+      return _i55.FamilyRealtimeEvent.fromJson(data) as T;
     }
-    if (t == _i56.TaskHistoryEntryDto) {
-      return _i56.TaskHistoryEntryDto.fromJson(data) as T;
+    if (t == _i56.SyncChangeDto) {
+      return _i56.SyncChangeDto.fromJson(data) as T;
     }
-    if (t == _i57.TaskHistoryRow) {
-      return _i57.TaskHistoryRow.fromJson(data) as T;
+    if (t == _i57.SyncChangesResponse) {
+      return _i57.SyncChangesResponse.fromJson(data) as T;
     }
-    if (t == _i58.TaskRow) {
-      return _i58.TaskRow.fromJson(data) as T;
+    if (t == _i58.TaskDto) {
+      return _i58.TaskDto.fromJson(data) as T;
     }
-    if (t == _i59.AccountDeletionPayload) {
-      return _i59.AccountDeletionPayload.fromJson(data) as T;
+    if (t == _i59.TaskHistoryEntryDto) {
+      return _i59.TaskHistoryEntryDto.fromJson(data) as T;
     }
-    if (t == _i60.MediaCleanupPayload) {
-      return _i60.MediaCleanupPayload.fromJson(data) as T;
+    if (t == _i60.TaskHistoryRow) {
+      return _i60.TaskHistoryRow.fromJson(data) as T;
     }
-    if (t == _i61.NotificationsDuePayload) {
-      return _i61.NotificationsDuePayload.fromJson(data) as T;
+    if (t == _i61.TaskRow) {
+      return _i61.TaskRow.fromJson(data) as T;
     }
-    if (t == _i62.PrivacyExportPayload) {
-      return _i62.PrivacyExportPayload.fromJson(data) as T;
+    if (t == _i62.AccountDeletionPayload) {
+      return _i62.AccountDeletionPayload.fromJson(data) as T;
+    }
+    if (t == _i63.MediaCleanupPayload) {
+      return _i63.MediaCleanupPayload.fromJson(data) as T;
+    }
+    if (t == _i64.NotificationsDuePayload) {
+      return _i64.NotificationsDuePayload.fromJson(data) as T;
+    }
+    if (t == _i65.PrivacyExportPayload) {
+      return _i65.PrivacyExportPayload.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.AuthRegistrationException?>()) {
       return (data != null
@@ -2672,160 +2887,180 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i41.MoneyGoalRow?>()) {
       return (data != null ? _i41.MoneyGoalRow.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i42.NotificationPreferenceDto?>()) {
+    if (t == _i1.getType<_i42.AppNotificationDto?>()) {
+      return (data != null ? _i42.AppNotificationDto.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i43.AppNotificationListResponse?>()) {
       return (data != null
-              ? _i42.NotificationPreferenceDto.fromJson(data)
+              ? _i43.AppNotificationListResponse.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i43.NotificationPreferenceRow?>()) {
+    if (t == _i1.getType<_i44.AppNotificationRow?>()) {
+      return (data != null ? _i44.AppNotificationRow.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i45.NotificationPreferenceDto?>()) {
       return (data != null
-              ? _i43.NotificationPreferenceRow.fromJson(data)
+              ? _i45.NotificationPreferenceDto.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i44.PushTokenRow?>()) {
-      return (data != null ? _i44.PushTokenRow.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i45.ReminderDto?>()) {
-      return (data != null ? _i45.ReminderDto.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i46.ReminderRow?>()) {
-      return (data != null ? _i46.ReminderRow.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i47.AccountDeletionRequestRow?>()) {
+    if (t == _i1.getType<_i46.NotificationPreferenceRow?>()) {
       return (data != null
-              ? _i47.AccountDeletionRequestRow.fromJson(data)
+              ? _i46.NotificationPreferenceRow.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i48.AccountDeletionStatusDto?>()) {
+    if (t == _i1.getType<_i47.PushTokenRow?>()) {
+      return (data != null ? _i47.PushTokenRow.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i48.ReminderDto?>()) {
+      return (data != null ? _i48.ReminderDto.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i49.ReminderRow?>()) {
+      return (data != null ? _i49.ReminderRow.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i50.AccountDeletionRequestRow?>()) {
       return (data != null
-              ? _i48.AccountDeletionStatusDto.fromJson(data)
+              ? _i50.AccountDeletionRequestRow.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i49.PrivacyExportJobDto?>()) {
-      return (data != null ? _i49.PrivacyExportJobDto.fromJson(data) : null)
+    if (t == _i1.getType<_i51.AccountDeletionStatusDto?>()) {
+      return (data != null
+              ? _i51.AccountDeletionStatusDto.fromJson(data)
+              : null)
           as T;
     }
-    if (t == _i1.getType<_i50.PrivacyExportJobRow?>()) {
-      return (data != null ? _i50.PrivacyExportJobRow.fromJson(data) : null)
+    if (t == _i1.getType<_i52.PrivacyExportJobDto?>()) {
+      return (data != null ? _i52.PrivacyExportJobDto.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i51.PrivacyStatusDto?>()) {
-      return (data != null ? _i51.PrivacyStatusDto.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i52.FamilyRealtimeEvent?>()) {
-      return (data != null ? _i52.FamilyRealtimeEvent.fromJson(data) : null)
+    if (t == _i1.getType<_i53.PrivacyExportJobRow?>()) {
+      return (data != null ? _i53.PrivacyExportJobRow.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i53.SyncChangeDto?>()) {
-      return (data != null ? _i53.SyncChangeDto.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i54.PrivacyStatusDto?>()) {
+      return (data != null ? _i54.PrivacyStatusDto.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i54.SyncChangesResponse?>()) {
-      return (data != null ? _i54.SyncChangesResponse.fromJson(data) : null)
+    if (t == _i1.getType<_i55.FamilyRealtimeEvent?>()) {
+      return (data != null ? _i55.FamilyRealtimeEvent.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i55.TaskDto?>()) {
-      return (data != null ? _i55.TaskDto.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i56.SyncChangeDto?>()) {
+      return (data != null ? _i56.SyncChangeDto.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i56.TaskHistoryEntryDto?>()) {
-      return (data != null ? _i56.TaskHistoryEntryDto.fromJson(data) : null)
+    if (t == _i1.getType<_i57.SyncChangesResponse?>()) {
+      return (data != null ? _i57.SyncChangesResponse.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i57.TaskHistoryRow?>()) {
-      return (data != null ? _i57.TaskHistoryRow.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i58.TaskDto?>()) {
+      return (data != null ? _i58.TaskDto.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i58.TaskRow?>()) {
-      return (data != null ? _i58.TaskRow.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i59.AccountDeletionPayload?>()) {
-      return (data != null ? _i59.AccountDeletionPayload.fromJson(data) : null)
+    if (t == _i1.getType<_i59.TaskHistoryEntryDto?>()) {
+      return (data != null ? _i59.TaskHistoryEntryDto.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i60.MediaCleanupPayload?>()) {
-      return (data != null ? _i60.MediaCleanupPayload.fromJson(data) : null)
+    if (t == _i1.getType<_i60.TaskHistoryRow?>()) {
+      return (data != null ? _i60.TaskHistoryRow.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i61.TaskRow?>()) {
+      return (data != null ? _i61.TaskRow.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i62.AccountDeletionPayload?>()) {
+      return (data != null ? _i62.AccountDeletionPayload.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i61.NotificationsDuePayload?>()) {
-      return (data != null ? _i61.NotificationsDuePayload.fromJson(data) : null)
+    if (t == _i1.getType<_i63.MediaCleanupPayload?>()) {
+      return (data != null ? _i63.MediaCleanupPayload.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i62.PrivacyExportPayload?>()) {
-      return (data != null ? _i62.PrivacyExportPayload.fromJson(data) : null)
+    if (t == _i1.getType<_i64.NotificationsDuePayload?>()) {
+      return (data != null ? _i64.NotificationsDuePayload.fromJson(data) : null)
           as T;
     }
-    if (t == List<_i53.SyncChangeDto>) {
+    if (t == _i1.getType<_i65.PrivacyExportPayload?>()) {
+      return (data != null ? _i65.PrivacyExportPayload.fromJson(data) : null)
+          as T;
+    }
+    if (t == List<_i42.AppNotificationDto>) {
       return (data as List)
-              .map((e) => deserialize<_i53.SyncChangeDto>(e))
+              .map((e) => deserialize<_i42.AppNotificationDto>(e))
               .toList()
           as T;
     }
-    if (t == List<_i63.CalendarInstanceDto>) {
+    if (t == List<_i56.SyncChangeDto>) {
       return (data as List)
-              .map((e) => deserialize<_i63.CalendarInstanceDto>(e))
+              .map((e) => deserialize<_i56.SyncChangeDto>(e))
               .toList()
           as T;
     }
-    if (t == List<_i64.FamilyMemberDto>) {
+    if (t == List<_i66.CalendarInstanceDto>) {
       return (data as List)
-              .map((e) => deserialize<_i64.FamilyMemberDto>(e))
+              .map((e) => deserialize<_i66.CalendarInstanceDto>(e))
               .toList()
           as T;
     }
-    if (t == List<_i65.FamilyListDto>) {
+    if (t == List<_i67.FamilyMemberDto>) {
       return (data as List)
-              .map((e) => deserialize<_i65.FamilyListDto>(e))
+              .map((e) => deserialize<_i67.FamilyMemberDto>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i68.FamilyListDto>) {
+      return (data as List)
+              .map((e) => deserialize<_i68.FamilyListDto>(e))
               .toList()
           as T;
     }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
-    if (t == List<_i66.ListItemDto>) {
+    if (t == List<_i69.ListItemDto>) {
       return (data as List)
-              .map((e) => deserialize<_i66.ListItemDto>(e))
+              .map((e) => deserialize<_i69.ListItemDto>(e))
               .toList()
           as T;
     }
-    if (t == List<_i67.MediaObjectDto>) {
+    if (t == List<_i70.MediaObjectDto>) {
       return (data as List)
-              .map((e) => deserialize<_i67.MediaObjectDto>(e))
+              .map((e) => deserialize<_i70.MediaObjectDto>(e))
               .toList()
           as T;
     }
-    if (t == List<_i68.MoneyGoalHistoryEntryDto>) {
+    if (t == List<_i71.MoneyGoalHistoryEntryDto>) {
       return (data as List)
-              .map((e) => deserialize<_i68.MoneyGoalHistoryEntryDto>(e))
+              .map((e) => deserialize<_i71.MoneyGoalHistoryEntryDto>(e))
               .toList()
           as T;
     }
-    if (t == List<_i69.MoneyGoalDto>) {
+    if (t == List<_i72.MoneyGoalDto>) {
       return (data as List)
-              .map((e) => deserialize<_i69.MoneyGoalDto>(e))
+              .map((e) => deserialize<_i72.MoneyGoalDto>(e))
               .toList()
           as T;
     }
-    if (t == List<_i70.NotificationPreferenceDto>) {
+    if (t == List<_i73.NotificationPreferenceDto>) {
       return (data as List)
-              .map((e) => deserialize<_i70.NotificationPreferenceDto>(e))
+              .map((e) => deserialize<_i73.NotificationPreferenceDto>(e))
               .toList()
           as T;
     }
-    if (t == List<_i71.ReminderDto>) {
+    if (t == List<_i74.ReminderDto>) {
       return (data as List)
-              .map((e) => deserialize<_i71.ReminderDto>(e))
+              .map((e) => deserialize<_i74.ReminderDto>(e))
               .toList()
           as T;
     }
-    if (t == List<_i72.TaskDto>) {
-      return (data as List).map((e) => deserialize<_i72.TaskDto>(e)).toList()
+    if (t == List<_i75.TaskDto>) {
+      return (data as List).map((e) => deserialize<_i75.TaskDto>(e)).toList()
           as T;
     }
-    if (t == List<_i73.TaskHistoryEntryDto>) {
+    if (t == List<_i76.TaskHistoryEntryDto>) {
       return (data as List)
-              .map((e) => deserialize<_i73.TaskHistoryEntryDto>(e))
+              .map((e) => deserialize<_i76.TaskHistoryEntryDto>(e))
               .toList()
           as T;
     }
@@ -2880,27 +3115,30 @@ class Protocol extends _i1.SerializationManagerServer {
       _i39.MoneyGoalDto => 'MoneyGoalDto',
       _i40.MoneyGoalHistoryEntryDto => 'MoneyGoalHistoryEntryDto',
       _i41.MoneyGoalRow => 'MoneyGoalRow',
-      _i42.NotificationPreferenceDto => 'NotificationPreferenceDto',
-      _i43.NotificationPreferenceRow => 'NotificationPreferenceRow',
-      _i44.PushTokenRow => 'PushTokenRow',
-      _i45.ReminderDto => 'ReminderDto',
-      _i46.ReminderRow => 'ReminderRow',
-      _i47.AccountDeletionRequestRow => 'AccountDeletionRequestRow',
-      _i48.AccountDeletionStatusDto => 'AccountDeletionStatusDto',
-      _i49.PrivacyExportJobDto => 'PrivacyExportJobDto',
-      _i50.PrivacyExportJobRow => 'PrivacyExportJobRow',
-      _i51.PrivacyStatusDto => 'PrivacyStatusDto',
-      _i52.FamilyRealtimeEvent => 'FamilyRealtimeEvent',
-      _i53.SyncChangeDto => 'SyncChangeDto',
-      _i54.SyncChangesResponse => 'SyncChangesResponse',
-      _i55.TaskDto => 'TaskDto',
-      _i56.TaskHistoryEntryDto => 'TaskHistoryEntryDto',
-      _i57.TaskHistoryRow => 'TaskHistoryRow',
-      _i58.TaskRow => 'TaskRow',
-      _i59.AccountDeletionPayload => 'AccountDeletionPayload',
-      _i60.MediaCleanupPayload => 'MediaCleanupPayload',
-      _i61.NotificationsDuePayload => 'NotificationsDuePayload',
-      _i62.PrivacyExportPayload => 'PrivacyExportPayload',
+      _i42.AppNotificationDto => 'AppNotificationDto',
+      _i43.AppNotificationListResponse => 'AppNotificationListResponse',
+      _i44.AppNotificationRow => 'AppNotificationRow',
+      _i45.NotificationPreferenceDto => 'NotificationPreferenceDto',
+      _i46.NotificationPreferenceRow => 'NotificationPreferenceRow',
+      _i47.PushTokenRow => 'PushTokenRow',
+      _i48.ReminderDto => 'ReminderDto',
+      _i49.ReminderRow => 'ReminderRow',
+      _i50.AccountDeletionRequestRow => 'AccountDeletionRequestRow',
+      _i51.AccountDeletionStatusDto => 'AccountDeletionStatusDto',
+      _i52.PrivacyExportJobDto => 'PrivacyExportJobDto',
+      _i53.PrivacyExportJobRow => 'PrivacyExportJobRow',
+      _i54.PrivacyStatusDto => 'PrivacyStatusDto',
+      _i55.FamilyRealtimeEvent => 'FamilyRealtimeEvent',
+      _i56.SyncChangeDto => 'SyncChangeDto',
+      _i57.SyncChangesResponse => 'SyncChangesResponse',
+      _i58.TaskDto => 'TaskDto',
+      _i59.TaskHistoryEntryDto => 'TaskHistoryEntryDto',
+      _i60.TaskHistoryRow => 'TaskHistoryRow',
+      _i61.TaskRow => 'TaskRow',
+      _i62.AccountDeletionPayload => 'AccountDeletionPayload',
+      _i63.MediaCleanupPayload => 'MediaCleanupPayload',
+      _i64.NotificationsDuePayload => 'NotificationsDuePayload',
+      _i65.PrivacyExportPayload => 'PrivacyExportPayload',
       _ => null,
     };
   }
@@ -2992,47 +3230,53 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'MoneyGoalHistoryEntryDto';
       case _i41.MoneyGoalRow():
         return 'MoneyGoalRow';
-      case _i42.NotificationPreferenceDto():
+      case _i42.AppNotificationDto():
+        return 'AppNotificationDto';
+      case _i43.AppNotificationListResponse():
+        return 'AppNotificationListResponse';
+      case _i44.AppNotificationRow():
+        return 'AppNotificationRow';
+      case _i45.NotificationPreferenceDto():
         return 'NotificationPreferenceDto';
-      case _i43.NotificationPreferenceRow():
+      case _i46.NotificationPreferenceRow():
         return 'NotificationPreferenceRow';
-      case _i44.PushTokenRow():
+      case _i47.PushTokenRow():
         return 'PushTokenRow';
-      case _i45.ReminderDto():
+      case _i48.ReminderDto():
         return 'ReminderDto';
-      case _i46.ReminderRow():
+      case _i49.ReminderRow():
         return 'ReminderRow';
-      case _i47.AccountDeletionRequestRow():
+      case _i50.AccountDeletionRequestRow():
         return 'AccountDeletionRequestRow';
-      case _i48.AccountDeletionStatusDto():
+      case _i51.AccountDeletionStatusDto():
         return 'AccountDeletionStatusDto';
-      case _i49.PrivacyExportJobDto():
+      case _i52.PrivacyExportJobDto():
         return 'PrivacyExportJobDto';
-      case _i50.PrivacyExportJobRow():
+      case _i53.PrivacyExportJobRow():
         return 'PrivacyExportJobRow';
-      case _i51.PrivacyStatusDto():
+      case _i54.PrivacyStatusDto():
         return 'PrivacyStatusDto';
-      case _i52.FamilyRealtimeEvent():
+      case _i55.FamilyRealtimeEvent():
         return 'FamilyRealtimeEvent';
-      case _i53.SyncChangeDto():
+      case _i56.SyncChangeDto():
         return 'SyncChangeDto';
-      case _i54.SyncChangesResponse():
+      case _i57.SyncChangesResponse():
         return 'SyncChangesResponse';
-      case _i55.TaskDto():
+      case _i58.TaskDto():
         return 'TaskDto';
-      case _i56.TaskHistoryEntryDto():
+      case _i59.TaskHistoryEntryDto():
         return 'TaskHistoryEntryDto';
-      case _i57.TaskHistoryRow():
+      case _i60.TaskHistoryRow():
         return 'TaskHistoryRow';
-      case _i58.TaskRow():
+      case _i61.TaskRow():
         return 'TaskRow';
-      case _i59.AccountDeletionPayload():
+      case _i62.AccountDeletionPayload():
         return 'AccountDeletionPayload';
-      case _i60.MediaCleanupPayload():
+      case _i63.MediaCleanupPayload():
         return 'MediaCleanupPayload';
-      case _i61.NotificationsDuePayload():
+      case _i64.NotificationsDuePayload():
         return 'NotificationsDuePayload';
-      case _i62.PrivacyExportPayload():
+      case _i65.PrivacyExportPayload():
         return 'PrivacyExportPayload';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -3167,68 +3411,77 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'MoneyGoalRow') {
       return deserialize<_i41.MoneyGoalRow>(data['data']);
     }
+    if (dataClassName == 'AppNotificationDto') {
+      return deserialize<_i42.AppNotificationDto>(data['data']);
+    }
+    if (dataClassName == 'AppNotificationListResponse') {
+      return deserialize<_i43.AppNotificationListResponse>(data['data']);
+    }
+    if (dataClassName == 'AppNotificationRow') {
+      return deserialize<_i44.AppNotificationRow>(data['data']);
+    }
     if (dataClassName == 'NotificationPreferenceDto') {
-      return deserialize<_i42.NotificationPreferenceDto>(data['data']);
+      return deserialize<_i45.NotificationPreferenceDto>(data['data']);
     }
     if (dataClassName == 'NotificationPreferenceRow') {
-      return deserialize<_i43.NotificationPreferenceRow>(data['data']);
+      return deserialize<_i46.NotificationPreferenceRow>(data['data']);
     }
     if (dataClassName == 'PushTokenRow') {
-      return deserialize<_i44.PushTokenRow>(data['data']);
+      return deserialize<_i47.PushTokenRow>(data['data']);
     }
     if (dataClassName == 'ReminderDto') {
-      return deserialize<_i45.ReminderDto>(data['data']);
+      return deserialize<_i48.ReminderDto>(data['data']);
     }
     if (dataClassName == 'ReminderRow') {
-      return deserialize<_i46.ReminderRow>(data['data']);
+      return deserialize<_i49.ReminderRow>(data['data']);
     }
     if (dataClassName == 'AccountDeletionRequestRow') {
-      return deserialize<_i47.AccountDeletionRequestRow>(data['data']);
+      return deserialize<_i50.AccountDeletionRequestRow>(data['data']);
     }
     if (dataClassName == 'AccountDeletionStatusDto') {
-      return deserialize<_i48.AccountDeletionStatusDto>(data['data']);
+      return deserialize<_i51.AccountDeletionStatusDto>(data['data']);
     }
     if (dataClassName == 'PrivacyExportJobDto') {
-      return deserialize<_i49.PrivacyExportJobDto>(data['data']);
+      return deserialize<_i52.PrivacyExportJobDto>(data['data']);
     }
     if (dataClassName == 'PrivacyExportJobRow') {
-      return deserialize<_i50.PrivacyExportJobRow>(data['data']);
+      return deserialize<_i53.PrivacyExportJobRow>(data['data']);
     }
     if (dataClassName == 'PrivacyStatusDto') {
-      return deserialize<_i51.PrivacyStatusDto>(data['data']);
+      return deserialize<_i54.PrivacyStatusDto>(data['data']);
     }
     if (dataClassName == 'FamilyRealtimeEvent') {
-      return deserialize<_i52.FamilyRealtimeEvent>(data['data']);
+      return deserialize<_i55.FamilyRealtimeEvent>(data['data']);
     }
     if (dataClassName == 'SyncChangeDto') {
-      return deserialize<_i53.SyncChangeDto>(data['data']);
+      return deserialize<_i56.SyncChangeDto>(data['data']);
     }
     if (dataClassName == 'SyncChangesResponse') {
-      return deserialize<_i54.SyncChangesResponse>(data['data']);
+      return deserialize<_i57.SyncChangesResponse>(data['data']);
     }
     if (dataClassName == 'TaskDto') {
-      return deserialize<_i55.TaskDto>(data['data']);
+      return deserialize<_i58.TaskDto>(data['data']);
     }
     if (dataClassName == 'TaskHistoryEntryDto') {
-      return deserialize<_i56.TaskHistoryEntryDto>(data['data']);
+      return deserialize<_i59.TaskHistoryEntryDto>(data['data']);
     }
     if (dataClassName == 'TaskHistoryRow') {
-      return deserialize<_i57.TaskHistoryRow>(data['data']);
+      return deserialize<_i60.TaskHistoryRow>(data['data']);
     }
     if (dataClassName == 'TaskRow') {
-      return deserialize<_i58.TaskRow>(data['data']);
+      return deserialize<_i61.TaskRow>(data['data']);
     }
     if (dataClassName == 'AccountDeletionPayload') {
-      return deserialize<_i59.AccountDeletionPayload>(data['data']);
+      return deserialize<_i62.AccountDeletionPayload>(data['data']);
     }
     if (dataClassName == 'MediaCleanupPayload') {
-      return deserialize<_i60.MediaCleanupPayload>(data['data']);
+      return deserialize<_i63.MediaCleanupPayload>(data['data']);
     }
     if (dataClassName == 'NotificationsDuePayload') {
-      return deserialize<_i61.NotificationsDuePayload>(data['data']);
+      return deserialize<_i64.NotificationsDuePayload>(data['data']);
     }
     if (dataClassName == 'PrivacyExportPayload') {
-      return deserialize<_i62.PrivacyExportPayload>(data['data']);
+      return deserialize<_i65.PrivacyExportPayload>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -3300,20 +3553,22 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i38.MoneyContributionRow.t;
       case _i41.MoneyGoalRow:
         return _i41.MoneyGoalRow.t;
-      case _i43.NotificationPreferenceRow:
-        return _i43.NotificationPreferenceRow.t;
-      case _i44.PushTokenRow:
-        return _i44.PushTokenRow.t;
-      case _i46.ReminderRow:
-        return _i46.ReminderRow.t;
-      case _i47.AccountDeletionRequestRow:
-        return _i47.AccountDeletionRequestRow.t;
-      case _i50.PrivacyExportJobRow:
-        return _i50.PrivacyExportJobRow.t;
-      case _i57.TaskHistoryRow:
-        return _i57.TaskHistoryRow.t;
-      case _i58.TaskRow:
-        return _i58.TaskRow.t;
+      case _i44.AppNotificationRow:
+        return _i44.AppNotificationRow.t;
+      case _i46.NotificationPreferenceRow:
+        return _i46.NotificationPreferenceRow.t;
+      case _i47.PushTokenRow:
+        return _i47.PushTokenRow.t;
+      case _i49.ReminderRow:
+        return _i49.ReminderRow.t;
+      case _i50.AccountDeletionRequestRow:
+        return _i50.AccountDeletionRequestRow.t;
+      case _i53.PrivacyExportJobRow:
+        return _i53.PrivacyExportJobRow.t;
+      case _i60.TaskHistoryRow:
+        return _i60.TaskHistoryRow.t;
+      case _i61.TaskRow:
+        return _i61.TaskRow.t;
     }
     return null;
   }

@@ -15,12 +15,30 @@ class NotificationsEndpoint extends Endpoint {
     required String clientOperationId,
     required String token,
     required String platform,
+    String? provider,
+    String? deviceId,
+    String? appVersion,
   }) {
     return service.registerPushToken(
       session,
       clientOperationId: clientOperationId,
       token: token,
       platform: platform,
+      provider: provider,
+      deviceId: deviceId,
+      appVersion: appVersion,
+    );
+  }
+
+  Future<AppNotificationDto> sendTestPush(
+    Session session, {
+    required String clientOperationId,
+    required int familyId,
+  }) {
+    return service.sendTestPush(
+      session,
+      clientOperationId: clientOperationId,
+      familyId: familyId,
     );
   }
 
@@ -104,5 +122,42 @@ class NotificationsEndpoint extends Endpoint {
     throw AccessDeniedException(
       message: 'This method is internal and is not available to clients.',
     );
+  }
+
+  Future<AppNotificationListResponse> listInbox(
+    Session session, {
+    required int familyId,
+    bool unreadOnly = false,
+    int limit = 50,
+    DateTime? before,
+  }) {
+    return service.listInbox(
+      session,
+      familyId: familyId,
+      unreadOnly: unreadOnly,
+      limit: limit,
+      before: before,
+    );
+  }
+
+  Future<OperationResult> markRead(
+    Session session, {
+    required int notificationId,
+  }) {
+    return service.markRead(session, notificationId: notificationId);
+  }
+
+  Future<OperationResult> markAllRead(
+    Session session, {
+    required int familyId,
+  }) {
+    return service.markAllRead(session, familyId: familyId);
+  }
+
+  Future<int> unreadCount(
+    Session session, {
+    required int familyId,
+  }) {
+    return service.unreadCount(session, familyId: familyId);
   }
 }

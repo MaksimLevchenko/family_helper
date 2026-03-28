@@ -14,6 +14,7 @@ Create `config/passwords.yaml` from `config/passwords.yaml.example`, then set en
 - Media signing settings in `config/passwords.yaml`:
   - `mediaUrlSignSecret`
 - SMTP settings for email verification / password reset (optional in `development` / `test`):
+  - `smtpProvider` (`yandex` enables `smtp.yandex.com:465` with SSL by default)
   - `smtpHost`
   - `smtpPort`
   - `smtpUsername`
@@ -29,6 +30,32 @@ Recommended local values:
 
 ```bash
 mediaUrlSignSecret: 'replace-me'
+```
+
+Yandex SMTP example in `config/passwords.yaml`:
+
+```yaml
+development:
+  smtpProvider: 'yandex'
+  smtpUsername: 'your-mailbox@yandex.ru'
+  smtpPassword: 'replace-me'
+  smtpFromEmail: 'your-mailbox@yandex.ru'
+  smtpFromName: 'Family Helper'
+  smtpAllowInsecure: 'false'
+```
+
+With `smtpProvider: 'yandex'`, the server uses `smtp.yandex.com`, port `465`, and SSL automatically. `smtpHost`, `smtpPort`, and `smtpUseSsl` can still be set explicitly if you need to override the preset.
+
+For FCM push, add one of these to `config/passwords.yaml` for the active environment:
+
+```yaml
+firebaseServiceAccountJsonPath: './firebase-service-account.json'
+```
+
+or
+
+```yaml
+firebaseServiceAccountJson: '{"type":"service_account",...}'
 ```
 
 ## Local Infra

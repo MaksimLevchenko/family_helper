@@ -1722,6 +1722,21 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String>(),
               nullable: false,
             ),
+            'provider': _i1.ParameterDescription(
+              name: 'provider',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'deviceId': _i1.ParameterDescription(
+              name: 'deviceId',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'appVersion': _i1.ParameterDescription(
+              name: 'appVersion',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -1734,6 +1749,35 @@ class Endpoints extends _i1.EndpointDispatch {
                         clientOperationId: params['clientOperationId'],
                         token: params['token'],
                         platform: params['platform'],
+                        provider: params['provider'],
+                        deviceId: params['deviceId'],
+                        appVersion: params['appVersion'],
+                      ),
+        ),
+        'sendTestPush': _i1.MethodConnector(
+          name: 'sendTestPush',
+          params: {
+            'clientOperationId': _i1.ParameterDescription(
+              name: 'clientOperationId',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'familyId': _i1.ParameterDescription(
+              name: 'familyId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['notifications'] as _i12.NotificationsEndpoint)
+                      .sendTestPush(
+                        session,
+                        clientOperationId: params['clientOperationId'],
+                        familyId: params['familyId'],
                       ),
         ),
         'upsertPreference': _i1.MethodConnector(
@@ -1933,6 +1977,104 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async =>
                   (endpoints['notifications'] as _i12.NotificationsEndpoint)
                       .processDueReminders(session),
+        ),
+        'listInbox': _i1.MethodConnector(
+          name: 'listInbox',
+          params: {
+            'familyId': _i1.ParameterDescription(
+              name: 'familyId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'unreadOnly': _i1.ParameterDescription(
+              name: 'unreadOnly',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'before': _i1.ParameterDescription(
+              name: 'before',
+              type: _i1.getType<DateTime?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['notifications'] as _i12.NotificationsEndpoint)
+                      .listInbox(
+                        session,
+                        familyId: params['familyId'],
+                        unreadOnly: params['unreadOnly'],
+                        limit: params['limit'],
+                        before: params['before'],
+                      ),
+        ),
+        'markRead': _i1.MethodConnector(
+          name: 'markRead',
+          params: {
+            'notificationId': _i1.ParameterDescription(
+              name: 'notificationId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['notifications'] as _i12.NotificationsEndpoint)
+                      .markRead(
+                        session,
+                        notificationId: params['notificationId'],
+                      ),
+        ),
+        'markAllRead': _i1.MethodConnector(
+          name: 'markAllRead',
+          params: {
+            'familyId': _i1.ParameterDescription(
+              name: 'familyId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['notifications'] as _i12.NotificationsEndpoint)
+                      .markAllRead(
+                        session,
+                        familyId: params['familyId'],
+                      ),
+        ),
+        'unreadCount': _i1.MethodConnector(
+          name: 'unreadCount',
+          params: {
+            'familyId': _i1.ParameterDescription(
+              name: 'familyId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['notifications'] as _i12.NotificationsEndpoint)
+                      .unreadCount(
+                        session,
+                        familyId: params['familyId'],
+                      ),
         ),
       },
     );

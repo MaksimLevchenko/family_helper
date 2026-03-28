@@ -4,9 +4,15 @@ fields:
   profileId: int
   token: String
   platform: String
+  provider: String?
+  deviceId: String?
+  appVersion: String?
   createdAt: DateTime
   updatedAt: DateTime
+  lastSeenAt: DateTime?
+  lastErrorAt: DateTime?
   deletedAt: DateTime?
+  disabledAt: DateTime?
   version: int
 indexes:
   push_token_profile_token_idx:

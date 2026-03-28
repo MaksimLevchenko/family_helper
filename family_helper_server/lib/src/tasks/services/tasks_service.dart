@@ -7,6 +7,7 @@ import '../../core/rbac/ensure_family_role_service.dart';
 import '../../core/realtime/realtime_publisher.dart';
 import '../../core/sync/change_feed_service.dart';
 import '../../generated/protocol.dart';
+import '../../notifications/services/app_notification_service.dart';
 
 class TasksService {
   TasksService({
@@ -16,7 +17,8 @@ class TasksService {
     this.rbac = const EnsureFamilyRoleService(),
     this.changeFeed = const ChangeFeedService(),
     this.realtime = const RealtimePublisher(),
-  });
+    AppNotificationService? appNotifications,
+  }) : appNotifications = appNotifications ?? AppNotificationService();
 
   final AuthContext authContext;
   final ClockService clock;
@@ -24,6 +26,7 @@ class TasksService {
   final EnsureFamilyRoleService rbac;
   final ChangeFeedService changeFeed;
   final RealtimePublisher realtime;
+  final AppNotificationService appNotifications;
 
   Future<TaskDto> upsertTask(
     Session session, {
@@ -167,6 +170,14 @@ class TasksService {
           ),
         );
 
+        await _notifyTaskAssignmentIfNeeded(
+          session,
+          actorProfileId: actorProfileId,
+          previousAssigneeProfileId: null,
+          task: dto,
+          transaction: transaction,
+        );
+
         return dto;
       }
 
@@ -238,6 +249,14 @@ class TasksService {
           eventType: 'tasks.updated',
           changedAt: now,
         ),
+      );
+
+      await _notifyTaskAssignmentIfNeeded(
+        session,
+        actorProfileId: actorProfileId,
+        previousAssigneeProfileId: row.assigneeProfileId,
+        task: updated,
+        transaction: transaction,
       );
 
       return updated;
@@ -474,6 +493,13 @@ class TasksService {
         ),
       );
 
+      await _notifyTaskCompleted(
+        session,
+        actorProfileId: actorProfileId,
+        task: current,
+        transaction: transaction,
+      );
+
       return _findTask(session, taskId, transaction: transaction);
     });
   }
@@ -662,6 +688,63 @@ class TasksService {
         details: details,
         createdAt: clock.nowUtc(),
       ),
+      transaction: transaction,
+    );
+  }
+
+  Future<void> _notifyTaskAssignmentIfNeeded(
+    Session session, {
+    required int actorProfileId,
+    required int? previousAssigneeProfileId,
+    required TaskDto task,
+    Transaction? transaction,
+  }) async {
+    final assigneeProfileId = task.assigneeProfileId;
+    if (assigneeProfileId == null ||
+        assigneeProfileId == actorProfileId ||
+        assigneeProfileId == previousAssigneeProfileId) {
+      return;
+    }
+
+    await appNotifications.createForProfiles(
+      session,
+      profileIds: [assigneeProfileId],
+      familyId: task.familyId,
+      category: 'task_assigned',
+      title: 'Task assigned',
+      body: task.title,
+      entityType: 'task',
+      entityId: task.id,
+      route: '/home/tasks',
+      payload: {
+        'category': 'task_assigned',
+        'familyId': task.familyId,
+        'taskId': task.id,
+      },
+      transaction: transaction,
+    );
+  }
+
+  Future<void> _notifyTaskCompleted(
+    Session session, {
+    required int actorProfileId,
+    required TaskDto task,
+    Transaction? transaction,
+  }) async {
+    await appNotifications.createForFamilyMembers(
+      session,
+      familyId: task.familyId,
+      category: 'task_completed',
+      title: 'Task completed',
+      body: task.title,
+      entityType: 'task',
+      entityId: task.id,
+      route: '/home/tasks',
+      payload: {
+        'category': 'task_completed',
+        'familyId': task.familyId,
+        'taskId': task.id,
+      },
       transaction: transaction,
     );
   }

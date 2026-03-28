@@ -8,6 +8,8 @@ class AppRoutes {
   static const registerPassword = '/register/password';
 
   static const overview = '/home';
+  static const notificationCenter = '/home/notifications';
+  static const notificationSettings = '/home/notifications/settings';
   static const calendar = '/home/calendar';
   static const tasks = '/home/tasks';
   static const lists = '/home/lists';
@@ -16,6 +18,7 @@ class AppRoutes {
 
   static const profile = '/home/settings/profile';
   static const family = '/home/settings/family';
+  static const notificationsLegacy = '/home/settings/notifications';
   static const localReminders = '/home/settings/local-reminders';
   static const privacy = '/home/settings/privacy';
 

@@ -11,11 +11,27 @@ class NotificationsRepository {
     required String clientOperationId,
     required String token,
     required String platform,
+    String? provider,
+    String? deviceId,
+    String? appVersion,
   }) {
     return _apiClient.client.notifications.registerPushToken(
       clientOperationId: clientOperationId,
       token: token,
       platform: platform,
+      provider: provider,
+      deviceId: deviceId,
+      appVersion: appVersion,
+    );
+  }
+
+  Future<AppNotificationDto> sendTestPush({
+    required String clientOperationId,
+    required int familyId,
+  }) {
+    return _apiClient.client.notifications.sendTestPush(
+      clientOperationId: clientOperationId,
+      familyId: familyId,
     );
   }
 
@@ -85,5 +101,39 @@ class NotificationsRepository {
       status: status,
       limit: limit,
     );
+  }
+
+  Future<AppNotificationListResponse> listInbox({
+    required int familyId,
+    bool unreadOnly = false,
+    int limit = 50,
+    DateTime? before,
+  }) {
+    return _apiClient.client.notifications.listInbox(
+      familyId: familyId,
+      unreadOnly: unreadOnly,
+      limit: limit,
+      before: before,
+    );
+  }
+
+  Future<OperationResult> markRead({
+    required int notificationId,
+  }) {
+    return _apiClient.client.notifications.markRead(
+      notificationId: notificationId,
+    );
+  }
+
+  Future<OperationResult> markAllRead({
+    required int familyId,
+  }) {
+    return _apiClient.client.notifications.markAllRead(familyId: familyId);
+  }
+
+  Future<int> unreadCount({
+    required int familyId,
+  }) {
+    return _apiClient.client.notifications.unreadCount(familyId: familyId);
   }
 }

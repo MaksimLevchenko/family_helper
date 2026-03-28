@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -138,13 +139,19 @@ class AuthFlowScaffold extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
                     child: Center(
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 560),
+                        constraints: BoxConstraints(
+                          maxWidth: 560,
+                          minHeight: math.max(0, constraints.maxHeight - 48),
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             _EntranceMotion(
                               delay: const Duration(milliseconds: 40),
-                              child: const _AuthHeroPanel(isCompact: true),
+                              child: const _AuthHeroPanel(
+                                isCompact: true,
+                                isCondensed: true,
+                              ),
                             ),
                             const SizedBox(height: 24),
                             _EntranceMotion(
@@ -175,9 +182,13 @@ class AuthFlowScaffold extends StatelessWidget {
 }
 
 class _AuthHeroPanel extends StatelessWidget {
-  const _AuthHeroPanel({this.isCompact = false});
+  const _AuthHeroPanel({
+    this.isCompact = false,
+    this.isCondensed = false,
+  });
 
   final bool isCompact;
+  final bool isCondensed;
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +198,9 @@ class _AuthHeroPanel extends StatelessWidget {
 
     final titleStyle =
         (isCompact
-                ? theme.textTheme.headlineMedium
+                ? (isCondensed
+                      ? theme.textTheme.headlineSmall
+                      : theme.textTheme.headlineMedium)
                 : theme.textTheme.displaySmall)
             ?.copyWith(
               color: colors.textPrimary,
@@ -201,7 +214,10 @@ class _AuthHeroPanel extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: EdgeInsets.symmetric(
+            horizontal: isCondensed ? 12 : 14,
+            vertical: isCondensed ? 8 : 10,
+          ),
           decoration: BoxDecoration(
             color: colors.surface.withValues(alpha: isDark ? 0.56 : 0.74),
             borderRadius: BorderRadius.circular(999),
@@ -238,42 +254,44 @@ class _AuthHeroPanel extends StatelessWidget {
             ],
           ),
         ),
-        SizedBox(height: isCompact ? 22 : 30),
+        SizedBox(height: isCondensed ? 14 : (isCompact ? 22 : 30)),
         Text(
           'Calm planning for busy families.',
           style: titleStyle,
         ),
-        const SizedBox(height: 14),
-        ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: isCompact ? 520 : 460),
-          child: Text(
-            'Keep routines, lists, goals, and important dates together in one warm, shared space.',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: colors.textSecondary,
-              height: 1.45,
-              fontWeight: FontWeight.w500,
+        if (!isCondensed) ...[
+          const SizedBox(height: 14),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: isCompact ? 520 : 460),
+            child: Text(
+              'Keep routines, lists, goals, and important dates together in one warm, shared space.',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: colors.textSecondary,
+                height: 1.45,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-        ),
-        SizedBox(height: isCompact ? 20 : 28),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: const [
-            _HeroPill(
-              icon: Icons.event_available_rounded,
-              label: 'Shared calendar rhythm',
-            ),
-            _HeroPill(
-              icon: Icons.task_alt_rounded,
-              label: 'Household tasks in sync',
-            ),
-            _HeroPill(
-              icon: Icons.savings_rounded,
-              label: 'Goals everyone can follow',
-            ),
-          ],
-        ),
+          SizedBox(height: isCompact ? 20 : 28),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: const [
+              _HeroPill(
+                icon: Icons.event_available_rounded,
+                label: 'Shared calendar rhythm',
+              ),
+              _HeroPill(
+                icon: Icons.task_alt_rounded,
+                label: 'Household tasks in sync',
+              ),
+              _HeroPill(
+                icon: Icons.savings_rounded,
+                label: 'Goals everyone can follow',
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }

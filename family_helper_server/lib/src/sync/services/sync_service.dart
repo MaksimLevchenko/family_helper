@@ -1,3 +1,4 @@
+import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import '../../core/rbac/ensure_family_role_service.dart';
 import '../../generated/protocol.dart';
@@ -14,9 +15,16 @@ class SyncService {
     int limit = 500,
     int lastSeenChangeId = 0,
   }) async {
-    if (familyId != null) {
-      await rbac.ensureFamilyRole(session, familyId: familyId, minRole: 'member');
+    if (familyId == null) {
+      throw AccessDeniedException(
+        message: 'familyId is required for sync.',
+      );
     }
+    await rbac.ensureFamilyRole(
+      session,
+      familyId: familyId,
+      minRole: 'member',
+    );
 
     final sinceUtc = since.toUtc();
     final normalizedLimit = limit <= 0 ? 1 : (limit > 500 ? 500 : limit);
@@ -26,7 +34,6 @@ class SyncService {
         final byCursor =
             (t.changedAt > sinceUtc) |
             (t.changedAt.equals(sinceUtc) & (t.id > lastSeenChangeId));
-        if (familyId == null) return byCursor;
         return byCursor & t.familyId.equals(familyId);
       },
       orderByList: (t) => [
@@ -39,7 +46,9 @@ class SyncService {
     final items = rows.map(_map).toList();
     final hasMore = items.length >= normalizedLimit;
     final nextSince = items.isEmpty ? sinceUtc : items.last.changedAt;
-    final nextLastSeenChangeId = items.isEmpty ? lastSeenChangeId : items.last.id;
+    final nextLastSeenChangeId = items.isEmpty
+        ? lastSeenChangeId
+        : items.last.id;
 
     return SyncChangesResponse(
       since: sinceUtc,
@@ -65,5 +74,3 @@ class SyncService {
     );
   }
 }
-
-

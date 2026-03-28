@@ -15,6 +15,7 @@ import '../../features/home_overview/presentation/home_overview_screen.dart';
 import '../../features/home_overview/presentation/settings_screen.dart';
 import '../../features/lists/presentation/lists_screen.dart';
 import '../../features/money_goals/presentation/money_goals_screen.dart';
+import '../../features/notifications/presentation/notification_settings_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/privacy_security/presentation/privacy_security_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
@@ -95,6 +96,16 @@ GoRouter createAppRouter(
             builder: (context, state) => const MoneyGoalsScreen(),
           ),
           GoRoute(
+            path: AppRoutes.notificationCenter,
+            builder: (context, state) => const NotificationsScreen(),
+            routes: [
+              GoRoute(
+                path: 'settings',
+                builder: (context, state) => const NotificationSettingsScreen(),
+              ),
+            ],
+          ),
+          GoRoute(
             path: AppRoutes.settings,
             builder: (context, state) => const SettingsScreen(),
             routes: [
@@ -107,8 +118,12 @@ GoRouter createAppRouter(
                 builder: (context, state) => const FamilyScreen(),
               ),
               GoRoute(
+                path: 'notifications',
+                redirect: (context, state) => AppRoutes.notificationCenter,
+              ),
+              GoRoute(
                 path: 'local-reminders',
-                builder: (context, state) => const NotificationsScreen(),
+                redirect: (context, state) => AppRoutes.notificationSettings,
               ),
               GoRoute(
                 path: 'privacy',

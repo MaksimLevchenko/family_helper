@@ -6,6 +6,19 @@ import 'package:serverpod/serverpod.dart';
 
 enum EmailCodeKind { registration, passwordReset }
 
+const _smtpProviderKey = 'smtpProvider';
+const _smtpHostKey = 'smtpHost';
+const _smtpPortKey = 'smtpPort';
+const _smtpUsernameKey = 'smtpUsername';
+const _smtpPasswordKey = 'smtpPassword';
+const _smtpFromEmailKey = 'smtpFromEmail';
+const _smtpFromNameKey = 'smtpFromName';
+const _smtpUseSslKey = 'smtpUseSsl';
+const _smtpAllowInsecureKey = 'smtpAllowInsecure';
+const _defaultFromName = 'Family Helper';
+const _yandexProvider = 'yandex';
+const _yandexHost = 'smtp.yandex.com';
+
 abstract interface class EmailCodeSender {
   Future<void> sendCode({
     required String recipientEmail,
@@ -14,8 +27,8 @@ abstract interface class EmailCodeSender {
   });
 }
 
-class SmtpEmailCodeSender implements EmailCodeSender {
-  SmtpEmailCodeSender({
+class SmtpEmailSettings {
+  const SmtpEmailSettings({
     required this.host,
     required this.port,
     required this.username,
@@ -25,6 +38,63 @@ class SmtpEmailCodeSender implements EmailCodeSender {
     required this.useSsl,
     required this.allowInsecure,
   });
+
+  final String host;
+  final int port;
+  final String username;
+  final String password;
+  final String fromEmail;
+  final String fromName;
+  final bool useSsl;
+  final bool allowInsecure;
+}
+
+SmtpEmailSettings? resolveSmtpEmailSettings(Map<String, String> passwords) {
+  final provider = passwords[_smtpProviderKey]?.trim().toLowerCase();
+  final username = passwords[_smtpUsernameKey];
+  final password = passwords[_smtpPasswordKey];
+  final fromEmail = passwords[_smtpFromEmailKey];
+  final fromName = passwords[_smtpFromNameKey] ?? _defaultFromName;
+
+  final defaultHost = provider == _yandexProvider ? _yandexHost : null;
+  final defaultPort = provider == _yandexProvider ? 465 : 587;
+  final defaultUseSsl = provider == _yandexProvider;
+
+  final host = passwords[_smtpHostKey] ?? defaultHost;
+  if (_isBlank(host) ||
+      _isBlank(username) ||
+      _isBlank(password) ||
+      _isBlank(fromEmail)) {
+    return null;
+  }
+
+  final port = int.tryParse(passwords[_smtpPortKey] ?? '') ?? defaultPort;
+  final useSslValue = passwords[_smtpUseSslKey];
+  final useSsl = _isBlank(useSslValue) ? defaultUseSsl : _isTruthy(useSslValue);
+  final allowInsecure = _isTruthy(passwords[_smtpAllowInsecureKey]);
+
+  return SmtpEmailSettings(
+    host: host!,
+    port: port,
+    username: username!,
+    password: password!,
+    fromEmail: fromEmail!,
+    fromName: fromName,
+    useSsl: useSsl,
+    allowInsecure: allowInsecure,
+  );
+}
+
+class SmtpEmailCodeSender implements EmailCodeSender {
+  SmtpEmailCodeSender({required SmtpEmailSettings settings})
+    : host = settings.host,
+      port = settings.port,
+      username = settings.username,
+      password = settings.password,
+      fromEmail = settings.fromEmail,
+      fromName = settings.fromName,
+      useSsl = settings.useSsl,
+      allowInsecure = settings.allowInsecure;
 
   final String host;
   final int port;
@@ -79,15 +149,6 @@ class SmtpEmailCodeSender implements EmailCodeSender {
 
 final class EmailCodeDispatcher {
   const EmailCodeDispatcher({this.sender});
-
-  static const _smtpHostKey = 'smtpHost';
-  static const _smtpPortKey = 'smtpPort';
-  static const _smtpUsernameKey = 'smtpUsername';
-  static const _smtpPasswordKey = 'smtpPassword';
-  static const _smtpFromEmailKey = 'smtpFromEmail';
-  static const _smtpFromNameKey = 'smtpFromName';
-  static const _smtpUseSslKey = 'smtpUseSsl';
-  static const _smtpAllowInsecureKey = 'smtpAllowInsecure';
 
   static EmailCodeDispatcher instance = const EmailCodeDispatcher();
 
@@ -158,38 +219,18 @@ final class EmailCodeDispatcher {
   }
 
   SmtpEmailCodeSender? _buildSmtpSender(Session session) {
-    final passwords = session.passwords;
-    final host = passwords[_smtpHostKey];
-    final username = passwords[_smtpUsernameKey];
-    final password = passwords[_smtpPasswordKey];
-    final fromEmail = passwords[_smtpFromEmailKey];
-    final fromName = passwords[_smtpFromNameKey] ?? 'Family Helper';
-    if (_isBlank(host) ||
-        _isBlank(username) ||
-        _isBlank(password) ||
-        _isBlank(fromEmail)) {
+    final settings = resolveSmtpEmailSettings(session.passwords);
+    if (settings == null) {
       return null;
     }
 
-    final port = int.tryParse(passwords[_smtpPortKey] ?? '') ?? 587;
-    final useSsl = _isTruthy(passwords[_smtpUseSslKey]);
-    final allowInsecure = _isTruthy(passwords[_smtpAllowInsecureKey]);
-    return SmtpEmailCodeSender(
-      host: host!,
-      port: port,
-      username: username!,
-      password: password!,
-      fromEmail: fromEmail!,
-      fromName: fromName,
-      useSsl: useSsl,
-      allowInsecure: allowInsecure,
-    );
+    return SmtpEmailCodeSender(settings: settings);
   }
+}
 
-  bool _isBlank(String? value) => value == null || value.trim().isEmpty;
+bool _isBlank(String? value) => value == null || value.trim().isEmpty;
 
-  bool _isTruthy(String? value) {
-    if (value == null) return false;
-    return value.trim().toLowerCase() == 'true';
-  }
+bool _isTruthy(String? value) {
+  if (value == null) return false;
+  return value.trim().toLowerCase() == 'true';
 }
