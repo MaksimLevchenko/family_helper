@@ -69,7 +69,7 @@ class NotificationNavigationService {
       'list' => AppRoutes.lists,
       'goal' => AppRoutes.goals,
       'calendar' => AppRoutes.calendar,
-      _ => AppRoutes.notifications,
+      _ => AppRoutes.notificationCenter,
     };
   }
 }

@@ -13,6 +13,11 @@ import '../providers/calendar_provider.dart';
 class CalendarScreen extends StatelessWidget {
   const CalendarScreen({super.key});
 
+  static const double _wideLayoutBreakpoint = 720;
+  static const double _maxWidthBreakpoint = 1100;
+  static const double _maxContentWidth = 1280;
+  static const double _monthPaneWidth = 440;
+
   @override
   Widget build(BuildContext context) {
     final isOffline =
@@ -67,78 +72,157 @@ class CalendarScreen extends StatelessWidget {
                 ],
               ),
             ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 96),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: Column(
-                      children: [
-                        if (isOffline &&
-                            state.isUsingCachedData &&
-                            state.lastSuccessfulSyncAt != null)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                            child: CachedDataStatus(
-                              isUsingCachedData: state.isUsingCachedData,
-                              lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+            child: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth >= _wideLayoutBreakpoint;
+                  final maxWidth = constraints.maxWidth >= _maxWidthBreakpoint
+                      ? _maxContentWidth
+                      : double.infinity;
+
+                  final statusWidgets = <Widget>[
+                    if (isOffline &&
+                        state.isUsingCachedData &&
+                        state.lastSuccessfulSyncAt != null)
+                      CachedDataStatus(
+                        isUsingCachedData: state.isUsingCachedData,
+                        lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+                      ),
+                    if (state.error != null && !state.errorFromMutation)
+                      AppBanner(text: state.error!, isError: true),
+                  ];
+
+                  final monthCard = _CalendarMonthCard(
+                    selectedDay: state.selectedDay,
+                    visibleMonth: state.visibleMonth,
+                    groupedEvents: groupedEvents,
+                    selectedAgendaItems: agendaItems,
+                    isRefreshing: state.isMonthTransitioning,
+                    onDaySelected: (day) {
+                      context.read<CalendarCubit>().selectDay(day);
+                    },
+                    onPageChanged: (focusedDay) {
+                      context.read<CalendarCubit>().setVisibleMonth(
+                        focusedDay,
+                      );
+                    },
+                  );
+
+                  final agendaSection = _AgendaSection(
+                    selectedDay: state.selectedDay,
+                    items: agendaItems,
+                    isRefreshing: state.isMonthTransitioning,
+                    isMutating: state.isMutating,
+                    isPendingItem: state.isPendingInstance,
+                    onTapItem: (instance) {
+                      if (isOffline) {
+                        _showOfflineMessage(context);
+                        return;
+                      }
+                      _openInstanceActions(context, instance);
+                    },
+                    onCreateEvent: () {
+                      if (isOffline) {
+                        _showOfflineMessage(context);
+                        return;
+                      }
+                      _openCreateEvent(context);
+                    },
+                  );
+
+                  final body = isWide
+                      ? Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            key: const Key('calendar-wide-layout'),
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ..._withGaps(statusWidgets, gap: 12),
+                              if (statusWidgets.isNotEmpty)
+                                const SizedBox(height: 16),
+                              Expanded(
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(
+                                      key: const Key('calendar-month-pane'),
+                                      width: _monthPaneWidth,
+                                      child: SingleChildScrollView(
+                                        child: monthCard,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 20),
+                                    Expanded(
+                                      child: SingleChildScrollView(
+                                        key: const Key('calendar-agenda-pane'),
+                                        child: agendaSection,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : SingleChildScrollView(
+                          key: const Key('calendar-narrow-layout'),
+                          padding: const EdgeInsets.only(bottom: 96),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: Column(
+                              children: [
+                                if (statusWidgets.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      16,
+                                      16,
+                                      0,
+                                    ),
+                                    child: Column(
+                                      children: _withGaps(
+                                        statusWidgets,
+                                        gap: 12,
+                                      ),
+                                    ),
+                                  ),
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    16,
+                                    16,
+                                    12,
+                                  ),
+                                  child: monthCard,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    0,
+                                    16,
+                                    16,
+                                  ),
+                                  child: agendaSection,
+                                ),
+                              ],
                             ),
                           ),
-                        if (state.error != null && !state.errorFromMutation)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                            child: AppBanner(text: state.error!, isError: true),
-                          ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                          child: _CalendarMonthCard(
-                            selectedDay: state.selectedDay,
-                            visibleMonth: state.visibleMonth,
-                            groupedEvents: groupedEvents,
-                            selectedAgendaItems: agendaItems,
-                            isRefreshing: state.isMonthTransitioning,
-                            onDaySelected: (day) {
-                              context.read<CalendarCubit>().selectDay(day);
-                            },
-                            onPageChanged: (focusedDay) {
-                              context.read<CalendarCubit>().setVisibleMonth(
-                                focusedDay,
-                              );
-                            },
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          child: _AgendaSection(
-                            selectedDay: state.selectedDay,
-                            items: agendaItems,
-                            isRefreshing: state.isMonthTransitioning,
-                            isMutating: state.isMutating,
-                            isPendingItem: state.isPendingInstance,
-                            onTapItem: (instance) {
-                              if (isOffline) {
-                                _showOfflineMessage(context);
-                                return;
-                              }
-                              _openInstanceActions(context, instance);
-                            },
-                            onCreateEvent: () {
-                              if (isOffline) {
-                                _showOfflineMessage(context);
-                                return;
-                              }
-                              _openCreateEvent(context);
-                            },
-                          ),
-                        ),
-                      ],
+                        );
+
+                  return Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxWidth),
+                      child: SizedBox(
+                        height: constraints.maxHeight,
+                        child: body,
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           );
         },
@@ -157,18 +241,16 @@ class CalendarScreen extends StatelessWidget {
     final initialForm = CalendarEventForm.createDefault(
       context.read<CalendarCubit>().state.selectedDay,
     );
-    final form = await showModalBottomSheet<CalendarEventForm>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return _CalendarEventEditorSheet(
-          title: 'Create event',
-          submitLabel: 'Save event',
-          initialForm: initialForm,
-          allowRecurrence: true,
-        );
-      },
+    final form = await _showAdaptiveOverlay<CalendarEventForm>(
+      context,
+      maxWidth: 720,
+      builder: (overlayContext, useModalShell) => _CalendarEventEditorSheet(
+        title: 'Create event',
+        submitLabel: 'Save event',
+        initialForm: initialForm,
+        allowRecurrence: true,
+        useModalShell: useModalShell,
+      ),
     );
     if (form == null || !context.mounted) {
       return;
@@ -186,12 +268,13 @@ class CalendarScreen extends StatelessWidget {
       _showOfflineMessage(context);
       return;
     }
-    final action = await showModalBottomSheet<_CalendarAction>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return _CalendarActionSheet(instance: instance);
-      },
+    final action = await _showAdaptiveOverlay<_CalendarAction>(
+      context,
+      maxWidth: 560,
+      builder: (overlayContext, useModalShell) => _CalendarActionSheet(
+        instance: instance,
+        useModalShell: useModalShell,
+      ),
     );
     if (action == null || !context.mounted) {
       return;
@@ -246,18 +329,16 @@ class CalendarScreen extends StatelessWidget {
       return;
     }
     final cubit = context.read<CalendarCubit>();
-    final form = await showModalBottomSheet<CalendarEventForm>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return _CalendarEventEditorSheet(
-          title: 'Edit occurrence',
-          submitLabel: 'Save changes',
-          initialForm: CalendarEventForm.fromInstance(instance),
-          allowRecurrence: false,
-        );
-      },
+    final form = await _showAdaptiveOverlay<CalendarEventForm>(
+      context,
+      maxWidth: 720,
+      builder: (overlayContext, useModalShell) => _CalendarEventEditorSheet(
+        title: 'Edit occurrence',
+        submitLabel: 'Save changes',
+        initialForm: CalendarEventForm.fromInstance(instance),
+        allowRecurrence: false,
+        useModalShell: useModalShell,
+      ),
     );
     if (form == null || !context.mounted) {
       return;
@@ -298,18 +379,16 @@ class CalendarScreen extends StatelessWidget {
     final title = scope == CalendarMutationScope.future
         ? 'Edit this and following'
         : 'Edit whole series';
-    final form = await showModalBottomSheet<CalendarEventForm>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return _CalendarEventEditorSheet(
-          title: title,
-          submitLabel: 'Save changes',
-          initialForm: initialForm,
-          allowRecurrence: true,
-        );
-      },
+    final form = await _showAdaptiveOverlay<CalendarEventForm>(
+      context,
+      maxWidth: 720,
+      builder: (overlayContext, useModalShell) => _CalendarEventEditorSheet(
+        title: title,
+        submitLabel: 'Save changes',
+        initialForm: initialForm,
+        allowRecurrence: true,
+        useModalShell: useModalShell,
+      ),
     );
     if (form == null || !context.mounted) {
       return;
@@ -383,6 +462,50 @@ class CalendarScreen extends StatelessWidget {
       instance: instance,
       scope: scope,
     );
+  }
+
+  Future<T?> _showAdaptiveOverlay<T>(
+    BuildContext context, {
+    required Widget Function(BuildContext context, bool useModalShell) builder,
+    required double maxWidth,
+  }) {
+    final isWide = MediaQuery.sizeOf(context).width >= _wideLayoutBreakpoint;
+    if (isWide) {
+      return showDialog<T>(
+        context: context,
+        builder: (dialogContext) {
+          return Dialog(
+            insetPadding: const EdgeInsets.all(24),
+            clipBehavior: Clip.antiAlias,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+                maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.9,
+              ),
+              child: builder(dialogContext, false),
+            ),
+          );
+        },
+      );
+    }
+
+    return showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => builder(sheetContext, true),
+    );
+  }
+
+  List<Widget> _withGaps(List<Widget> widgets, {required double gap}) {
+    final spaced = <Widget>[];
+    for (var index = 0; index < widgets.length; index++) {
+      if (index > 0) {
+        spaced.add(SizedBox(height: gap));
+      }
+      spaced.add(widgets[index]);
+    }
+    return spaced;
   }
 
   void _showOfflineMessage(BuildContext context) {
@@ -1297,13 +1420,18 @@ class _BusyPill extends StatelessWidget {
 }
 
 class _CalendarActionSheet extends StatelessWidget {
-  const _CalendarActionSheet({required this.instance});
+  const _CalendarActionSheet({
+    required this.instance,
+    this.useModalShell = true,
+  });
 
   final CalendarInstanceDto instance;
+  final bool useModalShell;
 
   @override
   Widget build(BuildContext context) {
     return _SheetScaffold(
+      useModalShell: useModalShell,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1487,12 +1615,14 @@ class _CalendarEventEditorSheet extends StatefulWidget {
     required this.submitLabel,
     required this.initialForm,
     required this.allowRecurrence,
+    this.useModalShell = true,
   });
 
   final String title;
   final String submitLabel;
   final CalendarEventForm initialForm;
   final bool allowRecurrence;
+  final bool useModalShell;
 
   @override
   State<_CalendarEventEditorSheet> createState() =>
@@ -1537,16 +1667,11 @@ class _CalendarEventEditorSheetState extends State<_CalendarEventEditorSheet> {
   Widget build(BuildContext context) {
     final safeArea = MediaQuery.paddingOf(context);
     final colors = context.colors;
-
-    return AppModalSheet(
-      maxWidth: 720,
-      showHandle: false,
-      scrollable: false,
-      includeBottomSafeArea: false,
-      contentPadding: EdgeInsets.zero,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+    final bottomPadding = widget.useModalShell ? safeArea.bottom : 0.0;
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (widget.useModalShell) ...[
           const SizedBox(height: 10),
           Container(
             width: 44,
@@ -1556,285 +1681,284 @@ class _CalendarEventEditorSheetState extends State<_CalendarEventEditorSheet> {
               borderRadius: BorderRadius.circular(999),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
-            child: Row(
+        ],
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.allowRecurrence
+                          ? 'Set time, reminders, and repeat rules in one place.'
+                          : 'Update this single occurrence without changing the full series.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colors.textSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close_rounded),
+              ),
+            ],
+          ),
+        ),
+        Divider(height: 1, color: colors.border.withValues(alpha: 0.9)),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 16 + bottomPadding),
+            child: Column(
               children: [
-                Expanded(
+                _EditorSection(
+                  title: 'Basics',
+                  subtitle:
+                      'A clear title helps the whole family scan the day faster.',
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.title,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
+                      AppTextField(
+                        controller: _titleController,
+                        label: 'Event title',
+                      ),
+                      if (widget.allowRecurrence) ...[
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          controller: _descriptionController,
+                          label: 'Notes',
+                          hint: 'Optional',
+                          maxLines: 3,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _EditorSection(
+                  title: 'Schedule',
+                  subtitle:
+                      'Choose a polished start and end time for the event.',
+                  child: Column(
+                    children: [
+                      _DateTimeTile(
+                        label: 'Starts',
+                        value: _startsAt,
+                        icon: Icons.login_rounded,
+                        onTap: () => _pickDateTime(
+                          initialValue: _startsAt,
+                          onChanged: (value) {
+                            final duration = _endsAt.difference(_startsAt);
+                            setState(() {
+                              _startsAt = value;
+                              if (!_endsAt.isAfter(_startsAt)) {
+                                _endsAt = _startsAt.add(
+                                  duration.isNegative ||
+                                          duration == Duration.zero
+                                      ? const Duration(hours: 1)
+                                      : duration,
+                                );
+                              }
+                              _validationMessage = null;
+                            });
+                          },
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        widget.allowRecurrence
-                            ? 'Set time, reminders, and repeat rules in one place.'
-                            : 'Update this single occurrence without changing the full series.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: colors.textSecondary,
-                          height: 1.35,
+                      const SizedBox(height: 12),
+                      _DateTimeTile(
+                        label: 'Ends',
+                        value: _endsAt,
+                        icon: Icons.logout_rounded,
+                        onTap: () => _pickDateTime(
+                          initialValue: _endsAt,
+                          onChanged: (value) {
+                            setState(() {
+                              _endsAt = value;
+                              _validationMessage = null;
+                            });
+                          },
                         ),
                       ),
                     ],
                   ),
                 ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded),
+                const SizedBox(height: 16),
+                _EditorSection(
+                  title: 'Reminder',
+                  subtitle:
+                      'Notifications should appear only when they are helpful.',
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: ReminderPreset.values
+                        .map(
+                          (preset) => _ChoicePill(
+                            label: preset.label,
+                            selected: _reminderPreset == preset,
+                            onTap: () {
+                              setState(() {
+                                _reminderPreset = preset;
+                              });
+                            },
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+                if (widget.allowRecurrence) ...[
+                  const SizedBox(height: 16),
+                  _EditorSection(
+                    title: 'Repeat',
+                    subtitle:
+                        'Keep repeat rules visible and only reveal the controls that matter.',
+                    child: Column(
+                      children: [
+                        ...CalendarRecurrenceMode.values.map((mode) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _RecurrenceModeTile(
+                              mode: mode,
+                              selected: _recurrence.mode == mode,
+                              onTap: () => _selectRecurrenceMode(mode),
+                            ),
+                          );
+                        }),
+                        if (_recurrence.mode ==
+                            CalendarRecurrenceMode.weekly) ...[
+                          const SizedBox(height: 6),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Days of week',
+                              style: Theme.of(context).textTheme.labelLarge
+                                  ?.copyWith(
+                                    color: colors.textSecondary,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: List.generate(7, (index) {
+                              final weekday = index + 1;
+                              final selected = _recurrence.weekdays.contains(
+                                weekday,
+                              );
+                              return _ChoicePill(
+                                label: _CalendarFormatters.weekdayShort(
+                                  weekday,
+                                ),
+                                selected: selected,
+                                onTap: () {
+                                  final next = {..._recurrence.weekdays};
+                                  if (selected) {
+                                    next.remove(weekday);
+                                  } else {
+                                    next.add(weekday);
+                                  }
+                                  setState(() {
+                                    _recurrence = CalendarRecurrence.weekly(
+                                      next.isEmpty ? <int>{weekday} : next,
+                                    );
+                                  });
+                                },
+                              );
+                            }),
+                          ),
+                        ],
+                        if (_recurrence.mode ==
+                            CalendarRecurrenceMode.everyNDays) ...[
+                          const SizedBox(height: 6),
+                          AppTextField(
+                            controller: _intervalController,
+                            label: 'Repeat every N days',
+                            keyboardType: TextInputType.number,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.background,
+            border: Border(
+              top: BorderSide(color: colors.border.withValues(alpha: 0.9)),
+            ),
+          ),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 14, 20, 20 + bottomPadding),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_validationMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _validationMessage!,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colors.danger,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AppButton(
+                        label: widget.submitLabel,
+                        onPressed: _submit,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          Divider(height: 1, color: colors.border.withValues(alpha: 0.9)),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                20,
-                20,
-                16 + safeArea.bottom,
-              ),
-              child: Column(
-                children: [
-                  _EditorSection(
-                    title: 'Basics',
-                    subtitle:
-                        'A clear title helps the whole family scan the day faster.',
-                    child: Column(
-                      children: [
-                        AppTextField(
-                          controller: _titleController,
-                          label: 'Event title',
-                        ),
-                        if (widget.allowRecurrence) ...[
-                          const SizedBox(height: 12),
-                          AppTextField(
-                            controller: _descriptionController,
-                            label: 'Notes',
-                            hint: 'Optional',
-                            maxLines: 3,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _EditorSection(
-                    title: 'Schedule',
-                    subtitle:
-                        'Choose a polished start and end time for the event.',
-                    child: Column(
-                      children: [
-                        _DateTimeTile(
-                          label: 'Starts',
-                          value: _startsAt,
-                          icon: Icons.login_rounded,
-                          onTap: () => _pickDateTime(
-                            initialValue: _startsAt,
-                            onChanged: (value) {
-                              final duration = _endsAt.difference(
-                                _startsAt,
-                              );
-                              setState(() {
-                                _startsAt = value;
-                                if (!_endsAt.isAfter(_startsAt)) {
-                                  _endsAt = _startsAt.add(
-                                    duration.isNegative ||
-                                            duration == Duration.zero
-                                        ? const Duration(hours: 1)
-                                        : duration,
-                                  );
-                                }
-                                _validationMessage = null;
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _DateTimeTile(
-                          label: 'Ends',
-                          value: _endsAt,
-                          icon: Icons.logout_rounded,
-                          onTap: () => _pickDateTime(
-                            initialValue: _endsAt,
-                            onChanged: (value) {
-                              setState(() {
-                                _endsAt = value;
-                                _validationMessage = null;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _EditorSection(
-                    title: 'Reminder',
-                    subtitle:
-                        'Notifications should appear only when they are helpful.',
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: ReminderPreset.values
-                          .map(
-                            (preset) => _ChoicePill(
-                              label: preset.label,
-                              selected: _reminderPreset == preset,
-                              onTap: () {
-                                setState(() {
-                                  _reminderPreset = preset;
-                                });
-                              },
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                  if (widget.allowRecurrence) ...[
-                    const SizedBox(height: 16),
-                    _EditorSection(
-                      title: 'Repeat',
-                      subtitle:
-                          'Keep repeat rules visible and only reveal the controls that matter.',
-                      child: Column(
-                        children: [
-                          ...CalendarRecurrenceMode.values.map((mode) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: _RecurrenceModeTile(
-                                mode: mode,
-                                selected: _recurrence.mode == mode,
-                                onTap: () => _selectRecurrenceMode(mode),
-                              ),
-                            );
-                          }),
-                          if (_recurrence.mode ==
-                              CalendarRecurrenceMode.weekly) ...[
-                            const SizedBox(height: 6),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'Days of week',
-                                style: Theme.of(context).textTheme.labelLarge
-                                    ?.copyWith(
-                                      color: colors.textSecondary,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: List.generate(7, (index) {
-                                final weekday = index + 1;
-                                final selected = _recurrence.weekdays.contains(
-                                  weekday,
-                                );
-                                return _ChoicePill(
-                                  label: _CalendarFormatters.weekdayShort(
-                                    weekday,
-                                  ),
-                                  selected: selected,
-                                  onTap: () {
-                                    final next = {
-                                      ..._recurrence.weekdays,
-                                    };
-                                    if (selected) {
-                                      next.remove(weekday);
-                                    } else {
-                                      next.add(weekday);
-                                    }
-                                    setState(() {
-                                      _recurrence = CalendarRecurrence.weekly(
-                                        next.isEmpty ? <int>{weekday} : next,
-                                      );
-                                    });
-                                  },
-                                );
-                              }),
-                            ),
-                          ],
-                          if (_recurrence.mode ==
-                              CalendarRecurrenceMode.everyNDays) ...[
-                            const SizedBox(height: 6),
-                            AppTextField(
-                              controller: _intervalController,
-                              label: 'Repeat every N days',
-                              keyboardType: TextInputType.number,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.background,
-              border: Border(
-                top: BorderSide(
-                  color: colors.border.withValues(alpha: 0.9),
-                ),
-              ),
-            ),
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                14,
-                20,
-                20 + safeArea.bottom,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_validationMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          _validationMessage!,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: colors.danger,
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
-                      ),
-                    ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Cancel'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: AppButton(
-                          label: widget.submitLabel,
-                          onPressed: _submit,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
+    );
+
+    if (widget.useModalShell) {
+      return AppModalSheet(
+        maxWidth: 720,
+        showHandle: false,
+        scrollable: false,
+        includeBottomSafeArea: false,
+        contentPadding: EdgeInsets.zero,
+        child: content,
+      );
+    }
+
+    return SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.82,
+      child: content,
     );
   }
 
@@ -2208,14 +2332,25 @@ class _RecurrenceModeTile extends StatelessWidget {
 }
 
 class _SheetScaffold extends StatelessWidget {
-  const _SheetScaffold({required this.child});
+  const _SheetScaffold({
+    required this.child,
+    this.useModalShell = true,
+  });
 
   final Widget child;
+  final bool useModalShell;
 
   @override
   Widget build(BuildContext context) {
-    return AppModalSheet(
-      contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+    if (useModalShell) {
+      return AppModalSheet(
+        contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: child,
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       child: child,
     );
   }

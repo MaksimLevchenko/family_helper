@@ -32,12 +32,14 @@ class _HomeShellScreenState extends State<HomeShellScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<RealtimeCubit>().start();
       context.read<NotificationsCubit>().refreshPermissionStatus();
+      context.read<NotificationsCubit>().refreshUnreadCount();
       if (getIt.isRegistered<PushNotificationService>()) {
-        _notificationOpenSub = getIt<PushNotificationService>().openTargets.listen(
-          (target) {
-            unawaited(_openNotificationTarget(target));
-          },
-        );
+        _notificationOpenSub = getIt<PushNotificationService>().openTargets
+            .listen(
+              (target) {
+                unawaited(_openNotificationTarget(target));
+              },
+            );
         final initialTarget = getIt<PushNotificationService>()
             .takePendingInitialOpen();
         if (initialTarget != null) {
@@ -58,6 +60,7 @@ class _HomeShellScreenState extends State<HomeShellScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
       context.read<NotificationsCubit>().refreshPermissionStatus();
+      context.read<NotificationsCubit>().refreshUnreadCount();
     }
   }
 
@@ -80,6 +83,9 @@ class _HomeShellScreenState extends State<HomeShellScreen>
   Widget build(BuildContext context) {
     final hasFamily = context.watch<FamilySelectionCubit>().state != null;
     final location = GoRouterState.of(context).matchedLocation;
+    final showBottomNavigation = !location.startsWith(
+      AppRoutes.notificationCenter,
+    );
     final selectedIndex = AppRoutes.bottomNavIndexFor(
       location,
       hasFamily: hasFamily,
@@ -109,15 +115,17 @@ class _HomeShellScreenState extends State<HomeShellScreen>
 
     return Scaffold(
       body: widget.child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: (value) {
-          context.go(
-            AppRoutes.locationForTabIndex(value, hasFamily: hasFamily),
-          );
-        },
-        destinations: destinations,
-      ),
+      bottomNavigationBar: showBottomNavigation
+          ? NavigationBar(
+              selectedIndex: selectedIndex,
+              onDestinationSelected: (value) {
+                context.go(
+                  AppRoutes.locationForTabIndex(value, hasFamily: hasFamily),
+                );
+              },
+              destinations: destinations,
+            )
+          : null,
     );
   }
 }

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../core/network/server_availability_cubit.dart';
+import '../core/routing/app_routes.dart';
 import '../core/theme/app_colors.dart';
+import '../features/notifications/providers/notifications_provider.dart';
 
 const _serverUnavailableBannerText =
     'Server unavailable. Some actions may not work until connection is restored.';
@@ -15,20 +18,31 @@ AppBar serverStatusAppBar(
   PreferredSizeWidget? bottom,
   double? toolbarHeight,
   bool automaticallyImplyLeading = true,
+  bool showNotificationAction = true,
 }) {
   final serverAvailabilityState =
       context.watch<ServerAvailabilityCubit?>()?.state ??
       const ServerAvailabilityState(
         status: ServerAvailabilityStatus.available,
       );
+  final notificationsState = context.watch<NotificationsCubit?>()?.state;
+  final currentLocation = GoRouterState.of(context).matchedLocation;
   final availabilityBottom = serverAvailabilityState.isUnavailable
       ? const _ServerStatusBanner()
       : null;
+  final resolvedActions = [
+    ...?actions,
+    if (showNotificationAction &&
+        notificationsState != null &&
+        currentLocation.startsWith('/home') &&
+        !currentLocation.startsWith(AppRoutes.notificationCenter))
+      _NotificationCenterAction(unreadCount: notificationsState.unreadCount),
+  ];
 
   return AppBar(
     title: title,
     leading: leading,
-    actions: actions,
+    actions: resolvedActions.isEmpty ? null : resolvedActions,
     toolbarHeight: toolbarHeight,
     automaticallyImplyLeading: automaticallyImplyLeading,
     bottom: switch ((bottom, availabilityBottom)) {
@@ -41,6 +55,30 @@ AppBar serverStatusAppBar(
         ),
     },
   );
+}
+
+class _NotificationCenterAction extends StatelessWidget {
+  const _NotificationCenterAction({required this.unreadCount});
+
+  final int unreadCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = unreadCount > 0
+        ? Badge.count(
+            count: unreadCount > 99 ? 99 : unreadCount,
+            child: const Icon(Icons.notifications_rounded),
+          )
+        : const Icon(Icons.notifications_none_rounded);
+
+    return IconButton(
+      tooltip: 'Notifications',
+      onPressed: () {
+        context.push(AppRoutes.notificationCenter);
+      },
+      icon: icon,
+    );
+  }
 }
 
 class _CombinedAppBarBottom extends StatelessWidget

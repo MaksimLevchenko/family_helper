@@ -11,6 +11,11 @@ import '../providers/lists_provider.dart';
 class ListsScreen extends StatelessWidget {
   const ListsScreen({super.key});
 
+  static const double _wideLayoutBreakpoint = 720;
+  static const double _maxWidthBreakpoint = 1100;
+  static const double _maxContentWidth = 1280;
+  static const double _sidebarWidth = 340;
+
   @override
   Widget build(BuildContext context) {
     final isOffline =
@@ -37,160 +42,357 @@ class ListsScreen extends StatelessWidget {
                   label: const Text('Add item'),
                 ),
           body: SafeArea(
-            child: RefreshIndicator(
-              onRefresh: () => context.read<ListsCubit>().reload(),
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 112),
-                children: [
-                  CachedDataStatus(
-                    isUsingCachedData: state.isUsingCachedData,
-                    lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
-                  ),
-                  if (state.error != null) ...[
-                    AppBanner(text: state.error!, isError: true),
-                    const SizedBox(height: 12),
-                  ],
-                  _HeroCard(
-                    familyTitle:
-                        familyState?.family?.title ?? 'Family collaboration',
-                    listCount: state.lists.length,
-                    isOffline: isOffline,
-                    onCreateList: () {
-                      _showCreateListSheet(context);
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  _HeaderRow(
-                    title: 'Your lists',
-                    subtitle: 'Pick a list and keep every check-off visible.',
-                    trailing: state.isLoadingLists && state.lists.isNotEmpty
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : null,
-                  ),
-                  const SizedBox(height: 12),
-                  if (state.lists.isEmpty)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            const EmptyState(
-                              title: 'No lists yet',
-                              message:
-                                  'Start with a shopping list or wishlist for your family.',
-                            ),
-                            const SizedBox(height: 16),
-                            AppButton(
-                              label: 'Create your first list',
-                              onPressed: isOffline
-                                  ? null
-                                  : () {
-                                      _showCreateListSheet(context);
-                                    },
-                              isLoading: state.isLoadingLists,
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else
-                    SizedBox(
-                      height: 212,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: state.lists.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 12),
-                        itemBuilder: (context, index) {
-                          final list = state.lists[index];
-                          return _ListCard(
-                            list: list,
-                            isSelected: list.id == state.selectedListId,
-                            onTap: () {
-                              context.read<ListsCubit>().selectList(list.id);
-                            },
-                          );
-                        },
-                      ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= _wideLayoutBreakpoint;
+                final maxWidth = constraints.maxWidth >= _maxWidthBreakpoint
+                    ? _maxContentWidth
+                    : double.infinity;
+
+                final content = isWide
+                    ? _buildWideLayout(
+                        context,
+                        state: state,
+                        familyState: familyState,
+                        selectedList: selectedList,
+                        isOffline: isOffline,
+                      )
+                    : _buildNarrowLayout(
+                        context,
+                        state: state,
+                        familyState: familyState,
+                        selectedList: selectedList,
+                        isOffline: isOffline,
+                      );
+
+                return Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: SizedBox(
+                      height: constraints.maxHeight,
+                      child: content,
                     ),
-                  const SizedBox(height: 24),
-                  _HeaderRow(
-                    title: selectedList?.title ?? 'List details',
-                    subtitle: selectedList == null
-                        ? 'Choose or create a list to start adding items.'
-                        : _selectedListSubtitle(selectedList),
-                    trailing: selectedList == null
-                        ? null
-                        : Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _TypeBadge(type: selectedList.listType),
-                              if (!isOffline) ...[
-                                const SizedBox(width: 8),
-                                PopupMenuButton<_SelectedListAction>(
-                                  tooltip: 'List actions',
-                                  onSelected: (action) {
-                                    _handleSelectedListAction(
-                                      context,
-                                      selectedList,
-                                      action,
-                                    );
-                                  },
-                                  itemBuilder: (context) => const [
-                                    PopupMenuItem(
-                                      value: _SelectedListAction.edit,
-                                      child: Text('Edit list'),
-                                    ),
-                                    PopupMenuItem(
-                                      value: _SelectedListAction.delete,
-                                      child: Text('Delete list'),
-                                    ),
-                                  ],
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNarrowLayout(
+    BuildContext context, {
+    required ListsState state,
+    required FamilyMembersState? familyState,
+    required FamilyListDto? selectedList,
+    required bool isOffline,
+  }) {
+    return RefreshIndicator(
+      onRefresh: () => context.read<ListsCubit>().reload(),
+      child: ListView(
+        key: const Key('lists-narrow-layout'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 112),
+        children: [
+          CachedDataStatus(
+            isUsingCachedData: state.isUsingCachedData,
+            lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+          ),
+          if (state.error != null) ...[
+            AppBanner(text: state.error!, isError: true),
+            const SizedBox(height: 12),
+          ],
+          _HeroCard(
+            familyTitle: familyState?.family?.title ?? 'Family collaboration',
+            listCount: state.lists.length,
+            isOffline: isOffline,
+            onCreateList: () {
+              _showCreateListSheet(context);
+            },
+          ),
+          const SizedBox(height: 20),
+          _HeaderRow(
+            title: 'Your lists',
+            subtitle: 'Pick a list and keep every check-off visible.',
+            trailing: state.isLoadingLists && state.lists.isNotEmpty
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : null,
+          ),
+          const SizedBox(height: 12),
+          if (state.lists.isEmpty)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    const EmptyState(
+                      title: 'No lists yet',
+                      message:
+                          'Start with a shopping list or wishlist for your family.',
+                    ),
+                    const SizedBox(height: 16),
+                    AppButton(
+                      label: 'Create your first list',
+                      onPressed: isOffline
+                          ? null
+                          : () {
+                              _showCreateListSheet(context);
+                            },
+                      isLoading: state.isLoadingLists,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            SizedBox(
+              height: 212,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: state.lists.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final list = state.lists[index];
+                  return _ListCard(
+                    key: Key('list-card-${list.id}'),
+                    list: list,
+                    isSelected: list.id == state.selectedListId,
+                    onTap: () {
+                      context.read<ListsCubit>().selectList(list.id);
+                    },
+                  );
+                },
+              ),
+            ),
+          const SizedBox(height: 24),
+          _buildDetailsHeader(
+            context,
+            selectedList: selectedList,
+            isOffline: isOffline,
+          ),
+          const SizedBox(height: 12),
+          _buildDetailsBody(
+            context,
+            state: state,
+            selectedList: selectedList,
+            isOffline: isOffline,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWideLayout(
+    BuildContext context, {
+    required ListsState state,
+    required FamilyMembersState? familyState,
+    required FamilyListDto? selectedList,
+    required bool isOffline,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        key: const Key('lists-wide-layout'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            key: const Key('lists-sidebar-pane'),
+            width: _sidebarWidth,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CachedDataStatus(
+                  isUsingCachedData: state.isUsingCachedData,
+                  lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+                ),
+                if (state.error != null) ...[
+                  const SizedBox(height: 12),
+                  AppBanner(text: state.error!, isError: true),
+                ],
+                const SizedBox(height: 12),
+                _HeroCard(
+                  familyTitle:
+                      familyState?.family?.title ?? 'Family collaboration',
+                  listCount: state.lists.length,
+                  isOffline: isOffline,
+                  onCreateList: () {
+                    _showCreateListSheet(context);
+                  },
+                ),
+                const SizedBox(height: 20),
+                _HeaderRow(
+                  title: 'Your lists',
+                  subtitle: 'Pick a list and keep every check-off visible.',
+                  trailing: state.isLoadingLists && state.lists.isNotEmpty
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : null,
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: state.lists.isEmpty
+                      ? Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const EmptyState(
+                                  title: 'No lists yet',
+                                  message:
+                                      'Start with a shopping list or wishlist for your family.',
+                                ),
+                                const SizedBox(height: 16),
+                                AppButton(
+                                  label: 'Create your first list',
+                                  onPressed: isOffline
+                                      ? null
+                                      : () {
+                                          _showCreateListSheet(context);
+                                        },
+                                  isLoading: state.isLoadingLists,
                                 ),
                               ],
-                            ],
+                            ),
                           ),
+                        )
+                      : ListView.separated(
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: state.lists.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final list = state.lists[index];
+                            return _ListCard(
+                              key: Key('list-card-${list.id}'),
+                              list: list,
+                              isSelected: list.id == state.selectedListId,
+                              onTap: () {
+                                context.read<ListsCubit>().selectList(list.id);
+                              },
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: SingleChildScrollView(
+              key: const Key('lists-detail-pane'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDetailsHeader(
+                    context,
+                    selectedList: selectedList,
+                    isOffline: isOffline,
                   ),
                   const SizedBox(height: 12),
-                  if (selectedList == null)
-                    const EmptyState(
-                      title: 'No list selected',
-                      message:
-                          'Create your first list to start planning together.',
-                    )
-                  else
-                    _ListDetails(
-                      list: selectedList,
-                      items: state.items,
-                      isOffline: isOffline,
-                      isLoadingItems: state.isLoadingItems,
-                      pendingActionItemId: state.pendingActionItemId,
-                      onAddItem: () {
-                        _showAddItemSheet(context, selectedList);
-                      },
-                      onEditItem: (item) {
-                        _showAddItemSheet(
-                          context,
-                          selectedList,
-                          initialItem: item,
-                        );
-                      },
-                      onDeleteItem: (item) {
-                        _confirmDeleteItem(context, item);
-                      },
-                      onToggleBought: (item) {
-                        context.read<ListsCubit>().toggleBought(item);
-                      },
-                    ),
+                  _buildDetailsBody(
+                    context,
+                    state: state,
+                    selectedList: selectedList,
+                    isOffline: isOffline,
+                  ),
                 ],
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailsHeader(
+    BuildContext context, {
+    required FamilyListDto? selectedList,
+    required bool isOffline,
+  }) {
+    return _HeaderRow(
+      title: selectedList?.title ?? 'List details',
+      subtitle: selectedList == null
+          ? 'Choose or create a list to start adding items.'
+          : _selectedListSubtitle(selectedList),
+      trailing: selectedList == null
+          ? null
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _TypeBadge(type: selectedList.listType),
+                if (!isOffline) ...[
+                  const SizedBox(width: 8),
+                  PopupMenuButton<_SelectedListAction>(
+                    tooltip: 'List actions',
+                    onSelected: (action) {
+                      _handleSelectedListAction(
+                        context,
+                        selectedList,
+                        action,
+                      );
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: _SelectedListAction.edit,
+                        child: Text('Edit list'),
+                      ),
+                      PopupMenuItem(
+                        value: _SelectedListAction.delete,
+                        child: Text('Delete list'),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+    );
+  }
+
+  Widget _buildDetailsBody(
+    BuildContext context, {
+    required ListsState state,
+    required FamilyListDto? selectedList,
+    required bool isOffline,
+  }) {
+    if (selectedList == null) {
+      return const EmptyState(
+        title: 'No list selected',
+        message: 'Create your first list to start planning together.',
+      );
+    }
+
+    return _ListDetails(
+      list: selectedList,
+      items: state.items,
+      isOffline: isOffline,
+      isLoadingItems: state.isLoadingItems,
+      pendingActionItemId: state.pendingActionItemId,
+      onAddItem: () {
+        _showAddItemSheet(context, selectedList);
+      },
+      onEditItem: (item) {
+        _showAddItemSheet(
+          context,
+          selectedList,
+          initialItem: item,
         );
+      },
+      onDeleteItem: (item) {
+        _confirmDeleteItem(context, item);
+      },
+      onToggleBought: (item) {
+        context.read<ListsCubit>().toggleBought(item);
       },
     );
   }
@@ -199,15 +401,15 @@ class ListsScreen extends StatelessWidget {
     BuildContext context, {
     FamilyListDto? initialList,
   }) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _CreateListSheet(
+    await _showAdaptiveOverlay<void>(
+      context,
+      maxWidth: 560,
+      builder: (context, useModalShell) => _CreateListSheet(
         initialTitle: initialList?.title,
         initialType: initialList?.listType ?? 'shopping',
         sheetTitle: initialList == null ? 'Create a new list' : 'Edit list',
         submitLabel: initialList == null ? 'Create list' : 'Save changes',
+        useModalShell: useModalShell,
         onSubmit: (title, type) async {
           if (initialList == null) {
             await context.read<ListsCubit>().createList(title, listType: type);
@@ -227,15 +429,15 @@ class ListsScreen extends StatelessWidget {
     FamilyListDto selectedList, {
     ListItemDto? initialItem,
   }) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _AddItemSheet(
+    await _showAdaptiveOverlay<void>(
+      context,
+      maxWidth: 560,
+      builder: (context, useModalShell) => _AddItemSheet(
         listTitle: selectedList.title,
         initialItem: initialItem,
         sheetTitle: initialItem == null ? 'Add item' : 'Edit item',
         submitLabel: initialItem == null ? 'Add to list' : 'Save changes',
+        useModalShell: useModalShell,
         onSubmit:
             ({
               required String title,
@@ -264,6 +466,39 @@ class ListsScreen extends StatelessWidget {
               }
             },
       ),
+    );
+  }
+
+  Future<T?> _showAdaptiveOverlay<T>(
+    BuildContext context, {
+    required Widget Function(BuildContext context, bool useModalShell) builder,
+    required double maxWidth,
+  }) {
+    final isWide = MediaQuery.sizeOf(context).width >= _wideLayoutBreakpoint;
+    if (isWide) {
+      return showDialog<T>(
+        context: context,
+        builder: (dialogContext) {
+          return Dialog(
+            insetPadding: const EdgeInsets.all(24),
+            clipBehavior: Clip.antiAlias,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+                maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.9,
+              ),
+              child: builder(dialogContext, false),
+            ),
+          );
+        },
+      );
+    }
+
+    return showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => builder(sheetContext, true),
     );
   }
 
@@ -471,6 +706,7 @@ class _HeaderRow extends StatelessWidget {
 
 class _ListCard extends StatelessWidget {
   const _ListCard({
+    super.key,
     required this.list,
     required this.isSelected,
     required this.onTap,
@@ -522,6 +758,7 @@ class _ListCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -539,7 +776,7 @@ class _ListCard extends StatelessWidget {
                   _TypeBadge(type: list.listType),
                 ],
               ),
-              const Spacer(),
+              const SizedBox(height: 28),
               Text(
                 list.title,
                 maxLines: 2,
@@ -888,6 +1125,7 @@ class _CreateListSheet extends StatefulWidget {
     this.initialType = 'shopping',
     this.sheetTitle = 'Create a new list',
     this.submitLabel = 'Create list',
+    this.useModalShell = true,
   });
 
   final Future<void> Function(String title, String type) onSubmit;
@@ -895,6 +1133,7 @@ class _CreateListSheet extends StatefulWidget {
   final String initialType;
   final String sheetTitle;
   final String submitLabel;
+  final bool useModalShell;
 
   @override
   State<_CreateListSheet> createState() => _CreateListSheetState();
@@ -921,6 +1160,7 @@ class _CreateListSheetState extends State<_CreateListSheet> {
   @override
   Widget build(BuildContext context) {
     return _SheetScaffold(
+      useModalShell: widget.useModalShell,
       title: widget.sheetTitle,
       subtitle:
           'Choose a template and make it easy for the whole family to follow.',
@@ -991,12 +1231,14 @@ class _AddItemSheet extends StatefulWidget {
     this.initialItem,
     this.sheetTitle = 'Add item',
     this.submitLabel = 'Add to list',
+    this.useModalShell = true,
   });
 
   final String listTitle;
   final ListItemDto? initialItem;
   final String sheetTitle;
   final String submitLabel;
+  final bool useModalShell;
   final Future<void> Function({
     required String title,
     required double qty,
@@ -1046,6 +1288,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
   @override
   Widget build(BuildContext context) {
     return _SheetScaffold(
+      useModalShell: widget.useModalShell,
       title: widget.sheetTitle,
       subtitle: 'Everything added here will show up in ${widget.listTitle}.',
       child: Column(
@@ -1168,39 +1411,49 @@ class _SheetScaffold extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.child,
+    this.useModalShell = true,
   });
 
   final String title;
   final String subtitle;
   final Widget child;
+  final bool useModalShell;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          subtitle,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: colors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 20),
+        child,
+      ],
+    );
 
-    return AppModalSheet(
-      contentPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 20),
-          child,
-        ],
-      ),
+    if (useModalShell) {
+      return AppModalSheet(
+        contentPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: content,
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: content,
     );
   }
 }

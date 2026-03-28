@@ -10,6 +10,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import 'browser_notification_service.dart';
 import '../domain/notification_models.dart';
+import 'notification_visuals.dart';
 
 class LocalNotificationService {
   LocalNotificationService({
@@ -177,6 +178,13 @@ class LocalNotificationService {
     final details = _defaultNotificationDetails(
       channelId: 'reminders',
       channelName: 'Reminders',
+      title: title,
+      body: body,
+      presentation: NotificationVisuals.resolve(
+        id: id,
+        payload: payload,
+        isReminder: true,
+      ),
     );
 
     final now = DateTime.now();
@@ -245,6 +253,12 @@ class LocalNotificationService {
       _defaultNotificationDetails(
         channelId: 'family_helper_inbox',
         channelName: 'Family notifications',
+        title: title,
+        body: body,
+        presentation: NotificationVisuals.resolve(
+          id: id,
+          payload: payload,
+        ),
       ),
       payload: payload,
     );
@@ -379,17 +393,31 @@ class LocalNotificationService {
   NotificationDetails _defaultNotificationDetails({
     required String channelId,
     required String channelName,
+    required String title,
+    required String body,
+    required NotificationPresentation presentation,
   }) {
-    const darwinDetails = DarwinNotificationDetails(
+    final darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      subtitle: presentation.subtitle,
+      threadIdentifier: presentation.groupKey,
     );
     final androidDetails = AndroidNotificationDetails(
       channelId,
       channelName,
+      channelDescription:
+          'Rich reminders and family updates from Family Helper',
       importance: Importance.high,
       priority: Priority.high,
+      color: const Color(NotificationVisuals.brandColorValue),
+      groupKey: presentation.groupKey,
+      styleInformation: BigTextStyleInformation(
+        body,
+        contentTitle: title,
+        summaryText: presentation.subtitle,
+      ),
     );
     return NotificationDetails(
       android: androidDetails,

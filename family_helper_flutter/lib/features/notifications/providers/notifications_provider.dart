@@ -146,9 +146,11 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   Future<void> _handleFamilyChanged(int? familyId) async {
     reset(preserveAccountSettings: true);
     if (familyId == null) {
+      await refreshUnreadCount();
       return;
     }
     await _restoreSnapshot(familyId);
+    await refreshUnreadCount();
     await _replayQueuedOperations();
     await Future.wait([
       loadPreferences(),
@@ -829,6 +831,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
     try {
       await _repository.markRead(notificationId: notificationId);
+      unawaited(refreshUnreadCount());
       await _writeSnapshot(
         familyId: _familySelectionCubit.state,
         reminders: state.reminders,
@@ -872,6 +875,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
     try {
       await _repository.markAllRead(familyId: familyId);
+      unawaited(refreshUnreadCount());
       await _writeSnapshot(
         familyId: familyId,
         reminders: state.reminders,
@@ -890,6 +894,41 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       );
       emit(state.copyWith(error: '$error'));
       await reloadInbox();
+    }
+  }
+
+  Future<void> refreshUnreadCount() async {
+    final familyId = _familySelectionCubit.state;
+    if (familyId == null) {
+      if (state.unreadCount != 0) {
+        emit(state.copyWith(unreadCount: 0));
+      }
+      return;
+    }
+
+    try {
+      final unreadCount = await _repository.unreadCount(familyId: familyId);
+      if (isClosed || unreadCount == state.unreadCount) {
+        return;
+      }
+
+      emit(state.copyWith(unreadCount: unreadCount));
+      await _writeSnapshot(
+        familyId: familyId,
+        reminders: state.reminders,
+        preferences: state.preferences,
+        inbox: state.inbox,
+        unreadCount: unreadCount,
+        lastRegisteredPushToken: state.lastRegisteredPushToken,
+        syncedAt: state.lastSuccessfulSyncAt ?? DateTime.now().toUtc(),
+      );
+    } catch (error, stackTrace) {
+      AppErrorLogger.logHandled(
+        scope: 'notifications.refreshUnreadCount',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'familyId': familyId},
+      );
     }
   }
 

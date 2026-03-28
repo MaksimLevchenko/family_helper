@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:html' as html;
 
 import 'browser_notification_service.dart';
+import 'notification_visuals.dart';
 
 class BrowserNotificationServiceImpl implements BrowserNotificationService {
   final Map<int, Timer> _scheduledTimers = <int, Timer>{};
@@ -38,10 +39,15 @@ class BrowserNotificationServiceImpl implements BrowserNotificationService {
       return;
     }
 
+    final presentation = NotificationVisuals.resolve(
+      id: id,
+      payload: payload,
+    );
     final notification = html.Notification(
       title,
-      body: body,
-      tag: '$id',
+      body: _composeBody(presentation.subtitle, body),
+      tag: presentation.tag,
+      icon: NotificationVisuals.webIconDataUrl,
     );
     notification.onClick.listen((_) {
       notification.close();
@@ -89,4 +95,11 @@ class BrowserNotificationServiceImpl implements BrowserNotificationService {
 
   bool get _canShowNotifications =>
       isSupported && html.Notification.permission == 'granted';
+
+  static String _composeBody(String subtitle, String body) {
+    if (subtitle.isEmpty) {
+      return body;
+    }
+    return '$subtitle\n$body';
+  }
 }

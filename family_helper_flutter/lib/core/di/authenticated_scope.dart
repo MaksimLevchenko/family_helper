@@ -85,6 +85,7 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
     );
     _notificationsCubit.refreshPermissionStatus();
     _notificationsCubit.loadPreferences();
+    _notificationsCubit.refreshUnreadCount();
     _mediaCubit = MediaCubit(
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,

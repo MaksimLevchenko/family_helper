@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_auth_idp_server/providers/email.dart';
 import '../../core/audit/audit_service.dart';
 import '../../core/auth/auth_context.dart';
 import '../../core/clock/clock_service.dart';
@@ -373,6 +374,11 @@ class FamilyService {
       }
 
       final now = clock.nowUtc();
+      final normalizedInviteType = inviteType.trim().toLowerCase();
+      final normalizedEmail = _normalizeInviteEmail(
+        inviteType: normalizedInviteType,
+        email: email,
+      );
       final inviteCode = _randomCode(8);
       final token = _randomCode(32);
 
@@ -380,8 +386,8 @@ class FamilyService {
         session,
         FamilyInviteRow(
           familyId: familyId,
-          inviteType: inviteType,
-          email: email,
+          inviteType: normalizedInviteType,
+          email: normalizedEmail,
           inviteCode: inviteCode,
           token: token,
           expiresAt: now.add(const Duration(days: 7)),
@@ -444,8 +450,8 @@ class FamilyService {
         familyId: familyId,
         category: 'family_invite_created',
         title: 'Family invite created',
-        body: email?.trim().isNotEmpty == true
-            ? 'Invite ready for ${email!.trim()}'
+        body: normalizedEmail != null
+            ? 'Invite ready for $normalizedEmail'
             : 'A new family invite is ready to share.',
         entityType: 'invite',
         entityId: invite.id,
@@ -484,11 +490,29 @@ class FamilyService {
         transaction: transaction,
       );
 
+      if (!isFresh) {
+        final binding = await idempotency.getBinding(
+          session,
+          actorAuthUserId: authUserId,
+          action: 'family.invite.accept',
+          clientOperationId: clientOperationId,
+          transaction: transaction,
+        );
+        if (binding?.resourceType == 'family_member') {
+          return _findMember(
+            session,
+            binding!.resourceId,
+            transaction: transaction,
+          );
+        }
+      }
+
       final invite = await FamilyInviteRow.db.findFirstRow(
         session,
         where: (t) =>
             (t.token.equals(tokenOrCode) | t.inviteCode.equals(tokenOrCode)) &
-            (t.expiresAt > clock.nowUtc()),
+            (t.expiresAt > clock.nowUtc()) &
+            t.acceptedAt.equals(null),
         orderBy: (t) => t.id,
         orderDescending: true,
         transaction: transaction,
@@ -498,6 +522,11 @@ class FamilyService {
         throw FileNotFoundException(message: 'Invite not found or expired.');
       }
       final inviteDto = _mapInvite(invite);
+      await _ensureInviteRecipientMatches(
+        session,
+        invite: invite,
+        transaction: transaction,
+      );
 
       if (isFresh) {
         final now = clock.nowUtc();
@@ -531,6 +560,24 @@ class FamilyService {
               updatedAt: now,
               version: existingMember.version + 1,
             ),
+            transaction: transaction,
+          );
+        }
+        final currentMember = await FamilyMemberRow.db.findFirstRow(
+          session,
+          where: (t) =>
+              t.familyId.equals(inviteDto.familyId) &
+              t.profileId.equals(profileId),
+          transaction: transaction,
+        );
+        if (currentMember != null) {
+          await idempotency.bindResource(
+            session,
+            actorAuthUserId: authUserId,
+            action: 'family.invite.accept',
+            clientOperationId: clientOperationId,
+            resourceType: 'family_member',
+            resourceId: currentMember.id!,
             transaction: transaction,
           );
         }
@@ -820,6 +867,26 @@ class FamilyService {
     return _mapInvite(row!);
   }
 
+  Future<FamilyMemberDto> _findMember(
+    Session session,
+    int memberId, {
+    Transaction? transaction,
+  }) async {
+    final row = await FamilyMemberRow.db.findById(
+      session,
+      memberId,
+      transaction: transaction,
+    );
+    final profile = row == null
+        ? null
+        : await AppProfileRow.db.findById(
+            session,
+            row.profileId,
+            transaction: transaction,
+          );
+    return _mapMember(row!, profile);
+  }
+
   FamilyDto _mapFamily(FamilyRow row) {
     return FamilyDto(
       id: row.id!,
@@ -865,5 +932,50 @@ class FamilyService {
       length,
       (_) => alphabet[random.nextInt(alphabet.length)],
     ).join();
+  }
+
+  String? _normalizeInviteEmail({
+    required String inviteType,
+    required String? email,
+  }) {
+    if (inviteType == 'email') {
+      final normalized = email?.trim().toLowerCase();
+      if (normalized == null || normalized.isEmpty) {
+        throw ArgumentError.value(
+          email,
+          'email',
+          'Email is required for email invites.',
+        );
+      }
+      return normalized;
+    }
+
+    return null;
+  }
+
+  Future<void> _ensureInviteRecipientMatches(
+    Session session, {
+    required FamilyInviteRow invite,
+    Transaction? transaction,
+  }) async {
+    if (invite.inviteType != 'email') {
+      return;
+    }
+
+    final normalizedInviteEmail = invite.email?.trim().toLowerCase();
+    if (normalizedInviteEmail == null || normalizedInviteEmail.isEmpty) {
+      throw AccessDeniedException(message: 'Invite is invalid.');
+    }
+
+    final authUserId = authContext.requireAuthUserId(session);
+    final account = await EmailAccount.db.findFirstRow(
+      session,
+      where: (t) => t.authUserId.equals(authUserId),
+      transaction: transaction,
+    );
+    final normalizedAccountEmail = account?.email.trim().toLowerCase();
+    if (normalizedAccountEmail != normalizedInviteEmail) {
+      throw AccessDeniedException(message: 'Invite is not available.');
+    }
   }
 }
