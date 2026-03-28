@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/auth/auth_error_mapper.dart';
 import '../../../core/auth/auth_input_validator.dart';
 import '../../../core/auth/auth_session.dart';
+import '../../../core/di/service_locator.dart';
 import '../../../core/logging/app_error_logger.dart';
+import '../../../core/network/app_api_client.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../ui_kit/ui_kit.dart';
 import 'auth_flow_scaffold.dart';
+
+const _privacyPolicyFileName = 'Family_Helper_Политика_ПД.pdf';
+const _termsOfUseFileName = 'Family_Helper_Пользовательское_соглашение.pdf';
 
 class RegistrationEmailStepScreen extends StatefulWidget {
   const RegistrationEmailStepScreen({super.key});
@@ -22,6 +28,7 @@ class RegistrationEmailStepScreen extends StatefulWidget {
 class _RegistrationEmailStepScreenState
     extends State<RegistrationEmailStepScreen> {
   final _emailController = TextEditingController();
+  bool _acceptedLegalTerms = false;
   bool _isLoading = false;
   String? _error;
 
@@ -51,6 +58,18 @@ class _RegistrationEmailStepScreenState
           onSubmitted: (_) => _submit(),
         ),
         const SizedBox(height: 16),
+        _RegistrationLegalConsent(
+          accepted: _acceptedLegalTerms,
+          enabled: !_isLoading,
+          onChanged: (value) {
+            setState(() {
+              _acceptedLegalTerms = value ?? false;
+            });
+          },
+          onOpenPrivacyPolicy: () => _openLegalDocument(_privacyPolicyFileName),
+          onOpenTermsOfUse: () => _openLegalDocument(_termsOfUseFileName),
+        ),
+        const SizedBox(height: 16),
         AppButton(
           label: 'Continue',
           isLoading: _isLoading,
@@ -72,6 +91,13 @@ class _RegistrationEmailStepScreenState
     if (emailValidationError != null) {
       setState(() {
         _error = emailValidationError;
+      });
+      return;
+    }
+    if (!_acceptedLegalTerms) {
+      setState(() {
+        _error =
+            'Accept the Terms of Use and Privacy Policy to create an account.';
       });
       return;
     }
@@ -111,6 +137,69 @@ class _RegistrationEmailStepScreenState
         });
       }
     }
+  }
+
+  Future<void> _openLegalDocument(String fileName) async {
+    final uri = _buildLegalDocumentUri(fileName);
+    if (uri == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Legal document link is not configured.')),
+      );
+      return;
+    }
+
+    try {
+      final openedInApp = await launchUrl(
+        uri,
+        mode: LaunchMode.inAppBrowserView,
+      );
+      if (openedInApp) {
+        return;
+      }
+    } catch (_) {}
+
+    final openedExternally = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!openedExternally && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the document link.')),
+      );
+    }
+  }
+
+  Uri? _buildLegalDocumentUri(String fileName) {
+    if (!getIt.isRegistered<AppApiClient>()) {
+      return null;
+    }
+
+    final apiUri = Uri.tryParse(getIt<AppApiClient>().client.host);
+    if (apiUri == null) {
+      return null;
+    }
+
+    final host = apiUri.host.toLowerCase();
+    final resolvedHost = switch (host) {
+      'localhost' || '127.0.0.1' || '10.0.2.2' || '::1' => apiUri.host,
+      _ when host.startsWith('api.') => 'app.${apiUri.host.substring(4)}',
+      _ when host.startsWith('api-') => 'app-${apiUri.host.substring(4)}',
+      _ => apiUri.host,
+    };
+    final resolvedPort = switch (apiUri.port) {
+      8080 => 8082,
+      0 => null,
+      _ => apiUri.hasPort ? apiUri.port : null,
+    };
+
+    return apiUri.replace(
+      host: resolvedHost,
+      port: resolvedPort,
+      pathSegments: ['legal', fileName],
+      queryParameters: null,
+      fragment: null,
+    );
   }
 }
 
@@ -451,6 +540,58 @@ class _RegistrationStepScaffold extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 12),
                     child: AppBanner(text: error!, isError: true),
                   ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RegistrationLegalConsent extends StatelessWidget {
+  const _RegistrationLegalConsent({
+    required this.accepted,
+    required this.enabled,
+    required this.onChanged,
+    required this.onOpenPrivacyPolicy,
+    required this.onOpenTermsOfUse,
+  });
+
+  final bool accepted;
+  final bool enabled;
+  final ValueChanged<bool?> onChanged;
+  final VoidCallback onOpenPrivacyPolicy;
+  final VoidCallback onOpenTermsOfUse;
+
+  @override
+  Widget build(BuildContext context) {
+    return CheckboxListTile(
+      value: accepted,
+      onChanged: enabled ? onChanged : null,
+      contentPadding: EdgeInsets.zero,
+      controlAffinity: ListTileControlAffinity.leading,
+      title: const Text(
+        'I accept the Terms of Use and Privacy Policy.',
+      ),
+      subtitle: Wrap(
+        spacing: 4,
+        runSpacing: 0,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            'Read the documents:',
+            style: TextStyle(color: context.colors.textSecondary),
+          ),
+          TextButton(
+            onPressed: onOpenTermsOfUse,
+            child: const Text('Terms of Use'),
+          ),
+          Text(
+            'and',
+            style: TextStyle(color: context.colors.textSecondary),
+          ),
+          TextButton(
+            onPressed: onOpenPrivacyPolicy,
+            child: const Text('Privacy Policy'),
           ),
         ],
       ),

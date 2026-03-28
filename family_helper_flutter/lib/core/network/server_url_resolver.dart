@@ -70,6 +70,41 @@ class ServerUrlResolver {
     return uri.replace(host: preferredHost).toString();
   }
 
+  static String normalizeAgainstBase(
+    String serverUrl, {
+    required String baseUrl,
+    required TargetPlatform platform,
+    bool isDebug = kDebugMode,
+    bool isWeb = kIsWeb,
+  }) {
+    final normalizedUrl = normalize(
+      serverUrl,
+      platform: platform,
+      isDebug: isDebug,
+      isWeb: isWeb,
+    );
+    if (!isDebug) {
+      return normalizedUrl;
+    }
+
+    final targetUri = Uri.tryParse(normalizedUrl);
+    final baseUri = Uri.tryParse(baseUrl);
+    if (targetUri == null || baseUri == null) {
+      return normalizedUrl;
+    }
+
+    if (!_loopbackHosts.contains(targetUri.host.toLowerCase())) {
+      return normalizedUrl;
+    }
+
+    if (baseUri.host.isEmpty ||
+        _loopbackHosts.contains(baseUri.host.toLowerCase())) {
+      return normalizedUrl;
+    }
+
+    return targetUri.replace(host: baseUri.host).toString();
+  }
+
   @visibleForTesting
   static void resetCachedAndroidLoopbackHost() {
     _resolvedAndroidLoopbackHost = null;

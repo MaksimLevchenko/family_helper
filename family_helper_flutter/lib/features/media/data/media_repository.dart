@@ -33,8 +33,9 @@ class MediaRepository {
       sizeBytes: sizeBytes,
       objectPrefix: familyId == null ? 'avatars' : 'attachments',
     );
-    final normalizedUploadUrl = ServerUrlResolver.normalize(
+    final normalizedUploadUrl = ServerUrlResolver.normalizeAgainstBase(
       uploadSession.uploadUrl,
+      baseUrl: _apiClient.client.host,
       platform: defaultTargetPlatform,
     );
 
@@ -88,8 +89,9 @@ class MediaRepository {
     final signedUrl = await _apiClient.client.media.signedGetUrl(
       mediaId: mediaId,
     );
-    return ServerUrlResolver.normalize(
+    return ServerUrlResolver.normalizeAgainstBase(
       signedUrl,
+      baseUrl: _apiClient.client.host,
       platform: defaultTargetPlatform,
     );
   }
