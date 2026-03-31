@@ -66,6 +66,7 @@ FamilyMemberDto _mapMember(FamilyMemberRow row, AppProfileRow? profile) {
     familyId: row.familyId,
     profileId: row.profileId,
     displayName: profile?.displayName ?? 'User #${row.profileId}',
+    avatarMediaId: profile?.avatarMediaId,
     role: row.role,
     status: row.status,
     createdAt: row.createdAt,

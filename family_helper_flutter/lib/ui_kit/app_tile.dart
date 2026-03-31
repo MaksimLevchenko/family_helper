@@ -7,12 +7,14 @@ class AppTile extends StatelessWidget {
     super.key,
     required this.title,
     this.subtitle,
+    this.leading,
     this.trailing,
     this.onTap,
   });
 
   final String title;
   final String? subtitle;
+  final Widget? leading;
   final Widget? trailing;
   final VoidCallback? onTap;
 
@@ -23,6 +25,7 @@ class AppTile extends StatelessWidget {
     return Card(
       child: ListTile(
         onTap: onTap,
+        leading: leading,
         title: Text(title, style: TextStyle(color: colors.textPrimary)),
         subtitle: subtitle == null
             ? null

@@ -110,6 +110,10 @@ class _MembersSection extends StatelessWidget {
                     : member.displayName;
                 return AppTile(
                   title: title,
+                  leading: FamilyMemberAvatar(
+                    displayName: member.displayName,
+                    avatarMediaId: member.avatarMediaId,
+                  ),
                   subtitle: '$roleLabel • $statusLabel',
                 );
               }),
@@ -153,6 +157,7 @@ class _TransferOwnershipSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loadSignedUrl = context.read<MediaCubit>().loadSignedUrl;
     final candidates = members
         .where((member) => member.role != 'owner' && member.status == 'active')
         .toList();
@@ -188,7 +193,10 @@ class _TransferOwnershipSection extends StatelessWidget {
                   .map(
                     (member) => DropdownMenuItem<int>(
                       value: member.profileId,
-                      child: Text(member.displayName),
+                      child: _MemberOptionLabel(
+                        member: member,
+                        loadSignedUrl: loadSignedUrl,
+                      ),
                     ),
                   )
                   .toList(),
@@ -248,6 +256,39 @@ class _FamilyActionCard extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MemberOptionLabel extends StatelessWidget {
+  const _MemberOptionLabel({
+    required this.member,
+    required this.loadSignedUrl,
+  });
+
+  final FamilyMemberDto member;
+  final Future<String> Function(int mediaId) loadSignedUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 240),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FamilyMemberAvatar(
+            displayName: member.displayName,
+            avatarMediaId: member.avatarMediaId,
+            size: 28,
+            loadSignedUrl: loadSignedUrl,
+          ),
+          const SizedBox(width: 10),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 190),
+            child: Text(member.displayName, overflow: TextOverflow.ellipsis),
+          ),
+        ],
       ),
     );
   }

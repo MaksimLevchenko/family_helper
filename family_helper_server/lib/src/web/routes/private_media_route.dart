@@ -13,51 +13,66 @@ class PrivateMediaRoute extends Route {
 
   @override
   Future<Result> handleCall(Session session, Request request) async {
-    if (request.method == Method.options) {
-      return Response.ok(headers: _corsHeaders());
-    }
+    try {
+      if (request.method == Method.options) {
+        return Response.ok(headers: _corsHeaders());
+      }
 
-    final resolvedStorage = storage.forSession(session);
-    final validation = resolvedStorage.validateSignedDownloadUri(request.url);
+      final resolvedStorage = storage.forSession(session);
+      final validation = resolvedStorage.validateSignedDownloadUri(request.url);
 
-    if (!validation.isValid) {
-      final error = validation.error;
-      if (error == SignedDownloadValidationError.expired) {
+      if (!validation.isValid) {
+        final error = validation.error;
+        if (error == SignedDownloadValidationError.expired) {
+          return _withCors(
+            Response(
+              410,
+              body: Body.fromString('Signed media URL has expired.'),
+            ),
+          );
+        }
+
         return _withCors(
-          Response(
-            410,
-            body: Body.fromString('Signed media URL has expired.'),
+          Response.forbidden(
+            body: Body.fromString('Signed media URL is invalid.'),
           ),
         );
       }
 
+      final payload = validation.payload!;
+      final byteData = await resolvedStorage.retrieveBytes(
+        session,
+        path: payload.path,
+      );
+      if (byteData == null) {
+        return _withCors(
+          Response.notFound(body: Body.fromString('Private media not found.')),
+        );
+      }
+
+      final mimeType = _parseMimeType(payload.mimeType);
       return _withCors(
-        Response.forbidden(
-          body: Body.fromString('Signed media URL is invalid.'),
+        Response.ok(
+          body: Body.fromData(
+            Uint8List.sublistView(byteData),
+            mimeType: mimeType,
+          ),
+        ),
+      );
+    } catch (error, stackTrace) {
+      session.log(
+        'private-media route failed; method=${request.method.name}; url=${request.url}',
+        level: LogLevel.error,
+        exception: error,
+        stackTrace: stackTrace,
+      );
+      return _withCors(
+        Response(
+          500,
+          body: Body.fromString('Private media could not be served.'),
         ),
       );
     }
-
-    final payload = validation.payload!;
-    final byteData = await resolvedStorage.retrieveBytes(
-      session,
-      path: payload.path,
-    );
-    if (byteData == null) {
-      return _withCors(
-        Response.notFound(body: Body.fromString('Private media not found.')),
-      );
-    }
-
-    final mimeType = _parseMimeType(payload.mimeType);
-    return _withCors(
-      Response.ok(
-        body: Body.fromData(
-          Uint8List.sublistView(byteData),
-          mimeType: mimeType,
-        ),
-      ),
-    );
   }
 
   Response _withCors(Response response) {

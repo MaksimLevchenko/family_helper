@@ -4,6 +4,7 @@ fields:
   familyId: int
   profileId: int
   displayName: String
+  avatarMediaId: int?
   role: String
   status: String
   createdAt: DateTime

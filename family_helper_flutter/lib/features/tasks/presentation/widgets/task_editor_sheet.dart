@@ -9,6 +9,8 @@ import '../../../../core/config/app_defaults.dart';
 import '../../../../ui_kit/app_modal_sheet.dart';
 import '../../../../ui_kit/app_button.dart';
 import '../../../../ui_kit/date_time_picker.dart';
+import '../../../../ui_kit/family_member_avatar.dart';
+import '../../../media/providers/media_provider.dart';
 import '../../../notifications/domain/notification_models.dart';
 import '../../../notifications/providers/notifications_provider.dart';
 import '../../domain/task_form.dart';
@@ -24,6 +26,7 @@ Future<void> showTaskEditor(
 }) async {
   final cubit = context.read<TasksCubit>();
   final notificationsCubit = context.read<NotificationsCubit>();
+  final loadSignedUrl = context.read<MediaCubit?>()?.loadSignedUrl;
   final reminder = existingTask == null
       ? null
       : scheduledReminderForTask(
@@ -48,6 +51,7 @@ Future<void> showTaskEditor(
         currentProfileId: currentProfileId,
         isSubmitting: state.isSavingTask || state.isReminderSyncing,
         existingTask: existingTask,
+        loadSignedUrl: loadSignedUrl,
         onSubmit: (form) async {
           final messenger = ScaffoldMessenger.of(context);
           final savedTask = await cubit.saveTask(
@@ -144,6 +148,7 @@ class TaskEditorSheet extends StatefulWidget {
     required this.currentProfileId,
     required this.isSubmitting,
     required this.existingTask,
+    required this.loadSignedUrl,
     required this.onSubmit,
     this.nowProvider,
   });
@@ -153,6 +158,7 @@ class TaskEditorSheet extends StatefulWidget {
   final int? currentProfileId;
   final bool isSubmitting;
   final TaskDto? existingTask;
+  final Future<String> Function(int mediaId)? loadSignedUrl;
   final Future<bool> Function(TaskForm form) onSubmit;
   final DateTime Function()? nowProvider;
 
@@ -389,7 +395,28 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
                   ...activeMembers.map(
                     (member) => DropdownMenuItem<int?>(
                       value: member.profileId,
-                      child: Text(member.displayName),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 240),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            FamilyMemberAvatar(
+                              displayName: member.displayName,
+                              avatarMediaId: member.avatarMediaId,
+                              size: 28,
+                              loadSignedUrl: widget.loadSignedUrl,
+                            ),
+                            const SizedBox(width: 10),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 190),
+                              child: Text(
+                                member.displayName,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],

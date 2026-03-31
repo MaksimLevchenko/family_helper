@@ -8,6 +8,7 @@ export 'cached_data_status.dart';
 export 'date_time_picker.dart';
 export 'empty_state.dart';
 export 'error_state.dart';
+export 'family_member_avatar.dart';
 export 'loading_state.dart';
 export 'money_field.dart';
 export 'responsive_content_layout.dart';

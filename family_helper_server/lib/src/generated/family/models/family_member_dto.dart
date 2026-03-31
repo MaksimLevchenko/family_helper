@@ -19,6 +19,7 @@ abstract class FamilyMemberDto
     required this.familyId,
     required this.profileId,
     required this.displayName,
+    this.avatarMediaId,
     required this.role,
     required this.status,
     required this.createdAt,
@@ -29,6 +30,7 @@ abstract class FamilyMemberDto
     required int familyId,
     required int profileId,
     required String displayName,
+    int? avatarMediaId,
     required String role,
     required String status,
     required DateTime createdAt,
@@ -40,6 +42,7 @@ abstract class FamilyMemberDto
       familyId: jsonSerialization['familyId'] as int,
       profileId: jsonSerialization['profileId'] as int,
       displayName: jsonSerialization['displayName'] as String,
+      avatarMediaId: jsonSerialization['avatarMediaId'] as int?,
       role: jsonSerialization['role'] as String,
       status: jsonSerialization['status'] as String,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
@@ -56,6 +59,8 @@ abstract class FamilyMemberDto
 
   String displayName;
 
+  int? avatarMediaId;
+
   String role;
 
   String status;
@@ -70,6 +75,7 @@ abstract class FamilyMemberDto
     int? familyId,
     int? profileId,
     String? displayName,
+    int? avatarMediaId,
     String? role,
     String? status,
     DateTime? createdAt,
@@ -82,6 +88,7 @@ abstract class FamilyMemberDto
       'familyId': familyId,
       'profileId': profileId,
       'displayName': displayName,
+      if (avatarMediaId != null) 'avatarMediaId': avatarMediaId,
       'role': role,
       'status': status,
       'createdAt': createdAt.toJson(),
@@ -96,6 +103,7 @@ abstract class FamilyMemberDto
       'familyId': familyId,
       'profileId': profileId,
       'displayName': displayName,
+      if (avatarMediaId != null) 'avatarMediaId': avatarMediaId,
       'role': role,
       'status': status,
       'createdAt': createdAt.toJson(),
@@ -108,12 +116,15 @@ abstract class FamilyMemberDto
   }
 }
 
+class _Undefined {}
+
 class _FamilyMemberDtoImpl extends FamilyMemberDto {
   _FamilyMemberDtoImpl({
     required int id,
     required int familyId,
     required int profileId,
     required String displayName,
+    int? avatarMediaId,
     required String role,
     required String status,
     required DateTime createdAt,
@@ -122,6 +133,7 @@ class _FamilyMemberDtoImpl extends FamilyMemberDto {
          familyId: familyId,
          profileId: profileId,
          displayName: displayName,
+         avatarMediaId: avatarMediaId,
          role: role,
          status: status,
          createdAt: createdAt,
@@ -136,6 +148,7 @@ class _FamilyMemberDtoImpl extends FamilyMemberDto {
     int? familyId,
     int? profileId,
     String? displayName,
+    Object? avatarMediaId = _Undefined,
     String? role,
     String? status,
     DateTime? createdAt,
@@ -145,6 +158,7 @@ class _FamilyMemberDtoImpl extends FamilyMemberDto {
       familyId: familyId ?? this.familyId,
       profileId: profileId ?? this.profileId,
       displayName: displayName ?? this.displayName,
+      avatarMediaId: avatarMediaId is int? ? avatarMediaId : this.avatarMediaId,
       role: role ?? this.role,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,

@@ -6,6 +6,7 @@ import 'package:family_helper_client/family_helper_client.dart';
 import '../../../core/network/server_availability_cubit.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../../auth_profile/providers/profile_provider.dart';
+import '../../media/providers/media_provider.dart';
 import '../providers/family_provider.dart';
 
 part 'family_screen_forms.dart';

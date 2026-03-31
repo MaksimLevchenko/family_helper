@@ -361,7 +361,10 @@ class _HeroCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final familyName = familyState.family?.title ?? 'Your family';
-    final memberCount = familyState.members.length;
+    final activeMembers = familyState.members
+        .where((member) => member.status == 'active')
+        .toList();
+    final memberCount = activeMembers.length;
     final memberLabel = memberCount == 1 ? 'member' : 'members';
 
     return Container(
@@ -425,6 +428,26 @@ class _HeroCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (activeMembers.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: activeMembers
+                        .take(5)
+                        .map(
+                          (member) => Tooltip(
+                            message: member.displayName,
+                            child: FamilyMemberAvatar(
+                              displayName: member.displayName,
+                              avatarMediaId: member.avatarMediaId,
+                              size: 36,
+                            ),
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                ],
                 const SizedBox(height: 20),
                 Text(
                   'Everything your family needs, at a glance.',

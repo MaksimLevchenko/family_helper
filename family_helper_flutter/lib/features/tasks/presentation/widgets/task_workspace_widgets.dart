@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../ui_kit/app_button.dart';
+import '../../../../ui_kit/family_member_avatar.dart';
 import '../../domain/task_form.dart';
 import '../../providers/tasks_provider.dart';
 
@@ -192,6 +193,10 @@ class TasksSidebar extends StatelessWidget {
                   sections[sectionIndex].tasks[index].assigneeProfileId,
                   members,
                   currentProfileId: currentProfileId,
+                ),
+                assigneeMember: memberForProfileId(
+                  sections[sectionIndex].tasks[index].assigneeProfileId,
+                  members,
                 ),
                 isCompletingTask: isCompletingTask,
                 isOffline: isOffline,
@@ -412,6 +417,7 @@ class TaskListItem extends StatelessWidget {
     required this.task,
     required this.isSelected,
     required this.assigneeName,
+    required this.assigneeMember,
     required this.isCompletingTask,
     required this.isOffline,
     required this.onTap,
@@ -421,6 +427,7 @@ class TaskListItem extends StatelessWidget {
   final TaskDto task;
   final bool isSelected;
   final String assigneeName;
+  final FamilyMemberDto? assigneeMember;
   final bool isCompletingTask;
   final bool isOffline;
   final VoidCallback onTap;
@@ -433,6 +440,13 @@ class TaskListItem extends StatelessWidget {
       child: ListTile(
         key: Key('task-list-item-${task.id}'),
         onTap: onTap,
+        leading: assigneeMember == null
+            ? null
+            : FamilyMemberAvatar(
+                displayName: assigneeMember!.displayName,
+                avatarMediaId: assigneeMember!.avatarMediaId,
+                size: 36,
+              ),
         title: Text(task.title),
         subtitle: Text(
           '$assigneeName - ${priorityLabel(task.priority)} - ${shortDueLabel(task)}',
@@ -813,6 +827,21 @@ String assigneeName(
     }
   }
   return profileId == currentProfileId ? 'You' : 'User #$profileId';
+}
+
+FamilyMemberDto? memberForProfileId(
+  int? profileId,
+  List<FamilyMemberDto> members,
+) {
+  if (profileId == null) {
+    return null;
+  }
+  for (final member in members) {
+    if (member.profileId == profileId) {
+      return member;
+    }
+  }
+  return null;
 }
 
 String shortDueLabel(TaskDto task) {
