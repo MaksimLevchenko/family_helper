@@ -9,6 +9,7 @@ import '../../../core/logging/app_error_logger.dart';
 import '../../../firebase_options.dart';
 import '../../../firebase_web_push_options.dart';
 import 'local_notification_service.dart';
+import 'notification_target.dart';
 
 class PushNotificationService {
   PushNotificationService({
@@ -70,7 +71,7 @@ class PushNotificationService {
     _tokenSub = messaging.onTokenRefresh.listen(_tokenRefreshes.add);
     _messageSub = FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
     _openedSub = FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      final target = NotificationOpenTarget.fromRemoteMessage(message);
+      final target = NotificationOpenTarget.fromDataMap(message.data);
       if (target != null) {
         _openTargets.add(target);
       }
@@ -78,8 +79,8 @@ class PushNotificationService {
 
     final initialMessage = await messaging.getInitialMessage();
     if (initialMessage != null) {
-      _pendingInitialOpen = NotificationOpenTarget.fromRemoteMessage(
-        initialMessage,
+      _pendingInitialOpen = NotificationOpenTarget.fromDataMap(
+        initialMessage.data,
       );
     }
   }
@@ -198,84 +199,5 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   }
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp(options: options);
-  }
-}
-
-class NotificationOpenTarget {
-  const NotificationOpenTarget({
-    required this.familyId,
-    required this.entityType,
-    required this.entityId,
-    required this.category,
-    this.notificationId,
-    this.route,
-    this.payload,
-  });
-
-  final int familyId;
-  final String entityType;
-  final int entityId;
-  final String category;
-  final int? notificationId;
-  final String? route;
-  final Map<String, dynamic>? payload;
-
-  DateTime? get occurrenceStart {
-    final value = payload?['occurrenceStart'];
-    if (value is String && value.trim().isNotEmpty) {
-      return DateTime.tryParse(value)?.toLocal();
-    }
-    return null;
-  }
-
-  static NotificationOpenTarget? fromRemoteMessage(RemoteMessage message) {
-    return fromDataMap(message.data);
-  }
-
-  static NotificationOpenTarget? fromPayloadJson(String raw) {
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is Map<String, dynamic>) {
-        return fromDataMap(decoded);
-      }
-    } catch (_) {
-      return null;
-    }
-    return null;
-  }
-
-  static NotificationOpenTarget? fromDataMap(Map<String, dynamic> data) {
-    final familyId = int.tryParse('${data['familyId'] ?? ''}');
-    final entityId = int.tryParse('${data['entityId'] ?? data['taskId'] ?? data['eventId'] ?? data['goalId'] ?? data['listId'] ?? ''}');
-    final entityType = '${data['entityType'] ?? _inferEntityType(data)}'.trim();
-    final category = '${data['category'] ?? ''}'.trim();
-    if (familyId == null || entityId == null || entityType.isEmpty) {
-      return null;
-    }
-    return NotificationOpenTarget(
-      familyId: familyId,
-      entityType: entityType,
-      entityId: entityId,
-      category: category.isEmpty ? 'notification' : category,
-      notificationId: int.tryParse('${data['notificationId'] ?? ''}'),
-      route: (data['route'] as String?)?.trim(),
-      payload: data,
-    );
-  }
-
-  static String _inferEntityType(Map<String, dynamic> data) {
-    if (data.containsKey('taskId')) {
-      return 'task';
-    }
-    if (data.containsKey('eventId')) {
-      return 'calendar';
-    }
-    if (data.containsKey('goalId')) {
-      return 'goal';
-    }
-    if (data.containsKey('listId')) {
-      return 'list';
-    }
-    return '';
   }
 }

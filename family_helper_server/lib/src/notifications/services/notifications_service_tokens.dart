@@ -130,8 +130,8 @@ Future<AppNotificationDto> _sendTestPushImpl(
       transaction: transaction,
     );
 
-    final debugEntityId = service.clock.nowUtc().millisecondsSinceEpoch &
-        0x7fffffff;
+    final debugEntityId =
+        service.clock.nowUtc().millisecondsSinceEpoch & 0x7fffffff;
     final localeCode = await service.appNotifications.profileLocaleCode(
       session,
       profileId: profileId,
@@ -150,7 +150,7 @@ Future<AppNotificationDto> _sendTestPushImpl(
       body: message.body,
       entityType: 'notification',
       entityId: debugEntityId,
-      route: '/home/settings/notifications',
+      route: '/home/notifications/settings',
       payload: {
         'category': 'debug_test_push',
         'familyId': familyId,

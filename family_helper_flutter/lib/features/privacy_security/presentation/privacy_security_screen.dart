@@ -94,13 +94,15 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                 },
                 onCancelDeletion: () async {
                   final messenger = ScaffoldMessenger.of(context);
+                  final cancelledMessage =
+                      context.l10n.privacyDeletionCancelled;
                   await context.read<PrivacyCubit>().cancelAccountDeletion();
                   if (!mounted) {
                     return;
                   }
                   messenger.showSnackBar(
                     SnackBar(
-                      content: Text(context.l10n.privacyDeletionCancelled),
+                      content: Text(cancelledMessage),
                     ),
                   );
                 },
@@ -225,8 +227,8 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
       'pending' ||
       'processing' ||
       'scheduled' => context.l10n.privacyDeletionScheduledFor(
-          scheduledAt.toString(),
-        ),
+        scheduledAt.toString(),
+      ),
       'cancelled' => context.l10n.privacyDeletionCancelled,
       'completed' || 'hard_deleted' => context.l10n.privacyDeletionCompleted,
       _ => context.l10n.privacyDeletionScheduledFor(scheduledAt.toString()),

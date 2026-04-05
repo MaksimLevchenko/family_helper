@@ -131,7 +131,8 @@ abstract class PushGateway {
 }
 
 class FcmPushGateway implements PushGateway {
-  FcmPushGateway({ClockService? clock}) : _clock = clock ?? const ClockService();
+  FcmPushGateway({ClockService? clock})
+    : _clock = clock ?? const ClockService();
 
   static const _scope = 'https://www.googleapis.com/auth/firebase.messaging';
 
@@ -201,7 +202,7 @@ class FcmPushGateway implements PushGateway {
                 'body': body,
               },
               'fcm_options': {
-                'link': data['route'] ?? '/home/settings/notifications',
+                'link': data['route'] ?? '/home/notifications/settings',
               },
             },
           },
@@ -300,8 +301,7 @@ class FcmPushGateway implements PushGateway {
       String? errorCode;
       if (details is List) {
         for (final detail in details) {
-          if (detail is Map<String, dynamic> &&
-              detail['errorCode'] is String) {
+          if (detail is Map<String, dynamic> && detail['errorCode'] is String) {
             errorCode = detail['errorCode'] as String;
             break;
           }

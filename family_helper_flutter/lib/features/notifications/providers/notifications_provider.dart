@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter/foundation.dart';
@@ -16,6 +17,7 @@ import '../../../core/utils/operation_id.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/local_notification_service.dart';
+import '../data/notification_target.dart';
 import '../data/notifications_repository.dart';
 import '../data/push_notification_service.dart';
 import '../domain/notification_models.dart';
@@ -172,8 +174,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     return switch (permissionStatus) {
       NotificationPermissionStatus.notDetermined =>
         _l10n.notificationAllowTestPush,
-      NotificationPermissionStatus.denied =>
-        _l10n.notificationBlockedTestPush,
+      NotificationPermissionStatus.denied => _l10n.notificationBlockedTestPush,
       NotificationPermissionStatus.permanentlyDenied =>
         _l10n.notificationDisabledTestPush,
       NotificationPermissionStatus.granted => '',
@@ -574,6 +575,12 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
     emit(state.copyWith(isLoading: true, clearError: true));
     final clientOperationId = OperationId.next();
+    final normalizedPayloadJson = _normalizeReminderPayloadJson(
+      familyId: familyId,
+      entityType: entityType,
+      entityId: entityId,
+      payloadJson: payloadJson,
+    );
     try {
       final reminder = await _repository.scheduleReminder(
         clientOperationId: clientOperationId,
@@ -581,7 +588,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         entityType: entityType,
         entityId: entityId,
         remindAt: remindAt,
-        payloadJson: payloadJson,
+        payloadJson: normalizedPayloadJson,
       );
 
       await _localNotificationService.scheduleReminder(
@@ -589,7 +596,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         title: title,
         body: body,
         scheduledAt: reminder.remindAt.toLocal(),
-        payload: payloadJson,
+        payload: normalizedPayloadJson,
       );
 
       emit(
@@ -622,7 +629,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
             'entityType': entityType,
             'entityId': entityId,
             'remindAt': remindAt.toUtc().toIso8601String(),
-            'payloadJson': payloadJson,
+            'payloadJson': normalizedPayloadJson,
           },
         );
         emit(
@@ -684,6 +691,12 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       entityType: entityType,
       entityId: entityId,
     );
+    final normalizedPayloadJson = _normalizeReminderPayloadJson(
+      familyId: familyId,
+      entityType: entityType,
+      entityId: entityId,
+      payloadJson: payloadJson,
+    );
     try {
       final reminder = await _repository.replaceReminder(
         clientOperationId: clientOperationId,
@@ -691,7 +704,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         entityType: entityType,
         entityId: entityId,
         remindAt: remindAt,
-        payloadJson: payloadJson,
+        payloadJson: normalizedPayloadJson,
       );
 
       for (final reminderId in activeReminderIds) {
@@ -703,7 +716,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
           title: title,
           body: body,
           scheduledAt: reminder.remindAt.toLocal(),
-          payload: payloadJson,
+          payload: normalizedPayloadJson,
         );
       }
 
@@ -1041,6 +1054,33 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       showLoadingState: false,
     );
     return token;
+  }
+
+  String _normalizeReminderPayloadJson({
+    required int familyId,
+    required String entityType,
+    required int entityId,
+    required String payloadJson,
+  }) {
+    return buildNotificationTargetPayloadJson(
+      familyId: familyId,
+      entityType: entityType,
+      entityId: entityId,
+      route: defaultRouteForNotificationEntityType(entityType),
+      payload: _decodeReminderPayload(payloadJson),
+    );
+  }
+
+  Map<String, dynamic> _decodeReminderPayload(String payloadJson) {
+    try {
+      final decoded = jsonDecode(payloadJson);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+    } catch (_) {
+      // Fall back to the canonical notification target envelope.
+    }
+    return const <String, dynamic>{};
   }
 
   Future<NotificationPermissionStatus> requestSystemPermissionIfNeeded() async {

@@ -9,7 +9,7 @@ import '../../../core/routing/app_routes.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/notification_navigation_service.dart';
-import '../data/push_notification_service.dart';
+import '../data/notification_target.dart';
 import '../providers/notifications_provider.dart';
 
 part 'notifications_screen_layout.dart';
@@ -110,9 +110,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (!mounted) {
       return;
     }
-    final target = NotificationOpenTarget.fromPayloadJson(
-      notification.payloadJson,
-    );
+    final target = NotificationOpenTarget.fromAppNotification(notification);
     if (target != null) {
       await NotificationNavigationService.openTarget(context, target);
     }
@@ -194,10 +192,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             constraints: const BoxConstraints(maxWidth: 720),
                             child: _NotificationEmptyState(
                               icon: Icons.notifications_paused_rounded,
-                              title: context.l10n.notificationsConnectFamilyTitle,
-                              message:
-                                  context.l10n.notificationsConnectFamilyMessage,
-                              actionLabel: context.l10n.notificationsOpenFamilySettings,
+                              title:
+                                  context.l10n.notificationsConnectFamilyTitle,
+                              message: context
+                                  .l10n
+                                  .notificationsConnectFamilyMessage,
+                              actionLabel:
+                                  context.l10n.notificationsOpenFamilySettings,
                               onAction: () => context.go(AppRoutes.family),
                             ),
                           ),

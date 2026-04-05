@@ -10,6 +10,7 @@ import '../../../core/realtime/realtime_provider.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../../notifications/data/notification_navigation_service.dart';
+import '../../notifications/data/notification_target.dart';
 import '../../notifications/data/push_notification_service.dart';
 import '../../notifications/providers/notifications_provider.dart';
 

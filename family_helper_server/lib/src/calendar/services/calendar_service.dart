@@ -816,11 +816,20 @@ class CalendarService {
       desiredReminders[key] = _MaterializedReminder(
         clientOperationId: key,
         remindAt: remindAt,
-        payloadJson: jsonEncode({
-          'eventId': instance.eventId,
-          'occurrenceKeyStart': instance.occurrenceKeyStart.toIso8601String(),
-          'occurrenceStart': instance.occurrenceStart.toIso8601String(),
-        }),
+        payloadJson: jsonEncode(
+          buildAppNotificationPayload(
+            familyId: familyId,
+            entityType: _calendarReminderEntityType,
+            entityId: instance.eventId,
+            route: '/home/calendar',
+            payload: {
+              'eventId': instance.eventId,
+              'occurrenceKeyStart': instance.occurrenceKeyStart
+                  .toIso8601String(),
+              'occurrenceStart': instance.occurrenceStart.toIso8601String(),
+            },
+          ),
+        ),
         eventId: instance.eventId,
       );
     }

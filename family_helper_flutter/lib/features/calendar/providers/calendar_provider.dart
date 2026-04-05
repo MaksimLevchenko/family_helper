@@ -14,6 +14,7 @@ import '../../../core/utils/operation_id.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../../notifications/data/local_notification_service.dart';
+import '../../notifications/data/notification_target.dart';
 import '../../notifications/data/notifications_repository.dart';
 import '../../notifications/domain/notification_models.dart';
 import '../data/calendar_repository.dart';
@@ -543,9 +544,10 @@ class CalendarCubit extends Cubit<CalendarState> {
   LocalReminderSchedule _mapReminderSchedule(ReminderDto reminder) {
     String title = _l10n.commonEventReminderTitle;
     String body = _l10n.commonEventReminderBody;
+    Map<String, dynamic> payload = const <String, dynamic>{};
 
     try {
-      final payload = jsonDecode(reminder.payloadJson) as Map<String, dynamic>;
+      payload = jsonDecode(reminder.payloadJson) as Map<String, dynamic>;
       title = (payload['title'] as String?)?.trim().isNotEmpty == true
           ? payload['title'] as String
           : title;
@@ -561,6 +563,13 @@ class CalendarCubit extends Cubit<CalendarState> {
       title: title,
       body: body,
       scheduledAt: reminder.remindAt.toLocal(),
+      payload: buildNotificationTargetPayloadJson(
+        familyId: reminder.familyId,
+        entityType: reminder.entityType,
+        entityId: reminder.entityId,
+        route: defaultRouteForNotificationEntityType(reminder.entityType),
+        payload: payload,
+      ),
     );
   }
 

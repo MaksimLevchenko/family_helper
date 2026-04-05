@@ -69,8 +69,7 @@ class AppNotificationService {
     final profileId = await authContext.ensureProfileId(session);
     final row = await AppNotificationRow.db.findFirstRow(
       session,
-      where: (t) =>
-          t.id.equals(notificationId) & t.profileId.equals(profileId),
+      where: (t) => t.id.equals(notificationId) & t.profileId.equals(profileId),
     );
     if (row == null) {
       throw FileNotFoundException(message: 'Notification not found.');
@@ -192,6 +191,17 @@ class AppNotificationService {
       return const <AppNotificationDto>[];
     }
 
+    final normalizedRoute = defaultNotificationRouteForEntityType(
+      entityType,
+      explicitRoute: route,
+    );
+    final normalizedPayload = buildAppNotificationPayload(
+      familyId: familyId,
+      entityType: entityType,
+      entityId: entityId,
+      route: normalizedRoute,
+      payload: payload,
+    );
     final now = clock.nowUtc();
     final insertedRows = <AppNotificationRow>[];
     for (final profileId in profileIds.toSet()) {
@@ -205,8 +215,8 @@ class AppNotificationService {
           body: body,
           entityType: entityType,
           entityId: entityId,
-          route: route,
-          payloadJson: jsonEncode(payload ?? const <String, dynamic>{}),
+          route: normalizedRoute,
+          payloadJson: jsonEncode(normalizedPayload),
           isRead: false,
           readAt: null,
           createdAt: now,
@@ -383,4 +393,44 @@ class AppNotificationService {
       version: row.version,
     );
   }
+}
+
+Map<String, dynamic> buildAppNotificationPayload({
+  required int familyId,
+  required String entityType,
+  required int entityId,
+  String? route,
+  Map<String, dynamic>? payload,
+}) {
+  final normalizedRoute = defaultNotificationRouteForEntityType(
+    entityType,
+    explicitRoute: route,
+  );
+  return <String, dynamic>{
+    ...?payload,
+    'familyId': familyId,
+    'entityType': entityType,
+    'entityId': entityId,
+    if (normalizedRoute != null && normalizedRoute.trim().isNotEmpty)
+      'route': normalizedRoute,
+  };
+}
+
+String? defaultNotificationRouteForEntityType(
+  String entityType, {
+  String? explicitRoute,
+}) {
+  final trimmedExplicitRoute = explicitRoute?.trim();
+  if (trimmedExplicitRoute != null && trimmedExplicitRoute.isNotEmpty) {
+    return trimmedExplicitRoute;
+  }
+  return switch (entityType) {
+    'task' => '/home/tasks',
+    'calendar' => '/home/calendar',
+    'goal' => '/home/goals',
+    'list' => '/home/lists',
+    'invite' => '/home/settings/family',
+    'notification' => '/home/notifications/settings',
+    _ => '/home/notifications',
+  };
 }

@@ -303,6 +303,7 @@ class LocalNotificationService {
         title: reminder.title,
         body: reminder.body,
         scheduledAt: reminder.scheduledAt,
+        payload: reminder.payload,
       );
     }
 
@@ -446,10 +447,12 @@ class LocalReminderSchedule {
     required this.title,
     required this.body,
     required this.scheduledAt,
+    this.payload,
   });
 
   final int id;
   final String title;
   final String body;
   final DateTime scheduledAt;
+  final String? payload;
 }

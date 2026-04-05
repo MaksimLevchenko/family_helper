@@ -4,13 +4,12 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/routing/app_routes.dart';
 import '../../calendar/providers/calendar_provider.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../../lists/providers/lists_provider.dart';
 import '../../money_goals/providers/money_goals_provider.dart';
 import '../../tasks/providers/tasks_provider.dart';
-import 'push_notification_service.dart';
+import 'notification_target.dart';
 
 class NotificationNavigationService {
   const NotificationNavigationService._();
@@ -39,7 +38,11 @@ class NotificationNavigationService {
         tasksCubit.setCurrentTask(target.entityId);
         return;
       case 'list':
-        await listsCubit.selectList(target.entityId);
+        try {
+          await listsCubit.selectList(target.entityId);
+        } catch (_) {
+          return;
+        }
         return;
       case 'goal':
         moneyGoalsCubit.setCurrentGoal(target.entityId);
@@ -63,13 +66,7 @@ class NotificationNavigationService {
     if (explicitRoute != null && explicitRoute.isNotEmpty) {
       return explicitRoute;
     }
-
-    return switch (target.entityType) {
-      'task' => AppRoutes.tasks,
-      'list' => AppRoutes.lists,
-      'goal' => AppRoutes.goals,
-      'calendar' => AppRoutes.calendar,
-      _ => AppRoutes.notificationCenter,
-    };
+    return defaultRouteForNotificationEntityType(target.entityType) ??
+        defaultRouteForNotificationEntityType('notification')!;
   }
 }

@@ -1,21 +1,21 @@
-import 'dart:convert';
-
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../core/config/app_defaults.dart';
 import '../../../../core/l10n/l10n.dart';
-import '../../../../ui_kit/app_modal_sheet.dart';
 import '../../../../ui_kit/app_button.dart';
-import '../../../../ui_kit/date_time_picker.dart';
-import '../../../../ui_kit/family_member_avatar.dart';
+import '../../../../ui_kit/app_modal_sheet.dart';
+import '../../../family_invites/providers/family_provider.dart';
 import '../../../media/providers/media_provider.dart';
+import '../../../notifications/data/notification_target.dart';
 import '../../../notifications/domain/notification_models.dart';
 import '../../../notifications/providers/notifications_provider.dart';
 import '../../domain/task_form.dart';
 import '../../providers/tasks_provider.dart';
+import 'task_deadline_section.dart';
+import 'task_editor_form_sections.dart';
+import 'task_editor_recurrence_controls.dart';
 
 Future<void> showTaskEditor(
   BuildContext context, {
@@ -63,6 +63,7 @@ Future<void> showTaskEditor(
             return false;
           }
 
+          final familyId = context.read<FamilySelectionCubit>().state;
           final remindAt = form.dueAt == null
               ? null
               : form.reminderPreset.scheduleAt(form.dueAt!);
@@ -72,7 +73,12 @@ Future<void> showTaskEditor(
             entityType: AppDefaults.taskReminderEntityType,
             entityId: savedTask.id,
             remindAt: remindAt,
-            payloadJson: jsonEncode({'taskId': savedTask.id}),
+            payloadJson: buildNotificationTargetPayloadJson(
+              familyId: familyId ?? savedTask.familyId,
+              entityType: AppDefaults.taskReminderEntityType,
+              entityId: savedTask.id,
+              payload: {'taskId': savedTask.id},
+            ),
             title: context.l10n.commonTaskReminderTitle,
             body: savedTask.title,
           );
@@ -328,12 +334,10 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     final isEditing = widget.existingTask != null;
     final activeMembers = widget.members
         .where((member) => member.status == 'active')
         .toList();
-    final hasValidDeadline = _hasValidDeadline;
 
     return Form(
       key: _formKey,
@@ -342,54 +346,18 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              isEditing ? l10n.taskEditorEditTitle : l10n.taskEditorCreateTitle,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              isEditing
-                  ? l10n.taskEditorEditSubtitle
-                  : l10n.taskEditorCreateSubtitle,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            TaskEditorHeader(isEditing: isEditing),
             const SizedBox(height: 16),
-            TextFormField(
-              key: const Key('task-editor-title-field'),
-              controller: _titleController,
-              decoration: InputDecoration(
-                labelText: l10n.taskEditorTitleLabel,
-                hintText: l10n.taskEditorTitleHint,
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return l10n.taskEditorTitleValidation;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              key: const Key('task-editor-description-field'),
-              controller: _descriptionController,
-              minLines: 2,
-              maxLines: 4,
-              decoration: InputDecoration(
-                labelText: l10n.taskEditorDescriptionLabel,
-                hintText: l10n.taskEditorDescriptionHint,
-              ),
-            ),
-            const SizedBox(height: 12),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _isPersonal,
-              title: Text(l10n.taskEditorPersonalTaskLabel),
-              subtitle: Text(
-                _isPersonal
-                    ? l10n.taskEditorPersonalTaskOn
-                    : l10n.taskEditorPersonalTaskOff,
-              ),
-              onChanged: (value) {
+            TaskEditorBasicsSection(
+              titleController: _titleController,
+              descriptionController: _descriptionController,
+              isPersonal: _isPersonal,
+              priority: _priority,
+              assigneeProfileId: _assigneeProfileId,
+              activeMembers: activeMembers,
+              loadSignedUrl: widget.loadSignedUrl,
+              priorityLabel: _priorityLabel,
+              onPersonalChanged: (value) {
                 setState(() {
                   _isPersonal = value;
                   if (value) {
@@ -397,77 +365,17 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
                   }
                 });
               },
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<TaskPriorityOption>(
-              key: const Key('task-editor-priority-field'),
-              initialValue: _priority,
-              decoration: InputDecoration(labelText: l10n.taskEditorPriorityLabel),
-              items: TaskPriorityOption.values
-                  .map(
-                    (priority) => DropdownMenuItem<TaskPriorityOption>(
-                      value: priority,
-                      child: Text(_priorityLabel(priority)),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                if (value == null) {
-                  return;
-                }
+              onPriorityChanged: (value) {
                 setState(() {
                   _priority = value;
                 });
               },
+              onAssigneeChanged: (value) {
+                setState(() {
+                  _assigneeProfileId = value;
+                });
+              },
             ),
-            if (!_isPersonal) ...[
-              const SizedBox(height: 12),
-              DropdownButtonFormField<int?>(
-                key: const Key('task-editor-assignee-field'),
-                initialValue: _assigneeProfileId,
-                decoration: InputDecoration(
-                  labelText: l10n.taskEditorAssigneeLabel,
-                ),
-                items: [
-                  DropdownMenuItem<int?>(
-                    value: null,
-                    child: Text(l10n.taskEditorUnassigned),
-                  ),
-                  ...activeMembers.map(
-                    (member) => DropdownMenuItem<int?>(
-                      value: member.profileId,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 240),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            FamilyMemberAvatar(
-                              displayName: member.displayName,
-                              avatarMediaId: member.avatarMediaId,
-                              size: 28,
-                              loadSignedUrl: widget.loadSignedUrl,
-                            ),
-                            const SizedBox(width: 10),
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 190),
-                              child: Text(
-                                member.displayName,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _assigneeProfileId = value;
-                  });
-                },
-              ),
-            ],
             const SizedBox(height: 12),
             TaskDeadlineSection(
               mode: _dueInputMode,
@@ -499,77 +407,36 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
               formatPreview: _formatDuePreview,
             ),
             const SizedBox(height: 12),
-            ReminderPresetField(
-              key: const Key('task-editor-reminder-field'),
-              label: l10n.taskEditorReminderLabel,
-              value: _reminderPreset,
-              enabled: hasValidDeadline,
-              onChanged: (value) {
-                if (value == null) {
-                  return;
-                }
+            TaskEditorReminderRecurrenceSection(
+              hasValidDeadline: _hasValidDeadline,
+              reminderPreset: _reminderPreset,
+              recurrencePreset: _recurrencePreset,
+              recurrenceInterval: _recurrenceInterval,
+              recurrenceLabel: _recurrenceLabel,
+              onReminderChanged: (value) {
                 setState(() {
                   _reminderPreset = value;
                 });
               },
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<TaskRecurrencePreset>(
-              key: const Key('task-editor-recurrence-field'),
-              initialValue: _recurrencePreset,
-              decoration: InputDecoration(labelText: l10n.taskEditorRepeatLabel),
-              items: TaskRecurrencePreset.values
-                  .map(
-                    (preset) => DropdownMenuItem<TaskRecurrencePreset>(
-                      value: preset,
-                      child: Text(_recurrenceLabel(preset)),
-                    ),
-                  )
-                  .toList(),
-              onChanged: hasValidDeadline
-                  ? (value) {
-                      if (value == null) {
-                        return;
-                      }
-                      setState(() {
-                        _recurrencePreset = value;
-                        if (value == TaskRecurrencePreset.none) {
-                          _recurrenceInterval = 1;
-                        }
-                      });
-                    }
-                  : null,
-            ),
-            if (_recurrencePreset != TaskRecurrencePreset.none &&
-                hasValidDeadline) ...[
-              const SizedBox(height: 12),
-              DropdownButtonFormField<int>(
-                key: const Key('task-editor-recurrence-interval-field'),
-                initialValue: _recurrenceInterval,
-                decoration: InputDecoration(labelText: l10n.taskEditorIntervalLabel),
-                items: List.generate(12, (index) => index + 1)
-                    .map(
-                      (value) => DropdownMenuItem<int>(
-                        value: value,
-                        child: Text('$value'),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value == null) {
-                    return;
+              onRecurrenceChanged: (value) {
+                setState(() {
+                  _recurrencePreset = value;
+                  if (value == TaskRecurrencePreset.none) {
+                    _recurrenceInterval = 1;
                   }
-                  setState(() {
-                    _recurrenceInterval = value;
-                  });
-                },
-              ),
-            ],
+                });
+              },
+              onRecurrenceIntervalChanged: (value) {
+                setState(() {
+                  _recurrenceInterval = value;
+                });
+              },
+            ),
             const SizedBox(height: 20),
             AppButton(
               label: isEditing
-                  ? l10n.taskEditorSaveChanges
-                  : l10n.taskEditorCreateAction,
+                  ? context.l10n.taskEditorSaveChanges
+                  : context.l10n.taskEditorCreateAction,
               isLoading: widget.isSubmitting,
               onPressed: widget.isSubmitting ? null : _submit,
             ),
@@ -588,9 +455,7 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
     if (_dueInputMode == TaskDueInputMode.absolute && _dueAt == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            l10n.taskEditorDeadlineMissingMessage,
-          ),
+          content: Text(l10n.taskEditorDeadlineMissingMessage),
         ),
       );
       return;
@@ -601,9 +466,7 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
         _resolvedDueAt == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            l10n.taskEditorDeadlineRequiredMessage,
-          ),
+          content: Text(l10n.taskEditorDeadlineRequiredMessage),
         ),
       );
       return;
@@ -633,207 +496,3 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
     Navigator.of(context).pop();
   }
 }
-
-class TaskDeadlineSection extends StatelessWidget {
-  const TaskDeadlineSection({
-    super.key,
-    required this.mode,
-    required this.dueAt,
-    required this.dueOffsetValue,
-    required this.dueOffsetUnit,
-    required this.previewDueAt,
-    required this.dueModeLabel,
-    required this.dueOffsetUnitLabel,
-    required this.onModeChanged,
-    required this.onAbsoluteChanged,
-    required this.onRelativePresetSelected,
-    required this.onRelativeValueChanged,
-    required this.onRelativeUnitChanged,
-    required this.formatPreview,
-  });
-
-  final TaskDueInputMode mode;
-  final DateTime? dueAt;
-  final TextEditingController dueOffsetValue;
-  final TaskDueOffsetUnit dueOffsetUnit;
-  final DateTime? previewDueAt;
-  final String Function(TaskDueInputMode mode) dueModeLabel;
-  final String Function(TaskDueOffsetUnit unit) dueOffsetUnitLabel;
-  final ValueChanged<TaskDueInputMode> onModeChanged;
-  final ValueChanged<DateTime> onAbsoluteChanged;
-  final void Function(int value, TaskDueOffsetUnit unit)
-  onRelativePresetSelected;
-  final ValueChanged<String> onRelativeValueChanged;
-  final ValueChanged<TaskDueOffsetUnit> onRelativeUnitChanged;
-  final String Function(DateTime value) formatPreview;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(context.l10n.taskEditorDeadlineLabel, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final option in TaskDueInputMode.values)
-              ChoiceChip(
-                key: Key('task-editor-deadline-mode-${option.name}'),
-                label: Text(dueModeLabel(option)),
-                selected: mode == option,
-                onSelected: (_) => onModeChanged(option),
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        if (mode == TaskDueInputMode.none)
-          Text(
-            context.l10n.taskEditorNoDeadlineDescription,
-            style: Theme.of(context).textTheme.bodyMedium,
-          )
-        else if (mode == TaskDueInputMode.absolute)
-          DateTimePickerField(
-            key: const Key('task-editor-due-at-field'),
-            label: context.l10n.taskEditorDueAtLabel,
-            value: dueAt,
-            onChanged: onAbsoluteChanged,
-          )
-        else
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final preset in _relativeDuePresets)
-                    ChoiceChip(
-                      key: Key('task-editor-relative-preset-${preset.key}'),
-                      label: Text(_relativePresetLabel(context, preset)),
-                      selected:
-                          dueOffsetValue.text.trim() == '${preset.value}' &&
-                          dueOffsetUnit == preset.unit,
-                      onSelected: (_) =>
-                          onRelativePresetSelected(preset.value, preset.unit),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      key: const Key('task-editor-due-offset-value-field'),
-                      controller: dueOffsetValue,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: InputDecoration(
-                        labelText: context.l10n.taskEditorAmountLabel,
-                        hintText: context.l10n.taskEditorAmountHint,
-                      ),
-                      onChanged: onRelativeValueChanged,
-                      validator: (_) {
-                        if (mode != TaskDueInputMode.relative) {
-                          return null;
-                        }
-                        final value = int.tryParse(dueOffsetValue.text.trim());
-                        if (value == null || value < 1) {
-                          return context.l10n.taskEditorPositiveNumberValidation;
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: DropdownButtonFormField<TaskDueOffsetUnit>(
-                      key: const Key('task-editor-due-offset-unit-field'),
-                      initialValue: dueOffsetUnit,
-                      decoration: InputDecoration(labelText: context.l10n.taskEditorUnitLabel),
-                      items: TaskDueOffsetUnit.values
-                          .map(
-                            (unit) => DropdownMenuItem<TaskDueOffsetUnit>(
-                              value: unit,
-                              child: Text(dueOffsetUnitLabel(unit)),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value == null) {
-                          return;
-                        }
-                        onRelativeUnitChanged(value);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                previewDueAt == null
-                    ? context.l10n.taskEditorDeadlinePreviewInvalid
-                    : context.l10n.taskEditorDeadlinePreview(
-                        formatPreview(previewDueAt!),
-                      ),
-                key: const Key('task-editor-relative-preview'),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-          ),
-      ],
-    );
-  }
-}
-
-class _RelativeDuePreset {
-  const _RelativeDuePreset({
-    required this.key,
-    required this.value,
-    required this.unit,
-  });
-
-  final String key;
-  final int value;
-  final TaskDueOffsetUnit unit;
-}
-
-String _relativePresetLabel(BuildContext context, _RelativeDuePreset preset) {
-  return switch (preset.key) {
-    '30m' => context.l10n.taskEditorRelativePresetThirtyMinutes,
-    '1h' => context.l10n.taskEditorRelativePresetOneHour,
-    '3h' => context.l10n.taskEditorRelativePresetThreeHours,
-    '1d' => context.l10n.taskEditorRelativePresetOneDay,
-    '3d' => context.l10n.taskEditorRelativePresetThreeDays,
-    _ => '${preset.value}',
-  };
-}
-
-const _relativeDuePresets = [
-  _RelativeDuePreset(
-    key: '30m',
-    value: 30,
-    unit: TaskDueOffsetUnit.minutes,
-  ),
-  _RelativeDuePreset(
-    key: '1h',
-    value: 1,
-    unit: TaskDueOffsetUnit.hours,
-  ),
-  _RelativeDuePreset(
-    key: '3h',
-    value: 3,
-    unit: TaskDueOffsetUnit.hours,
-  ),
-  _RelativeDuePreset(
-    key: '1d',
-    value: 1,
-    unit: TaskDueOffsetUnit.days,
-  ),
-  _RelativeDuePreset(
-    key: '3d',
-    value: 3,
-    unit: TaskDueOffsetUnit.days,
-  ),
-];

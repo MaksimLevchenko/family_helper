@@ -224,7 +224,8 @@ String? _routeForEntityType(String entityType) {
     'invite' => '/home/settings/family',
     'goal' => '/home/goals',
     'list' => '/home/lists',
-    _ => '/home/settings/notifications',
+    'notification' => '/home/notifications/settings',
+    _ => '/home/notifications',
   };
 }
 

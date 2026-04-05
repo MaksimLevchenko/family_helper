@@ -250,7 +250,10 @@ class _NotificationTile extends StatelessWidget {
                         runSpacing: 8,
                         children: [
                           _MetaChip(
-                            label: _categoryLabel(context, notification.category),
+                            label: _categoryLabel(
+                              context,
+                              notification.category,
+                            ),
                             color: tone.$4,
                             background: tone.$4.withValues(alpha: 0.12),
                           ),
@@ -305,9 +308,7 @@ class _NotificationDetailPane extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final tone = _toneFor(context, notification!);
-    final target = NotificationOpenTarget.fromPayloadJson(
-      notification!.payloadJson,
-    );
+    final target = NotificationOpenTarget.fromAppNotification(notification!);
 
     return Card(
       key: const Key('notifications-detail-pane'),

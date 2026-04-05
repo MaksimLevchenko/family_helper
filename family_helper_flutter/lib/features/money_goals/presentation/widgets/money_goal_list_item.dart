@@ -55,10 +55,10 @@ class MoneyGoalListItem extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-                  Text(
-                    formatGoalProgressLabel(context, goal),
-                    style: TextStyle(color: context.colors.textSecondary),
-                  ),
+              Text(
+                formatGoalProgressLabel(context, goal),
+                style: TextStyle(color: context.colors.textSecondary),
+              ),
               const SizedBox(height: 10),
               ClipRRect(
                 borderRadius: BorderRadius.circular(999),

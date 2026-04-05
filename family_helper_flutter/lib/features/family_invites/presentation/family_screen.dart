@@ -64,7 +64,10 @@ class _FamilyScreenState extends State<FamilyScreen> {
         context.watch<ServerAvailabilityCubit?>()?.state.isUnavailable ?? false;
 
     return Scaffold(
-      appBar: serverStatusAppBar(context, title: Text(context.l10n.settingsFamilyTitle)),
+      appBar: serverStatusAppBar(
+        context,
+        title: Text(context.l10n.settingsFamilyTitle),
+      ),
       body: BlocBuilder<FamilyMembersCubit, FamilyMembersState>(
         builder: (context, state) {
           if (state.isLoading &&
@@ -106,6 +109,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
             isLoading: state.isLoading,
             onRename: () async {
               final messenger = ScaffoldMessenger.of(context);
+              final successMessage = context.l10n.familyNameUpdated;
               final renamed = await context
                   .read<FamilyMembersCubit>()
                   .renameFamily(
@@ -115,7 +119,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                 return;
               }
               messenger.showSnackBar(
-                SnackBar(content: Text(context.l10n.familyNameUpdated)),
+                SnackBar(content: Text(successMessage)),
               );
             },
           );
@@ -139,6 +143,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                 ? null
                 : () async {
                     final messenger = ScaffoldMessenger.of(context);
+                    final copiedMessage = context.l10n.familyInviteCodeCopied;
                     await Clipboard.setData(
                       ClipboardData(text: state.lastInviteCode!),
                     );
@@ -146,7 +151,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                       return;
                     }
                     messenger.showSnackBar(
-                      SnackBar(content: Text(context.l10n.familyInviteCodeCopied)),
+                      SnackBar(content: Text(copiedMessage)),
                     );
                   },
           );
