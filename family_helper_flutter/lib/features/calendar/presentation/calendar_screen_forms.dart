@@ -952,16 +952,6 @@ enum _CalendarAction {
 }
 
 class _CalendarFormatters {
-  static String fullDate(BuildContext context, DateTime date) {
-    final local = date.toLocal();
-    return DateFormat.yMMMMd(_locale(context)).format(local);
-  }
-
-  static String monthLabel(BuildContext context, DateTime date) {
-    final local = date.toLocal();
-    return DateFormat.yMMMM(_locale(context)).format(local);
-  }
-
   static String timeOfDay(BuildContext context, DateTime dateTime) {
     final local = dateTime.toLocal();
     return DateFormat.Hm(_locale(context)).format(local);
@@ -978,28 +968,8 @@ class _CalendarFormatters {
     ).add_Hm().format(local);
   }
 
-  static String durationLabel(
-    BuildContext context,
-    DateTime start,
-    DateTime end,
-  ) {
-    final difference = end.difference(start);
-    if (difference.inHours >= 1) {
-      final hours = difference.inHours;
-      final minutes = difference.inMinutes.remainder(60);
-      return minutes == 0
-          ? context.l10n.calendarDurationHours(hours)
-          : context.l10n.calendarDurationHoursMinutes(hours, minutes);
-    }
-    return context.l10n.calendarDurationMinutes(difference.inMinutes);
-  }
-
   static String weekdayShort(BuildContext context, int weekday) {
     return DateFormat.E(_locale(context)).format(_weekdayDate(weekday));
-  }
-
-  static String weekdayCompact(BuildContext context, int weekday) {
-    return DateFormat.EEEEE(_locale(context)).format(_weekdayDate(weekday));
   }
 
   static String _locale(BuildContext context) =>

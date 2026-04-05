@@ -2,7 +2,6 @@ import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:table_calendar/table_calendar.dart';
 
 import '../../../core/l10n/l10n.dart';
 import '../../../core/l10n/ui_error_localizer.dart';
@@ -12,14 +11,9 @@ import '../../../ui_kit/ui_kit.dart';
 import '../../notifications/domain/notification_models.dart';
 import '../domain/calendar_event_form.dart';
 import '../providers/calendar_provider.dart';
+import 'calendar_screen_sections.dart';
 
 part 'calendar_screen_forms.dart';
-part 'calendar_screen_sections.dart';
-
-const double _calendarWideLayoutBreakpoint = 720;
-const double _calendarMaxWidthBreakpoint = 1100;
-const double _calendarMaxContentWidth = 1280;
-const double _calendarMonthPaneWidth = 440;
 
 class CalendarScreen extends StatelessWidget {
   const CalendarScreen({super.key});
@@ -66,7 +60,7 @@ class CalendarScreen extends StatelessWidget {
             );
           }
 
-          return _CalendarScreenContent(
+          return CalendarScreenContent(
             state: state,
             isOffline: isOffline,
             onCreateEvent: () => _openCreateEvent(context),
@@ -318,7 +312,7 @@ class CalendarScreen extends StatelessWidget {
     required double maxWidth,
   }) {
     final isWide =
-        MediaQuery.sizeOf(context).width >= _calendarWideLayoutBreakpoint;
+        MediaQuery.sizeOf(context).width >= calendarWideLayoutBreakpoint;
     if (isWide) {
       return showDialog<T>(
         context: context,
@@ -345,17 +339,6 @@ class CalendarScreen extends StatelessWidget {
       builder: (sheetContext) => builder(sheetContext, true),
     );
   }
-}
-
-List<Widget> _withGaps(List<Widget> widgets, {required double gap}) {
-  final spaced = <Widget>[];
-  for (var index = 0; index < widgets.length; index++) {
-    if (index > 0) {
-      spaced.add(SizedBox(height: gap));
-    }
-    spaced.add(widgets[index]);
-  }
-  return spaced;
 }
 
 void _showOfflineMessage(BuildContext context) {
