@@ -83,6 +83,7 @@ class CalendarInfoChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     return Container(
+      constraints: const BoxConstraints(maxWidth: 220),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: colors.surfaceMuted,
@@ -93,11 +94,15 @@ class CalendarInfoChip extends StatelessWidget {
         children: [
           Icon(icon, size: 14, color: colors.textSecondary),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              fontWeight: FontWeight.w700,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: colors.textSecondary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
