@@ -1,7 +1,7 @@
 class: PrivacyExportJobRow
 table: privacy_export_job
 fields:
-  profileId: int
+  profile: AppProfileRow?, relation
   status: String
   objectKey: String
   signedUrl: String?

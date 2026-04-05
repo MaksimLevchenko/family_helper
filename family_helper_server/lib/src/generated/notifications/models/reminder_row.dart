@@ -8,18 +8,24 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../family/models/family_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i4;
 
 abstract class ReminderRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   ReminderRow._({
     this.id,
     required this.familyId,
+    this.family,
     required this.entityType,
     required this.entityId,
     required this.profileId,
+    this.profile,
     required this.remindAt,
     required this.status,
     required this.payloadJson,
@@ -31,9 +37,11 @@ abstract class ReminderRow
   factory ReminderRow({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String entityType,
     required int entityId,
     required int profileId,
+    _i3.AppProfileRow? profile,
     required DateTime remindAt,
     required String status,
     required String payloadJson,
@@ -46,9 +54,19 @@ abstract class ReminderRow
     return ReminderRow(
       id: jsonSerialization['id'] as int?,
       familyId: jsonSerialization['familyId'] as int,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       entityType: jsonSerialization['entityType'] as String,
       entityId: jsonSerialization['entityId'] as int,
       profileId: jsonSerialization['profileId'] as int,
+      profile: jsonSerialization['profile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['profile'],
+            ),
       remindAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['remindAt'],
       ),
@@ -73,11 +91,15 @@ abstract class ReminderRow
 
   int familyId;
 
+  _i2.FamilyRow? family;
+
   String entityType;
 
   int entityId;
 
   int profileId;
+
+  _i3.AppProfileRow? profile;
 
   DateTime remindAt;
 
@@ -100,9 +122,11 @@ abstract class ReminderRow
   ReminderRow copyWith({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     String? entityType,
     int? entityId,
     int? profileId,
+    _i3.AppProfileRow? profile,
     DateTime? remindAt,
     String? status,
     String? payloadJson,
@@ -116,9 +140,11 @@ abstract class ReminderRow
       '__className__': 'ReminderRow',
       if (id != null) 'id': id,
       'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'entityType': entityType,
       'entityId': entityId,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJson(),
       'remindAt': remindAt.toJson(),
       'status': status,
       'payloadJson': payloadJson,
@@ -134,9 +160,11 @@ abstract class ReminderRow
       '__className__': 'ReminderRow',
       if (id != null) 'id': id,
       'familyId': familyId,
+      if (family != null) 'family': family?.toJsonForProtocol(),
       'entityType': entityType,
       'entityId': entityId,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJsonForProtocol(),
       'remindAt': remindAt.toJson(),
       'status': status,
       'payloadJson': payloadJson,
@@ -146,8 +174,14 @@ abstract class ReminderRow
     };
   }
 
-  static ReminderRowInclude include() {
-    return ReminderRowInclude._();
+  static ReminderRowInclude include({
+    _i2.FamilyRowInclude? family,
+    _i3.AppProfileRowInclude? profile,
+  }) {
+    return ReminderRowInclude._(
+      family: family,
+      profile: profile,
+    );
   }
 
   static ReminderRowIncludeList includeList({
@@ -182,9 +216,11 @@ class _ReminderRowImpl extends ReminderRow {
   _ReminderRowImpl({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String entityType,
     required int entityId,
     required int profileId,
+    _i3.AppProfileRow? profile,
     required DateTime remindAt,
     required String status,
     required String payloadJson,
@@ -194,9 +230,11 @@ class _ReminderRowImpl extends ReminderRow {
   }) : super._(
          id: id,
          familyId: familyId,
+         family: family,
          entityType: entityType,
          entityId: entityId,
          profileId: profileId,
+         profile: profile,
          remindAt: remindAt,
          status: status,
          payloadJson: payloadJson,
@@ -212,9 +250,11 @@ class _ReminderRowImpl extends ReminderRow {
   ReminderRow copyWith({
     Object? id = _Undefined,
     int? familyId,
+    Object? family = _Undefined,
     String? entityType,
     int? entityId,
     int? profileId,
+    Object? profile = _Undefined,
     DateTime? remindAt,
     String? status,
     String? payloadJson,
@@ -225,9 +265,13 @@ class _ReminderRowImpl extends ReminderRow {
     return ReminderRow(
       id: id is int? ? id : this.id,
       familyId: familyId ?? this.familyId,
+      family: family is _i2.FamilyRow? ? family : this.family?.copyWith(),
       entityType: entityType ?? this.entityType,
       entityId: entityId ?? this.entityId,
       profileId: profileId ?? this.profileId,
+      profile: profile is _i3.AppProfileRow?
+          ? profile
+          : this.profile?.copyWith(),
       remindAt: remindAt ?? this.remindAt,
       status: status ?? this.status,
       payloadJson: payloadJson ?? this.payloadJson,
@@ -347,11 +391,15 @@ class ReminderRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt familyId;
 
+  _i2.FamilyRowTable? _family;
+
   late final _i1.ColumnString entityType;
 
   late final _i1.ColumnInt entityId;
 
   late final _i1.ColumnInt profileId;
+
+  _i3.AppProfileRowTable? _profile;
 
   late final _i1.ColumnDateTime remindAt;
 
@@ -364,6 +412,32 @@ class ReminderRowTable extends _i1.Table<int?> {
   late final _i1.ColumnDateTime firedAt;
 
   late final _i1.ColumnDateTime createdAt;
+
+  _i2.FamilyRowTable get family {
+    if (_family != null) return _family!;
+    _family = _i1.createRelationTable(
+      relationFieldName: 'family',
+      field: ReminderRow.t.familyId,
+      foreignField: _i2.FamilyRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.FamilyRowTable(tableRelation: foreignTableRelation),
+    );
+    return _family!;
+  }
+
+  _i3.AppProfileRowTable get profile {
+    if (_profile != null) return _profile!;
+    _profile = _i1.createRelationTable(
+      relationFieldName: 'profile',
+      field: ReminderRow.t.profileId,
+      foreignField: _i3.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _profile!;
+  }
 
   @override
   List<_i1.Column> get columns => [
@@ -379,13 +453,37 @@ class ReminderRowTable extends _i1.Table<int?> {
     firedAt,
     createdAt,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'family') {
+      return family;
+    }
+    if (relationField == 'profile') {
+      return profile;
+    }
+    return null;
+  }
 }
 
 class ReminderRowInclude extends _i1.IncludeObject {
-  ReminderRowInclude._();
+  ReminderRowInclude._({
+    _i2.FamilyRowInclude? family,
+    _i3.AppProfileRowInclude? profile,
+  }) {
+    _family = family;
+    _profile = profile;
+  }
+
+  _i2.FamilyRowInclude? _family;
+
+  _i3.AppProfileRowInclude? _profile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {
+    'family': _family,
+    'profile': _profile,
+  };
 
   @override
   _i1.Table<int?> get table => ReminderRow.t;
@@ -413,6 +511,8 @@ class ReminderRowIncludeList extends _i1.IncludeList {
 
 class ReminderRowRepository {
   const ReminderRowRepository._();
+
+  final attachRow = const ReminderRowAttachRowRepository._();
 
   /// Returns a list of [ReminderRow]s matching the given query parameters.
   ///
@@ -445,6 +545,7 @@ class ReminderRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<ReminderRowTable>? orderByList,
     _i1.Transaction? transaction,
+    ReminderRowInclude? include,
   }) async {
     return session.db.find<ReminderRow>(
       where: where?.call(ReminderRow.t),
@@ -454,6 +555,7 @@ class ReminderRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -482,6 +584,7 @@ class ReminderRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<ReminderRowTable>? orderByList,
     _i1.Transaction? transaction,
+    ReminderRowInclude? include,
   }) async {
     return session.db.findFirstRow<ReminderRow>(
       where: where?.call(ReminderRow.t),
@@ -490,6 +593,7 @@ class ReminderRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -498,10 +602,12 @@ class ReminderRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    ReminderRowInclude? include,
   }) async {
     return session.db.findById<ReminderRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -659,6 +765,56 @@ class ReminderRowRepository {
     return session.db.count<ReminderRow>(
       where: where?.call(ReminderRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class ReminderRowAttachRowRepository {
+  const ReminderRowAttachRowRepository._();
+
+  /// Creates a relation between the given [ReminderRow] and [FamilyRow]
+  /// by setting the [ReminderRow]'s foreign key `familyId` to refer to the [FamilyRow].
+  Future<void> family(
+    _i1.Session session,
+    ReminderRow reminderRow,
+    _i2.FamilyRow family, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (reminderRow.id == null) {
+      throw ArgumentError.notNull('reminderRow.id');
+    }
+    if (family.id == null) {
+      throw ArgumentError.notNull('family.id');
+    }
+
+    var $reminderRow = reminderRow.copyWith(familyId: family.id);
+    await session.db.updateRow<ReminderRow>(
+      $reminderRow,
+      columns: [ReminderRow.t.familyId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [ReminderRow] and [AppProfileRow]
+  /// by setting the [ReminderRow]'s foreign key `profileId` to refer to the [AppProfileRow].
+  Future<void> profile(
+    _i1.Session session,
+    ReminderRow reminderRow,
+    _i3.AppProfileRow profile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (reminderRow.id == null) {
+      throw ArgumentError.notNull('reminderRow.id');
+    }
+    if (profile.id == null) {
+      throw ArgumentError.notNull('profile.id');
+    }
+
+    var $reminderRow = reminderRow.copyWith(profileId: profile.id);
+    await session.db.updateRow<ReminderRow>(
+      $reminderRow,
+      columns: [ReminderRow.t.profileId],
       transaction: transaction,
     );
   }

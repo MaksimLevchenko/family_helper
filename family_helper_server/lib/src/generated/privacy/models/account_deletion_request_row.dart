@@ -8,15 +8,19 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../core/models/app_profile_row.dart' as _i2;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i3;
 
 abstract class AccountDeletionRequestRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   AccountDeletionRequestRow._({
     this.id,
     required this.profileId,
+    this.profile,
     required this.status,
     required this.scheduledHardDeleteAt,
     required this.createdAt,
@@ -26,6 +30,7 @@ abstract class AccountDeletionRequestRow
   factory AccountDeletionRequestRow({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String status,
     required DateTime scheduledHardDeleteAt,
     required DateTime createdAt,
@@ -38,6 +43,11 @@ abstract class AccountDeletionRequestRow
     return AccountDeletionRequestRow(
       id: jsonSerialization['id'] as int?,
       profileId: jsonSerialization['profileId'] as int,
+      profile: jsonSerialization['profile'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.AppProfileRow>(
+              jsonSerialization['profile'],
+            ),
       status: jsonSerialization['status'] as String,
       scheduledHardDeleteAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['scheduledHardDeleteAt'],
@@ -62,6 +72,8 @@ abstract class AccountDeletionRequestRow
 
   int profileId;
 
+  _i2.AppProfileRow? profile;
+
   String status;
 
   DateTime scheduledHardDeleteAt;
@@ -79,6 +91,7 @@ abstract class AccountDeletionRequestRow
   AccountDeletionRequestRow copyWith({
     int? id,
     int? profileId,
+    _i2.AppProfileRow? profile,
     String? status,
     DateTime? scheduledHardDeleteAt,
     DateTime? createdAt,
@@ -90,6 +103,7 @@ abstract class AccountDeletionRequestRow
       '__className__': 'AccountDeletionRequestRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJson(),
       'status': status,
       'scheduledHardDeleteAt': scheduledHardDeleteAt.toJson(),
       'createdAt': createdAt.toJson(),
@@ -103,6 +117,7 @@ abstract class AccountDeletionRequestRow
       '__className__': 'AccountDeletionRequestRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJsonForProtocol(),
       'status': status,
       'scheduledHardDeleteAt': scheduledHardDeleteAt.toJson(),
       'createdAt': createdAt.toJson(),
@@ -110,8 +125,10 @@ abstract class AccountDeletionRequestRow
     };
   }
 
-  static AccountDeletionRequestRowInclude include() {
-    return AccountDeletionRequestRowInclude._();
+  static AccountDeletionRequestRowInclude include({
+    _i2.AppProfileRowInclude? profile,
+  }) {
+    return AccountDeletionRequestRowInclude._(profile: profile);
   }
 
   static AccountDeletionRequestRowIncludeList includeList({
@@ -146,6 +163,7 @@ class _AccountDeletionRequestRowImpl extends AccountDeletionRequestRow {
   _AccountDeletionRequestRowImpl({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String status,
     required DateTime scheduledHardDeleteAt,
     required DateTime createdAt,
@@ -153,6 +171,7 @@ class _AccountDeletionRequestRowImpl extends AccountDeletionRequestRow {
   }) : super._(
          id: id,
          profileId: profileId,
+         profile: profile,
          status: status,
          scheduledHardDeleteAt: scheduledHardDeleteAt,
          createdAt: createdAt,
@@ -166,6 +185,7 @@ class _AccountDeletionRequestRowImpl extends AccountDeletionRequestRow {
   AccountDeletionRequestRow copyWith({
     Object? id = _Undefined,
     int? profileId,
+    Object? profile = _Undefined,
     String? status,
     DateTime? scheduledHardDeleteAt,
     DateTime? createdAt,
@@ -174,6 +194,9 @@ class _AccountDeletionRequestRowImpl extends AccountDeletionRequestRow {
     return AccountDeletionRequestRow(
       id: id is int? ? id : this.id,
       profileId: profileId ?? this.profileId,
+      profile: profile is _i2.AppProfileRow?
+          ? profile
+          : this.profile?.copyWith(),
       status: status ?? this.status,
       scheduledHardDeleteAt:
           scheduledHardDeleteAt ?? this.scheduledHardDeleteAt,
@@ -246,6 +269,8 @@ class AccountDeletionRequestRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt profileId;
 
+  _i2.AppProfileRowTable? _profile;
+
   late final _i1.ColumnString status;
 
   late final _i1.ColumnDateTime scheduledHardDeleteAt;
@@ -253,6 +278,19 @@ class AccountDeletionRequestRowTable extends _i1.Table<int?> {
   late final _i1.ColumnDateTime createdAt;
 
   late final _i1.ColumnDateTime cancelledAt;
+
+  _i2.AppProfileRowTable get profile {
+    if (_profile != null) return _profile!;
+    _profile = _i1.createRelationTable(
+      relationFieldName: 'profile',
+      field: AccountDeletionRequestRow.t.profileId,
+      foreignField: _i2.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _profile!;
+  }
 
   @override
   List<_i1.Column> get columns => [
@@ -263,13 +301,25 @@ class AccountDeletionRequestRowTable extends _i1.Table<int?> {
     createdAt,
     cancelledAt,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'profile') {
+      return profile;
+    }
+    return null;
+  }
 }
 
 class AccountDeletionRequestRowInclude extends _i1.IncludeObject {
-  AccountDeletionRequestRowInclude._();
+  AccountDeletionRequestRowInclude._({_i2.AppProfileRowInclude? profile}) {
+    _profile = profile;
+  }
+
+  _i2.AppProfileRowInclude? _profile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {'profile': _profile};
 
   @override
   _i1.Table<int?> get table => AccountDeletionRequestRow.t;
@@ -297,6 +347,8 @@ class AccountDeletionRequestRowIncludeList extends _i1.IncludeList {
 
 class AccountDeletionRequestRowRepository {
   const AccountDeletionRequestRowRepository._();
+
+  final attachRow = const AccountDeletionRequestRowAttachRowRepository._();
 
   /// Returns a list of [AccountDeletionRequestRow]s matching the given query parameters.
   ///
@@ -329,6 +381,7 @@ class AccountDeletionRequestRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<AccountDeletionRequestRowTable>? orderByList,
     _i1.Transaction? transaction,
+    AccountDeletionRequestRowInclude? include,
   }) async {
     return session.db.find<AccountDeletionRequestRow>(
       where: where?.call(AccountDeletionRequestRow.t),
@@ -338,6 +391,7 @@ class AccountDeletionRequestRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -366,6 +420,7 @@ class AccountDeletionRequestRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<AccountDeletionRequestRowTable>? orderByList,
     _i1.Transaction? transaction,
+    AccountDeletionRequestRowInclude? include,
   }) async {
     return session.db.findFirstRow<AccountDeletionRequestRow>(
       where: where?.call(AccountDeletionRequestRow.t),
@@ -374,6 +429,7 @@ class AccountDeletionRequestRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -382,10 +438,12 @@ class AccountDeletionRequestRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    AccountDeletionRequestRowInclude? include,
   }) async {
     return session.db.findById<AccountDeletionRequestRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -545,6 +603,35 @@ class AccountDeletionRequestRowRepository {
     return session.db.count<AccountDeletionRequestRow>(
       where: where?.call(AccountDeletionRequestRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class AccountDeletionRequestRowAttachRowRepository {
+  const AccountDeletionRequestRowAttachRowRepository._();
+
+  /// Creates a relation between the given [AccountDeletionRequestRow] and [AppProfileRow]
+  /// by setting the [AccountDeletionRequestRow]'s foreign key `profileId` to refer to the [AppProfileRow].
+  Future<void> profile(
+    _i1.Session session,
+    AccountDeletionRequestRow accountDeletionRequestRow,
+    _i2.AppProfileRow profile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (accountDeletionRequestRow.id == null) {
+      throw ArgumentError.notNull('accountDeletionRequestRow.id');
+    }
+    if (profile.id == null) {
+      throw ArgumentError.notNull('profile.id');
+    }
+
+    var $accountDeletionRequestRow = accountDeletionRequestRow.copyWith(
+      profileId: profile.id,
+    );
+    await session.db.updateRow<AccountDeletionRequestRow>(
+      $accountDeletionRequestRow,
+      columns: [AccountDeletionRequestRow.t.profileId],
       transaction: transaction,
     );
   }

@@ -8,15 +8,19 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../calendar/models/calendar_event_row.dart' as _i2;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i3;
 
 abstract class CalendarEventOverrideRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   CalendarEventOverrideRow._({
     this.id,
     required this.eventId,
+    this.event,
     required this.occurrenceStart,
     this.overrideTitle,
     this.overrideStartsAt,
@@ -33,6 +37,7 @@ abstract class CalendarEventOverrideRow
   factory CalendarEventOverrideRow({
     int? id,
     required int eventId,
+    _i2.CalendarEventRow? event,
     required DateTime occurrenceStart,
     String? overrideTitle,
     DateTime? overrideStartsAt,
@@ -52,6 +57,11 @@ abstract class CalendarEventOverrideRow
     return CalendarEventOverrideRow(
       id: jsonSerialization['id'] as int?,
       eventId: jsonSerialization['eventId'] as int,
+      event: jsonSerialization['event'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.CalendarEventRow>(
+              jsonSerialization['event'],
+            ),
       occurrenceStart: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['occurrenceStart'],
       ),
@@ -93,6 +103,8 @@ abstract class CalendarEventOverrideRow
 
   int eventId;
 
+  _i2.CalendarEventRow? event;
+
   DateTime occurrenceStart;
 
   String? overrideTitle;
@@ -124,6 +136,7 @@ abstract class CalendarEventOverrideRow
   CalendarEventOverrideRow copyWith({
     int? id,
     int? eventId,
+    _i2.CalendarEventRow? event,
     DateTime? occurrenceStart,
     String? overrideTitle,
     DateTime? overrideStartsAt,
@@ -142,6 +155,7 @@ abstract class CalendarEventOverrideRow
       '__className__': 'CalendarEventOverrideRow',
       if (id != null) 'id': id,
       'eventId': eventId,
+      if (event != null) 'event': event?.toJson(),
       'occurrenceStart': occurrenceStart.toJson(),
       if (overrideTitle != null) 'overrideTitle': overrideTitle,
       if (overrideStartsAt != null)
@@ -165,6 +179,7 @@ abstract class CalendarEventOverrideRow
       '__className__': 'CalendarEventOverrideRow',
       if (id != null) 'id': id,
       'eventId': eventId,
+      if (event != null) 'event': event?.toJsonForProtocol(),
       'occurrenceStart': occurrenceStart.toJson(),
       if (overrideTitle != null) 'overrideTitle': overrideTitle,
       if (overrideStartsAt != null)
@@ -182,8 +197,10 @@ abstract class CalendarEventOverrideRow
     };
   }
 
-  static CalendarEventOverrideRowInclude include() {
-    return CalendarEventOverrideRowInclude._();
+  static CalendarEventOverrideRowInclude include({
+    _i2.CalendarEventRowInclude? event,
+  }) {
+    return CalendarEventOverrideRowInclude._(event: event);
   }
 
   static CalendarEventOverrideRowIncludeList includeList({
@@ -218,6 +235,7 @@ class _CalendarEventOverrideRowImpl extends CalendarEventOverrideRow {
   _CalendarEventOverrideRowImpl({
     int? id,
     required int eventId,
+    _i2.CalendarEventRow? event,
     required DateTime occurrenceStart,
     String? overrideTitle,
     DateTime? overrideStartsAt,
@@ -232,6 +250,7 @@ class _CalendarEventOverrideRowImpl extends CalendarEventOverrideRow {
   }) : super._(
          id: id,
          eventId: eventId,
+         event: event,
          occurrenceStart: occurrenceStart,
          overrideTitle: overrideTitle,
          overrideStartsAt: overrideStartsAt,
@@ -252,6 +271,7 @@ class _CalendarEventOverrideRowImpl extends CalendarEventOverrideRow {
   CalendarEventOverrideRow copyWith({
     Object? id = _Undefined,
     int? eventId,
+    Object? event = _Undefined,
     DateTime? occurrenceStart,
     Object? overrideTitle = _Undefined,
     Object? overrideStartsAt = _Undefined,
@@ -267,6 +287,7 @@ class _CalendarEventOverrideRowImpl extends CalendarEventOverrideRow {
     return CalendarEventOverrideRow(
       id: id is int? ? id : this.id,
       eventId: eventId ?? this.eventId,
+      event: event is _i2.CalendarEventRow? ? event : this.event?.copyWith(),
       occurrenceStart: occurrenceStart ?? this.occurrenceStart,
       overrideTitle: overrideTitle is String?
           ? overrideTitle
@@ -424,6 +445,8 @@ class CalendarEventOverrideRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt eventId;
 
+  _i2.CalendarEventRowTable? _event;
+
   late final _i1.ColumnDateTime occurrenceStart;
 
   late final _i1.ColumnString overrideTitle;
@@ -446,6 +469,19 @@ class CalendarEventOverrideRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt version;
 
+  _i2.CalendarEventRowTable get event {
+    if (_event != null) return _event!;
+    _event = _i1.createRelationTable(
+      relationFieldName: 'event',
+      field: CalendarEventOverrideRow.t.eventId,
+      foreignField: _i2.CalendarEventRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.CalendarEventRowTable(tableRelation: foreignTableRelation),
+    );
+    return _event!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -462,13 +498,25 @@ class CalendarEventOverrideRowTable extends _i1.Table<int?> {
     deletedAt,
     version,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'event') {
+      return event;
+    }
+    return null;
+  }
 }
 
 class CalendarEventOverrideRowInclude extends _i1.IncludeObject {
-  CalendarEventOverrideRowInclude._();
+  CalendarEventOverrideRowInclude._({_i2.CalendarEventRowInclude? event}) {
+    _event = event;
+  }
+
+  _i2.CalendarEventRowInclude? _event;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {'event': _event};
 
   @override
   _i1.Table<int?> get table => CalendarEventOverrideRow.t;
@@ -496,6 +544,8 @@ class CalendarEventOverrideRowIncludeList extends _i1.IncludeList {
 
 class CalendarEventOverrideRowRepository {
   const CalendarEventOverrideRowRepository._();
+
+  final attachRow = const CalendarEventOverrideRowAttachRowRepository._();
 
   /// Returns a list of [CalendarEventOverrideRow]s matching the given query parameters.
   ///
@@ -528,6 +578,7 @@ class CalendarEventOverrideRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<CalendarEventOverrideRowTable>? orderByList,
     _i1.Transaction? transaction,
+    CalendarEventOverrideRowInclude? include,
   }) async {
     return session.db.find<CalendarEventOverrideRow>(
       where: where?.call(CalendarEventOverrideRow.t),
@@ -537,6 +588,7 @@ class CalendarEventOverrideRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -565,6 +617,7 @@ class CalendarEventOverrideRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<CalendarEventOverrideRowTable>? orderByList,
     _i1.Transaction? transaction,
+    CalendarEventOverrideRowInclude? include,
   }) async {
     return session.db.findFirstRow<CalendarEventOverrideRow>(
       where: where?.call(CalendarEventOverrideRow.t),
@@ -573,6 +626,7 @@ class CalendarEventOverrideRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -581,10 +635,12 @@ class CalendarEventOverrideRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    CalendarEventOverrideRowInclude? include,
   }) async {
     return session.db.findById<CalendarEventOverrideRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -744,6 +800,35 @@ class CalendarEventOverrideRowRepository {
     return session.db.count<CalendarEventOverrideRow>(
       where: where?.call(CalendarEventOverrideRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class CalendarEventOverrideRowAttachRowRepository {
+  const CalendarEventOverrideRowAttachRowRepository._();
+
+  /// Creates a relation between the given [CalendarEventOverrideRow] and [CalendarEventRow]
+  /// by setting the [CalendarEventOverrideRow]'s foreign key `eventId` to refer to the [CalendarEventRow].
+  Future<void> event(
+    _i1.Session session,
+    CalendarEventOverrideRow calendarEventOverrideRow,
+    _i2.CalendarEventRow event, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (calendarEventOverrideRow.id == null) {
+      throw ArgumentError.notNull('calendarEventOverrideRow.id');
+    }
+    if (event.id == null) {
+      throw ArgumentError.notNull('event.id');
+    }
+
+    var $calendarEventOverrideRow = calendarEventOverrideRow.copyWith(
+      eventId: event.id,
+    );
+    await session.db.updateRow<CalendarEventOverrideRow>(
+      $calendarEventOverrideRow,
+      columns: [CalendarEventOverrideRow.t.eventId],
       transaction: transaction,
     );
   }

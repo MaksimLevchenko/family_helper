@@ -11,11 +11,14 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../core/models/app_profile_row.dart' as _i2;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i3;
 
 abstract class NotificationPreferenceRow implements _i1.SerializableModel {
   NotificationPreferenceRow._({
     this.id,
     required this.profileId,
+    this.profile,
     required this.notificationType,
     required this.enabled,
     this.quietHoursStart,
@@ -27,6 +30,7 @@ abstract class NotificationPreferenceRow implements _i1.SerializableModel {
   factory NotificationPreferenceRow({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String notificationType,
     required bool enabled,
     String? quietHoursStart,
@@ -41,6 +45,11 @@ abstract class NotificationPreferenceRow implements _i1.SerializableModel {
     return NotificationPreferenceRow(
       id: jsonSerialization['id'] as int?,
       profileId: jsonSerialization['profileId'] as int,
+      profile: jsonSerialization['profile'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.AppProfileRow>(
+              jsonSerialization['profile'],
+            ),
       notificationType: jsonSerialization['notificationType'] as String,
       enabled: jsonSerialization['enabled'] as bool,
       quietHoursStart: jsonSerialization['quietHoursStart'] as String?,
@@ -58,6 +67,8 @@ abstract class NotificationPreferenceRow implements _i1.SerializableModel {
   int? id;
 
   int profileId;
+
+  _i2.AppProfileRow? profile;
 
   String notificationType;
 
@@ -77,6 +88,7 @@ abstract class NotificationPreferenceRow implements _i1.SerializableModel {
   NotificationPreferenceRow copyWith({
     int? id,
     int? profileId,
+    _i2.AppProfileRow? profile,
     String? notificationType,
     bool? enabled,
     String? quietHoursStart,
@@ -90,6 +102,7 @@ abstract class NotificationPreferenceRow implements _i1.SerializableModel {
       '__className__': 'NotificationPreferenceRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJson(),
       'notificationType': notificationType,
       'enabled': enabled,
       if (quietHoursStart != null) 'quietHoursStart': quietHoursStart,
@@ -111,6 +124,7 @@ class _NotificationPreferenceRowImpl extends NotificationPreferenceRow {
   _NotificationPreferenceRowImpl({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String notificationType,
     required bool enabled,
     String? quietHoursStart,
@@ -120,6 +134,7 @@ class _NotificationPreferenceRowImpl extends NotificationPreferenceRow {
   }) : super._(
          id: id,
          profileId: profileId,
+         profile: profile,
          notificationType: notificationType,
          enabled: enabled,
          quietHoursStart: quietHoursStart,
@@ -135,6 +150,7 @@ class _NotificationPreferenceRowImpl extends NotificationPreferenceRow {
   NotificationPreferenceRow copyWith({
     Object? id = _Undefined,
     int? profileId,
+    Object? profile = _Undefined,
     String? notificationType,
     bool? enabled,
     Object? quietHoursStart = _Undefined,
@@ -145,6 +161,9 @@ class _NotificationPreferenceRowImpl extends NotificationPreferenceRow {
     return NotificationPreferenceRow(
       id: id is int? ? id : this.id,
       profileId: profileId ?? this.profileId,
+      profile: profile is _i2.AppProfileRow?
+          ? profile
+          : this.profile?.copyWith(),
       notificationType: notificationType ?? this.notificationType,
       enabled: enabled ?? this.enabled,
       quietHoursStart: quietHoursStart is String?

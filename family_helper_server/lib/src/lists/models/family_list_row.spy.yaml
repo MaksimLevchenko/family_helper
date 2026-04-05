@@ -1,10 +1,10 @@
 class: FamilyListRow
 table: family_list
 fields:
-  familyId: int
+  family: FamilyRow?, relation
   title: String
   listType: String
-  createdByProfileId: int
+  createdByProfile: AppProfileRow?, relation
   createdAt: DateTime
   updatedAt: DateTime
   deletedAt: DateTime?

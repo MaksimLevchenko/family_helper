@@ -11,11 +11,14 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../family/models/family_row.dart' as _i2;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i3;
 
 abstract class FamilyInviteRow implements _i1.SerializableModel {
   FamilyInviteRow._({
     this.id,
     required this.familyId,
+    this.family,
     required this.inviteType,
     this.email,
     required this.inviteCode,
@@ -30,6 +33,7 @@ abstract class FamilyInviteRow implements _i1.SerializableModel {
   factory FamilyInviteRow({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String inviteType,
     String? email,
     required String inviteCode,
@@ -45,6 +49,11 @@ abstract class FamilyInviteRow implements _i1.SerializableModel {
     return FamilyInviteRow(
       id: jsonSerialization['id'] as int?,
       familyId: jsonSerialization['familyId'] as int,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       inviteType: jsonSerialization['inviteType'] as String,
       email: jsonSerialization['email'] as String?,
       inviteCode: jsonSerialization['inviteCode'] as String,
@@ -72,6 +81,8 @@ abstract class FamilyInviteRow implements _i1.SerializableModel {
 
   int familyId;
 
+  _i2.FamilyRow? family;
+
   String inviteType;
 
   String? email;
@@ -96,6 +107,7 @@ abstract class FamilyInviteRow implements _i1.SerializableModel {
   FamilyInviteRow copyWith({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     String? inviteType,
     String? email,
     String? inviteCode,
@@ -112,6 +124,7 @@ abstract class FamilyInviteRow implements _i1.SerializableModel {
       '__className__': 'FamilyInviteRow',
       if (id != null) 'id': id,
       'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'inviteType': inviteType,
       if (email != null) 'email': email,
       'inviteCode': inviteCode,
@@ -136,6 +149,7 @@ class _FamilyInviteRowImpl extends FamilyInviteRow {
   _FamilyInviteRowImpl({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String inviteType,
     String? email,
     required String inviteCode,
@@ -148,6 +162,7 @@ class _FamilyInviteRowImpl extends FamilyInviteRow {
   }) : super._(
          id: id,
          familyId: familyId,
+         family: family,
          inviteType: inviteType,
          email: email,
          inviteCode: inviteCode,
@@ -166,6 +181,7 @@ class _FamilyInviteRowImpl extends FamilyInviteRow {
   FamilyInviteRow copyWith({
     Object? id = _Undefined,
     int? familyId,
+    Object? family = _Undefined,
     String? inviteType,
     Object? email = _Undefined,
     String? inviteCode,
@@ -179,6 +195,7 @@ class _FamilyInviteRowImpl extends FamilyInviteRow {
     return FamilyInviteRow(
       id: id is int? ? id : this.id,
       familyId: familyId ?? this.familyId,
+      family: family is _i2.FamilyRow? ? family : this.family?.copyWith(),
       inviteType: inviteType ?? this.inviteType,
       email: email is String? ? email : this.email,
       inviteCode: inviteCode ?? this.inviteCode,

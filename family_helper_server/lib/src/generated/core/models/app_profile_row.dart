@@ -8,9 +8,12 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../media/models/media_object_row.dart' as _i2;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i3;
 
 abstract class AppProfileRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
@@ -21,6 +24,7 @@ abstract class AppProfileRow
     required this.timezone,
     String? locale,
     this.avatarMediaId,
+    this.avatarMedia,
     required this.analyticsOptIn,
     required this.createdAt,
     required this.updatedAt,
@@ -35,6 +39,7 @@ abstract class AppProfileRow
     required String timezone,
     String? locale,
     int? avatarMediaId,
+    _i2.MediaObjectRow? avatarMedia,
     required bool analyticsOptIn,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -50,6 +55,11 @@ abstract class AppProfileRow
       timezone: jsonSerialization['timezone'] as String,
       locale: jsonSerialization['locale'] as String?,
       avatarMediaId: jsonSerialization['avatarMediaId'] as int?,
+      avatarMedia: jsonSerialization['avatarMedia'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.MediaObjectRow>(
+              jsonSerialization['avatarMedia'],
+            ),
       analyticsOptIn: jsonSerialization['analyticsOptIn'] as bool,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
@@ -81,6 +91,8 @@ abstract class AppProfileRow
 
   int? avatarMediaId;
 
+  _i2.MediaObjectRow? avatarMedia;
+
   bool analyticsOptIn;
 
   DateTime createdAt;
@@ -104,6 +116,7 @@ abstract class AppProfileRow
     String? timezone,
     String? locale,
     int? avatarMediaId,
+    _i2.MediaObjectRow? avatarMedia,
     bool? analyticsOptIn,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -120,6 +133,7 @@ abstract class AppProfileRow
       'timezone': timezone,
       'locale': locale,
       if (avatarMediaId != null) 'avatarMediaId': avatarMediaId,
+      if (avatarMedia != null) 'avatarMedia': avatarMedia?.toJson(),
       'analyticsOptIn': analyticsOptIn,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -138,6 +152,7 @@ abstract class AppProfileRow
       'timezone': timezone,
       'locale': locale,
       if (avatarMediaId != null) 'avatarMediaId': avatarMediaId,
+      if (avatarMedia != null) 'avatarMedia': avatarMedia?.toJsonForProtocol(),
       'analyticsOptIn': analyticsOptIn,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -146,8 +161,10 @@ abstract class AppProfileRow
     };
   }
 
-  static AppProfileRowInclude include() {
-    return AppProfileRowInclude._();
+  static AppProfileRowInclude include({
+    _i2.MediaObjectRowInclude? avatarMedia,
+  }) {
+    return AppProfileRowInclude._(avatarMedia: avatarMedia);
   }
 
   static AppProfileRowIncludeList includeList({
@@ -186,6 +203,7 @@ class _AppProfileRowImpl extends AppProfileRow {
     required String timezone,
     String? locale,
     int? avatarMediaId,
+    _i2.MediaObjectRow? avatarMedia,
     required bool analyticsOptIn,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -198,6 +216,7 @@ class _AppProfileRowImpl extends AppProfileRow {
          timezone: timezone,
          locale: locale,
          avatarMediaId: avatarMediaId,
+         avatarMedia: avatarMedia,
          analyticsOptIn: analyticsOptIn,
          createdAt: createdAt,
          updatedAt: updatedAt,
@@ -216,6 +235,7 @@ class _AppProfileRowImpl extends AppProfileRow {
     String? timezone,
     String? locale,
     Object? avatarMediaId = _Undefined,
+    Object? avatarMedia = _Undefined,
     bool? analyticsOptIn,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -229,6 +249,9 @@ class _AppProfileRowImpl extends AppProfileRow {
       timezone: timezone ?? this.timezone,
       locale: locale ?? this.locale,
       avatarMediaId: avatarMediaId is int? ? avatarMediaId : this.avatarMediaId,
+      avatarMedia: avatarMedia is _i2.MediaObjectRow?
+          ? avatarMedia
+          : this.avatarMedia?.copyWith(),
       analyticsOptIn: analyticsOptIn ?? this.analyticsOptIn,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -353,6 +376,8 @@ class AppProfileRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt avatarMediaId;
 
+  _i2.MediaObjectRowTable? _avatarMedia;
+
   late final _i1.ColumnBool analyticsOptIn;
 
   late final _i1.ColumnDateTime createdAt;
@@ -362,6 +387,19 @@ class AppProfileRowTable extends _i1.Table<int?> {
   late final _i1.ColumnDateTime deletedAt;
 
   late final _i1.ColumnInt version;
+
+  _i2.MediaObjectRowTable get avatarMedia {
+    if (_avatarMedia != null) return _avatarMedia!;
+    _avatarMedia = _i1.createRelationTable(
+      relationFieldName: 'avatarMedia',
+      field: AppProfileRow.t.avatarMediaId,
+      foreignField: _i2.MediaObjectRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.MediaObjectRowTable(tableRelation: foreignTableRelation),
+    );
+    return _avatarMedia!;
+  }
 
   @override
   List<_i1.Column> get columns => [
@@ -377,13 +415,25 @@ class AppProfileRowTable extends _i1.Table<int?> {
     deletedAt,
     version,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'avatarMedia') {
+      return avatarMedia;
+    }
+    return null;
+  }
 }
 
 class AppProfileRowInclude extends _i1.IncludeObject {
-  AppProfileRowInclude._();
+  AppProfileRowInclude._({_i2.MediaObjectRowInclude? avatarMedia}) {
+    _avatarMedia = avatarMedia;
+  }
+
+  _i2.MediaObjectRowInclude? _avatarMedia;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {'avatarMedia': _avatarMedia};
 
   @override
   _i1.Table<int?> get table => AppProfileRow.t;
@@ -411,6 +461,10 @@ class AppProfileRowIncludeList extends _i1.IncludeList {
 
 class AppProfileRowRepository {
   const AppProfileRowRepository._();
+
+  final attachRow = const AppProfileRowAttachRowRepository._();
+
+  final detachRow = const AppProfileRowDetachRowRepository._();
 
   /// Returns a list of [AppProfileRow]s matching the given query parameters.
   ///
@@ -443,6 +497,7 @@ class AppProfileRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<AppProfileRowTable>? orderByList,
     _i1.Transaction? transaction,
+    AppProfileRowInclude? include,
   }) async {
     return session.db.find<AppProfileRow>(
       where: where?.call(AppProfileRow.t),
@@ -452,6 +507,7 @@ class AppProfileRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -480,6 +536,7 @@ class AppProfileRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<AppProfileRowTable>? orderByList,
     _i1.Transaction? transaction,
+    AppProfileRowInclude? include,
   }) async {
     return session.db.findFirstRow<AppProfileRow>(
       where: where?.call(AppProfileRow.t),
@@ -488,6 +545,7 @@ class AppProfileRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -496,10 +554,12 @@ class AppProfileRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    AppProfileRowInclude? include,
   }) async {
     return session.db.findById<AppProfileRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -657,6 +717,59 @@ class AppProfileRowRepository {
     return session.db.count<AppProfileRow>(
       where: where?.call(AppProfileRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class AppProfileRowAttachRowRepository {
+  const AppProfileRowAttachRowRepository._();
+
+  /// Creates a relation between the given [AppProfileRow] and [MediaObjectRow]
+  /// by setting the [AppProfileRow]'s foreign key `avatarMediaId` to refer to the [MediaObjectRow].
+  Future<void> avatarMedia(
+    _i1.Session session,
+    AppProfileRow appProfileRow,
+    _i2.MediaObjectRow avatarMedia, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (appProfileRow.id == null) {
+      throw ArgumentError.notNull('appProfileRow.id');
+    }
+    if (avatarMedia.id == null) {
+      throw ArgumentError.notNull('avatarMedia.id');
+    }
+
+    var $appProfileRow = appProfileRow.copyWith(avatarMediaId: avatarMedia.id);
+    await session.db.updateRow<AppProfileRow>(
+      $appProfileRow,
+      columns: [AppProfileRow.t.avatarMediaId],
+      transaction: transaction,
+    );
+  }
+}
+
+class AppProfileRowDetachRowRepository {
+  const AppProfileRowDetachRowRepository._();
+
+  /// Detaches the relation between this [AppProfileRow] and the [MediaObjectRow] set in `avatarMedia`
+  /// by setting the [AppProfileRow]'s foreign key `avatarMediaId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> avatarMedia(
+    _i1.Session session,
+    AppProfileRow appProfileRow, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (appProfileRow.id == null) {
+      throw ArgumentError.notNull('appProfileRow.id');
+    }
+
+    var $appProfileRow = appProfileRow.copyWith(avatarMediaId: null);
+    await session.db.updateRow<AppProfileRow>(
+      $appProfileRow,
+      columns: [AppProfileRow.t.avatarMediaId],
       transaction: transaction,
     );
   }

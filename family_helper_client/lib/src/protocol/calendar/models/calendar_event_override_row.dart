@@ -11,11 +11,14 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../calendar/models/calendar_event_row.dart' as _i2;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i3;
 
 abstract class CalendarEventOverrideRow implements _i1.SerializableModel {
   CalendarEventOverrideRow._({
     this.id,
     required this.eventId,
+    this.event,
     required this.occurrenceStart,
     this.overrideTitle,
     this.overrideStartsAt,
@@ -32,6 +35,7 @@ abstract class CalendarEventOverrideRow implements _i1.SerializableModel {
   factory CalendarEventOverrideRow({
     int? id,
     required int eventId,
+    _i2.CalendarEventRow? event,
     required DateTime occurrenceStart,
     String? overrideTitle,
     DateTime? overrideStartsAt,
@@ -51,6 +55,11 @@ abstract class CalendarEventOverrideRow implements _i1.SerializableModel {
     return CalendarEventOverrideRow(
       id: jsonSerialization['id'] as int?,
       eventId: jsonSerialization['eventId'] as int,
+      event: jsonSerialization['event'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.CalendarEventRow>(
+              jsonSerialization['event'],
+            ),
       occurrenceStart: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['occurrenceStart'],
       ),
@@ -90,6 +99,8 @@ abstract class CalendarEventOverrideRow implements _i1.SerializableModel {
 
   int eventId;
 
+  _i2.CalendarEventRow? event;
+
   DateTime occurrenceStart;
 
   String? overrideTitle;
@@ -118,6 +129,7 @@ abstract class CalendarEventOverrideRow implements _i1.SerializableModel {
   CalendarEventOverrideRow copyWith({
     int? id,
     int? eventId,
+    _i2.CalendarEventRow? event,
     DateTime? occurrenceStart,
     String? overrideTitle,
     DateTime? overrideStartsAt,
@@ -136,6 +148,7 @@ abstract class CalendarEventOverrideRow implements _i1.SerializableModel {
       '__className__': 'CalendarEventOverrideRow',
       if (id != null) 'id': id,
       'eventId': eventId,
+      if (event != null) 'event': event?.toJson(),
       'occurrenceStart': occurrenceStart.toJson(),
       if (overrideTitle != null) 'overrideTitle': overrideTitle,
       if (overrideStartsAt != null)
@@ -165,6 +178,7 @@ class _CalendarEventOverrideRowImpl extends CalendarEventOverrideRow {
   _CalendarEventOverrideRowImpl({
     int? id,
     required int eventId,
+    _i2.CalendarEventRow? event,
     required DateTime occurrenceStart,
     String? overrideTitle,
     DateTime? overrideStartsAt,
@@ -179,6 +193,7 @@ class _CalendarEventOverrideRowImpl extends CalendarEventOverrideRow {
   }) : super._(
          id: id,
          eventId: eventId,
+         event: event,
          occurrenceStart: occurrenceStart,
          overrideTitle: overrideTitle,
          overrideStartsAt: overrideStartsAt,
@@ -199,6 +214,7 @@ class _CalendarEventOverrideRowImpl extends CalendarEventOverrideRow {
   CalendarEventOverrideRow copyWith({
     Object? id = _Undefined,
     int? eventId,
+    Object? event = _Undefined,
     DateTime? occurrenceStart,
     Object? overrideTitle = _Undefined,
     Object? overrideStartsAt = _Undefined,
@@ -214,6 +230,7 @@ class _CalendarEventOverrideRowImpl extends CalendarEventOverrideRow {
     return CalendarEventOverrideRow(
       id: id is int? ? id : this.id,
       eventId: eventId ?? this.eventId,
+      event: event is _i2.CalendarEventRow? ? event : this.event?.copyWith(),
       occurrenceStart: occurrenceStart ?? this.occurrenceStart,
       overrideTitle: overrideTitle is String?
           ? overrideTitle

@@ -8,15 +8,21 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../family/models/family_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import '../../tasks/models/task_row.dart' as _i4;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i5;
 
 abstract class TaskRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   TaskRow._({
     this.id,
     required this.familyId,
+    this.family,
     required this.title,
     this.description,
     required this.isPersonal,
@@ -29,9 +35,12 @@ abstract class TaskRow
     this.recurrenceMode,
     this.recurrenceRrule,
     this.assigneeProfileId,
+    this.assigneeProfile,
     required this.createdByProfileId,
+    this.createdByProfile,
     this.completedAt,
     this.sourceTaskId,
+    this.sourceTask,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
@@ -41,6 +50,7 @@ abstract class TaskRow
   factory TaskRow({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String title,
     String? description,
     required bool isPersonal,
@@ -53,9 +63,12 @@ abstract class TaskRow
     String? recurrenceMode,
     String? recurrenceRrule,
     int? assigneeProfileId,
+    _i3.AppProfileRow? assigneeProfile,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     DateTime? completedAt,
     int? sourceTaskId,
+    _i4.TaskRow? sourceTask,
     required DateTime createdAt,
     required DateTime updatedAt,
     DateTime? deletedAt,
@@ -66,6 +79,11 @@ abstract class TaskRow
     return TaskRow(
       id: jsonSerialization['id'] as int?,
       familyId: jsonSerialization['familyId'] as int,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i5.Protocol().deserialize<_i2.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       title: jsonSerialization['title'] as String,
       description: jsonSerialization['description'] as String?,
       isPersonal: jsonSerialization['isPersonal'] as bool,
@@ -80,13 +98,28 @@ abstract class TaskRow
       recurrenceMode: jsonSerialization['recurrenceMode'] as String?,
       recurrenceRrule: jsonSerialization['recurrenceRrule'] as String?,
       assigneeProfileId: jsonSerialization['assigneeProfileId'] as int?,
+      assigneeProfile: jsonSerialization['assigneeProfile'] == null
+          ? null
+          : _i5.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['assigneeProfile'],
+            ),
       createdByProfileId: jsonSerialization['createdByProfileId'] as int,
+      createdByProfile: jsonSerialization['createdByProfile'] == null
+          ? null
+          : _i5.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['createdByProfile'],
+            ),
       completedAt: jsonSerialization['completedAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(
               jsonSerialization['completedAt'],
             ),
       sourceTaskId: jsonSerialization['sourceTaskId'] as int?,
+      sourceTask: jsonSerialization['sourceTask'] == null
+          ? null
+          : _i5.Protocol().deserialize<_i4.TaskRow>(
+              jsonSerialization['sourceTask'],
+            ),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -108,6 +141,8 @@ abstract class TaskRow
   int? id;
 
   int familyId;
+
+  _i2.FamilyRow? family;
 
   String title;
 
@@ -133,11 +168,17 @@ abstract class TaskRow
 
   int? assigneeProfileId;
 
+  _i3.AppProfileRow? assigneeProfile;
+
   int createdByProfileId;
+
+  _i3.AppProfileRow? createdByProfile;
 
   DateTime? completedAt;
 
   int? sourceTaskId;
+
+  _i4.TaskRow? sourceTask;
 
   DateTime createdAt;
 
@@ -156,6 +197,7 @@ abstract class TaskRow
   TaskRow copyWith({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     String? title,
     String? description,
     bool? isPersonal,
@@ -168,9 +210,12 @@ abstract class TaskRow
     String? recurrenceMode,
     String? recurrenceRrule,
     int? assigneeProfileId,
+    _i3.AppProfileRow? assigneeProfile,
     int? createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     DateTime? completedAt,
     int? sourceTaskId,
+    _i4.TaskRow? sourceTask,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? deletedAt,
@@ -182,6 +227,7 @@ abstract class TaskRow
       '__className__': 'TaskRow',
       if (id != null) 'id': id,
       'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'title': title,
       if (description != null) 'description': description,
       'isPersonal': isPersonal,
@@ -194,9 +240,13 @@ abstract class TaskRow
       if (recurrenceMode != null) 'recurrenceMode': recurrenceMode,
       if (recurrenceRrule != null) 'recurrenceRrule': recurrenceRrule,
       if (assigneeProfileId != null) 'assigneeProfileId': assigneeProfileId,
+      if (assigneeProfile != null) 'assigneeProfile': assigneeProfile?.toJson(),
       'createdByProfileId': createdByProfileId,
+      if (createdByProfile != null)
+        'createdByProfile': createdByProfile?.toJson(),
       if (completedAt != null) 'completedAt': completedAt?.toJson(),
       if (sourceTaskId != null) 'sourceTaskId': sourceTaskId,
+      if (sourceTask != null) 'sourceTask': sourceTask?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
@@ -210,6 +260,7 @@ abstract class TaskRow
       '__className__': 'TaskRow',
       if (id != null) 'id': id,
       'familyId': familyId,
+      if (family != null) 'family': family?.toJsonForProtocol(),
       'title': title,
       if (description != null) 'description': description,
       'isPersonal': isPersonal,
@@ -222,9 +273,14 @@ abstract class TaskRow
       if (recurrenceMode != null) 'recurrenceMode': recurrenceMode,
       if (recurrenceRrule != null) 'recurrenceRrule': recurrenceRrule,
       if (assigneeProfileId != null) 'assigneeProfileId': assigneeProfileId,
+      if (assigneeProfile != null)
+        'assigneeProfile': assigneeProfile?.toJsonForProtocol(),
       'createdByProfileId': createdByProfileId,
+      if (createdByProfile != null)
+        'createdByProfile': createdByProfile?.toJsonForProtocol(),
       if (completedAt != null) 'completedAt': completedAt?.toJson(),
       if (sourceTaskId != null) 'sourceTaskId': sourceTaskId,
+      if (sourceTask != null) 'sourceTask': sourceTask?.toJsonForProtocol(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
@@ -232,8 +288,18 @@ abstract class TaskRow
     };
   }
 
-  static TaskRowInclude include() {
-    return TaskRowInclude._();
+  static TaskRowInclude include({
+    _i2.FamilyRowInclude? family,
+    _i3.AppProfileRowInclude? assigneeProfile,
+    _i3.AppProfileRowInclude? createdByProfile,
+    _i4.TaskRowInclude? sourceTask,
+  }) {
+    return TaskRowInclude._(
+      family: family,
+      assigneeProfile: assigneeProfile,
+      createdByProfile: createdByProfile,
+      sourceTask: sourceTask,
+    );
   }
 
   static TaskRowIncludeList includeList({
@@ -268,6 +334,7 @@ class _TaskRowImpl extends TaskRow {
   _TaskRowImpl({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String title,
     String? description,
     required bool isPersonal,
@@ -280,9 +347,12 @@ class _TaskRowImpl extends TaskRow {
     String? recurrenceMode,
     String? recurrenceRrule,
     int? assigneeProfileId,
+    _i3.AppProfileRow? assigneeProfile,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     DateTime? completedAt,
     int? sourceTaskId,
+    _i4.TaskRow? sourceTask,
     required DateTime createdAt,
     required DateTime updatedAt,
     DateTime? deletedAt,
@@ -290,6 +360,7 @@ class _TaskRowImpl extends TaskRow {
   }) : super._(
          id: id,
          familyId: familyId,
+         family: family,
          title: title,
          description: description,
          isPersonal: isPersonal,
@@ -302,9 +373,12 @@ class _TaskRowImpl extends TaskRow {
          recurrenceMode: recurrenceMode,
          recurrenceRrule: recurrenceRrule,
          assigneeProfileId: assigneeProfileId,
+         assigneeProfile: assigneeProfile,
          createdByProfileId: createdByProfileId,
+         createdByProfile: createdByProfile,
          completedAt: completedAt,
          sourceTaskId: sourceTaskId,
+         sourceTask: sourceTask,
          createdAt: createdAt,
          updatedAt: updatedAt,
          deletedAt: deletedAt,
@@ -318,6 +392,7 @@ class _TaskRowImpl extends TaskRow {
   TaskRow copyWith({
     Object? id = _Undefined,
     int? familyId,
+    Object? family = _Undefined,
     String? title,
     Object? description = _Undefined,
     bool? isPersonal,
@@ -330,9 +405,12 @@ class _TaskRowImpl extends TaskRow {
     Object? recurrenceMode = _Undefined,
     Object? recurrenceRrule = _Undefined,
     Object? assigneeProfileId = _Undefined,
+    Object? assigneeProfile = _Undefined,
     int? createdByProfileId,
+    Object? createdByProfile = _Undefined,
     Object? completedAt = _Undefined,
     Object? sourceTaskId = _Undefined,
+    Object? sourceTask = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
     Object? deletedAt = _Undefined,
@@ -341,6 +419,7 @@ class _TaskRowImpl extends TaskRow {
     return TaskRow(
       id: id is int? ? id : this.id,
       familyId: familyId ?? this.familyId,
+      family: family is _i2.FamilyRow? ? family : this.family?.copyWith(),
       title: title ?? this.title,
       description: description is String? ? description : this.description,
       isPersonal: isPersonal ?? this.isPersonal,
@@ -363,9 +442,18 @@ class _TaskRowImpl extends TaskRow {
       assigneeProfileId: assigneeProfileId is int?
           ? assigneeProfileId
           : this.assigneeProfileId,
+      assigneeProfile: assigneeProfile is _i3.AppProfileRow?
+          ? assigneeProfile
+          : this.assigneeProfile?.copyWith(),
       createdByProfileId: createdByProfileId ?? this.createdByProfileId,
+      createdByProfile: createdByProfile is _i3.AppProfileRow?
+          ? createdByProfile
+          : this.createdByProfile?.copyWith(),
       completedAt: completedAt is DateTime? ? completedAt : this.completedAt,
       sourceTaskId: sourceTaskId is int? ? sourceTaskId : this.sourceTaskId,
+      sourceTask: sourceTask is _i4.TaskRow?
+          ? sourceTask
+          : this.sourceTask?.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,
@@ -575,6 +663,8 @@ class TaskRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt familyId;
 
+  _i2.FamilyRowTable? _family;
+
   late final _i1.ColumnString title;
 
   late final _i1.ColumnString description;
@@ -599,11 +689,17 @@ class TaskRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt assigneeProfileId;
 
+  _i3.AppProfileRowTable? _assigneeProfile;
+
   late final _i1.ColumnInt createdByProfileId;
+
+  _i3.AppProfileRowTable? _createdByProfile;
 
   late final _i1.ColumnDateTime completedAt;
 
   late final _i1.ColumnInt sourceTaskId;
+
+  _i4.TaskRowTable? _sourceTask;
 
   late final _i1.ColumnDateTime createdAt;
 
@@ -612,6 +708,58 @@ class TaskRowTable extends _i1.Table<int?> {
   late final _i1.ColumnDateTime deletedAt;
 
   late final _i1.ColumnInt version;
+
+  _i2.FamilyRowTable get family {
+    if (_family != null) return _family!;
+    _family = _i1.createRelationTable(
+      relationFieldName: 'family',
+      field: TaskRow.t.familyId,
+      foreignField: _i2.FamilyRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.FamilyRowTable(tableRelation: foreignTableRelation),
+    );
+    return _family!;
+  }
+
+  _i3.AppProfileRowTable get assigneeProfile {
+    if (_assigneeProfile != null) return _assigneeProfile!;
+    _assigneeProfile = _i1.createRelationTable(
+      relationFieldName: 'assigneeProfile',
+      field: TaskRow.t.assigneeProfileId,
+      foreignField: _i3.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _assigneeProfile!;
+  }
+
+  _i3.AppProfileRowTable get createdByProfile {
+    if (_createdByProfile != null) return _createdByProfile!;
+    _createdByProfile = _i1.createRelationTable(
+      relationFieldName: 'createdByProfile',
+      field: TaskRow.t.createdByProfileId,
+      foreignField: _i3.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _createdByProfile!;
+  }
+
+  _i4.TaskRowTable get sourceTask {
+    if (_sourceTask != null) return _sourceTask!;
+    _sourceTask = _i1.createRelationTable(
+      relationFieldName: 'sourceTask',
+      field: TaskRow.t.sourceTaskId,
+      foreignField: _i4.TaskRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i4.TaskRowTable(tableRelation: foreignTableRelation),
+    );
+    return _sourceTask!;
+  }
 
   @override
   List<_i1.Column> get columns => [
@@ -637,13 +785,53 @@ class TaskRowTable extends _i1.Table<int?> {
     deletedAt,
     version,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'family') {
+      return family;
+    }
+    if (relationField == 'assigneeProfile') {
+      return assigneeProfile;
+    }
+    if (relationField == 'createdByProfile') {
+      return createdByProfile;
+    }
+    if (relationField == 'sourceTask') {
+      return sourceTask;
+    }
+    return null;
+  }
 }
 
 class TaskRowInclude extends _i1.IncludeObject {
-  TaskRowInclude._();
+  TaskRowInclude._({
+    _i2.FamilyRowInclude? family,
+    _i3.AppProfileRowInclude? assigneeProfile,
+    _i3.AppProfileRowInclude? createdByProfile,
+    _i4.TaskRowInclude? sourceTask,
+  }) {
+    _family = family;
+    _assigneeProfile = assigneeProfile;
+    _createdByProfile = createdByProfile;
+    _sourceTask = sourceTask;
+  }
+
+  _i2.FamilyRowInclude? _family;
+
+  _i3.AppProfileRowInclude? _assigneeProfile;
+
+  _i3.AppProfileRowInclude? _createdByProfile;
+
+  _i4.TaskRowInclude? _sourceTask;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {
+    'family': _family,
+    'assigneeProfile': _assigneeProfile,
+    'createdByProfile': _createdByProfile,
+    'sourceTask': _sourceTask,
+  };
 
   @override
   _i1.Table<int?> get table => TaskRow.t;
@@ -671,6 +859,10 @@ class TaskRowIncludeList extends _i1.IncludeList {
 
 class TaskRowRepository {
   const TaskRowRepository._();
+
+  final attachRow = const TaskRowAttachRowRepository._();
+
+  final detachRow = const TaskRowDetachRowRepository._();
 
   /// Returns a list of [TaskRow]s matching the given query parameters.
   ///
@@ -703,6 +895,7 @@ class TaskRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<TaskRowTable>? orderByList,
     _i1.Transaction? transaction,
+    TaskRowInclude? include,
   }) async {
     return session.db.find<TaskRow>(
       where: where?.call(TaskRow.t),
@@ -712,6 +905,7 @@ class TaskRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -740,6 +934,7 @@ class TaskRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<TaskRowTable>? orderByList,
     _i1.Transaction? transaction,
+    TaskRowInclude? include,
   }) async {
     return session.db.findFirstRow<TaskRow>(
       where: where?.call(TaskRow.t),
@@ -748,6 +943,7 @@ class TaskRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -756,10 +952,12 @@ class TaskRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    TaskRowInclude? include,
   }) async {
     return session.db.findById<TaskRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -917,6 +1115,150 @@ class TaskRowRepository {
     return session.db.count<TaskRow>(
       where: where?.call(TaskRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class TaskRowAttachRowRepository {
+  const TaskRowAttachRowRepository._();
+
+  /// Creates a relation between the given [TaskRow] and [FamilyRow]
+  /// by setting the [TaskRow]'s foreign key `familyId` to refer to the [FamilyRow].
+  Future<void> family(
+    _i1.Session session,
+    TaskRow taskRow,
+    _i2.FamilyRow family, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (taskRow.id == null) {
+      throw ArgumentError.notNull('taskRow.id');
+    }
+    if (family.id == null) {
+      throw ArgumentError.notNull('family.id');
+    }
+
+    var $taskRow = taskRow.copyWith(familyId: family.id);
+    await session.db.updateRow<TaskRow>(
+      $taskRow,
+      columns: [TaskRow.t.familyId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [TaskRow] and [AppProfileRow]
+  /// by setting the [TaskRow]'s foreign key `assigneeProfileId` to refer to the [AppProfileRow].
+  Future<void> assigneeProfile(
+    _i1.Session session,
+    TaskRow taskRow,
+    _i3.AppProfileRow assigneeProfile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (taskRow.id == null) {
+      throw ArgumentError.notNull('taskRow.id');
+    }
+    if (assigneeProfile.id == null) {
+      throw ArgumentError.notNull('assigneeProfile.id');
+    }
+
+    var $taskRow = taskRow.copyWith(assigneeProfileId: assigneeProfile.id);
+    await session.db.updateRow<TaskRow>(
+      $taskRow,
+      columns: [TaskRow.t.assigneeProfileId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [TaskRow] and [AppProfileRow]
+  /// by setting the [TaskRow]'s foreign key `createdByProfileId` to refer to the [AppProfileRow].
+  Future<void> createdByProfile(
+    _i1.Session session,
+    TaskRow taskRow,
+    _i3.AppProfileRow createdByProfile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (taskRow.id == null) {
+      throw ArgumentError.notNull('taskRow.id');
+    }
+    if (createdByProfile.id == null) {
+      throw ArgumentError.notNull('createdByProfile.id');
+    }
+
+    var $taskRow = taskRow.copyWith(createdByProfileId: createdByProfile.id);
+    await session.db.updateRow<TaskRow>(
+      $taskRow,
+      columns: [TaskRow.t.createdByProfileId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [TaskRow] and [TaskRow]
+  /// by setting the [TaskRow]'s foreign key `sourceTaskId` to refer to the [TaskRow].
+  Future<void> sourceTask(
+    _i1.Session session,
+    TaskRow taskRow,
+    _i4.TaskRow sourceTask, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (taskRow.id == null) {
+      throw ArgumentError.notNull('taskRow.id');
+    }
+    if (sourceTask.id == null) {
+      throw ArgumentError.notNull('sourceTask.id');
+    }
+
+    var $taskRow = taskRow.copyWith(sourceTaskId: sourceTask.id);
+    await session.db.updateRow<TaskRow>(
+      $taskRow,
+      columns: [TaskRow.t.sourceTaskId],
+      transaction: transaction,
+    );
+  }
+}
+
+class TaskRowDetachRowRepository {
+  const TaskRowDetachRowRepository._();
+
+  /// Detaches the relation between this [TaskRow] and the [AppProfileRow] set in `assigneeProfile`
+  /// by setting the [TaskRow]'s foreign key `assigneeProfileId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> assigneeProfile(
+    _i1.Session session,
+    TaskRow taskRow, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (taskRow.id == null) {
+      throw ArgumentError.notNull('taskRow.id');
+    }
+
+    var $taskRow = taskRow.copyWith(assigneeProfileId: null);
+    await session.db.updateRow<TaskRow>(
+      $taskRow,
+      columns: [TaskRow.t.assigneeProfileId],
+      transaction: transaction,
+    );
+  }
+
+  /// Detaches the relation between this [TaskRow] and the [TaskRow] set in `sourceTask`
+  /// by setting the [TaskRow]'s foreign key `sourceTaskId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> sourceTask(
+    _i1.Session session,
+    TaskRow taskRow, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (taskRow.id == null) {
+      throw ArgumentError.notNull('taskRow.id');
+    }
+
+    var $taskRow = taskRow.copyWith(sourceTaskId: null);
+    await session.db.updateRow<TaskRow>(
+      $taskRow,
+      columns: [TaskRow.t.sourceTaskId],
       transaction: transaction,
     );
   }

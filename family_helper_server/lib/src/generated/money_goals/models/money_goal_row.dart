@@ -8,15 +8,20 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../family/models/family_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i4;
 
 abstract class MoneyGoalRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   MoneyGoalRow._({
     this.id,
     required this.familyId,
+    this.family,
     required this.title,
     this.description,
     required this.targetAmountCents,
@@ -26,6 +31,7 @@ abstract class MoneyGoalRow
     this.reachedAt,
     this.archivedAt,
     required this.createdByProfileId,
+    this.createdByProfile,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
@@ -35,6 +41,7 @@ abstract class MoneyGoalRow
   factory MoneyGoalRow({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String title,
     String? description,
     required int targetAmountCents,
@@ -44,6 +51,7 @@ abstract class MoneyGoalRow
     DateTime? reachedAt,
     DateTime? archivedAt,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     required DateTime createdAt,
     required DateTime updatedAt,
     DateTime? deletedAt,
@@ -54,6 +62,11 @@ abstract class MoneyGoalRow
     return MoneyGoalRow(
       id: jsonSerialization['id'] as int?,
       familyId: jsonSerialization['familyId'] as int,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       title: jsonSerialization['title'] as String,
       description: jsonSerialization['description'] as String?,
       targetAmountCents: jsonSerialization['targetAmountCents'] as int,
@@ -69,6 +82,11 @@ abstract class MoneyGoalRow
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['archivedAt']),
       createdByProfileId: jsonSerialization['createdByProfileId'] as int,
+      createdByProfile: jsonSerialization['createdByProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['createdByProfile'],
+            ),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -91,6 +109,8 @@ abstract class MoneyGoalRow
 
   int familyId;
 
+  _i2.FamilyRow? family;
+
   String title;
 
   String? description;
@@ -109,6 +129,8 @@ abstract class MoneyGoalRow
 
   int createdByProfileId;
 
+  _i3.AppProfileRow? createdByProfile;
+
   DateTime createdAt;
 
   DateTime updatedAt;
@@ -126,6 +148,7 @@ abstract class MoneyGoalRow
   MoneyGoalRow copyWith({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     String? title,
     String? description,
     int? targetAmountCents,
@@ -135,6 +158,7 @@ abstract class MoneyGoalRow
     DateTime? reachedAt,
     DateTime? archivedAt,
     int? createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? deletedAt,
@@ -146,6 +170,7 @@ abstract class MoneyGoalRow
       '__className__': 'MoneyGoalRow',
       if (id != null) 'id': id,
       'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'title': title,
       if (description != null) 'description': description,
       'targetAmountCents': targetAmountCents,
@@ -155,6 +180,8 @@ abstract class MoneyGoalRow
       if (reachedAt != null) 'reachedAt': reachedAt?.toJson(),
       if (archivedAt != null) 'archivedAt': archivedAt?.toJson(),
       'createdByProfileId': createdByProfileId,
+      if (createdByProfile != null)
+        'createdByProfile': createdByProfile?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
@@ -168,6 +195,7 @@ abstract class MoneyGoalRow
       '__className__': 'MoneyGoalRow',
       if (id != null) 'id': id,
       'familyId': familyId,
+      if (family != null) 'family': family?.toJsonForProtocol(),
       'title': title,
       if (description != null) 'description': description,
       'targetAmountCents': targetAmountCents,
@@ -177,6 +205,8 @@ abstract class MoneyGoalRow
       if (reachedAt != null) 'reachedAt': reachedAt?.toJson(),
       if (archivedAt != null) 'archivedAt': archivedAt?.toJson(),
       'createdByProfileId': createdByProfileId,
+      if (createdByProfile != null)
+        'createdByProfile': createdByProfile?.toJsonForProtocol(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
@@ -184,8 +214,14 @@ abstract class MoneyGoalRow
     };
   }
 
-  static MoneyGoalRowInclude include() {
-    return MoneyGoalRowInclude._();
+  static MoneyGoalRowInclude include({
+    _i2.FamilyRowInclude? family,
+    _i3.AppProfileRowInclude? createdByProfile,
+  }) {
+    return MoneyGoalRowInclude._(
+      family: family,
+      createdByProfile: createdByProfile,
+    );
   }
 
   static MoneyGoalRowIncludeList includeList({
@@ -220,6 +256,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
   _MoneyGoalRowImpl({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String title,
     String? description,
     required int targetAmountCents,
@@ -229,6 +266,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
     DateTime? reachedAt,
     DateTime? archivedAt,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     required DateTime createdAt,
     required DateTime updatedAt,
     DateTime? deletedAt,
@@ -236,6 +274,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
   }) : super._(
          id: id,
          familyId: familyId,
+         family: family,
          title: title,
          description: description,
          targetAmountCents: targetAmountCents,
@@ -245,6 +284,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
          reachedAt: reachedAt,
          archivedAt: archivedAt,
          createdByProfileId: createdByProfileId,
+         createdByProfile: createdByProfile,
          createdAt: createdAt,
          updatedAt: updatedAt,
          deletedAt: deletedAt,
@@ -258,6 +298,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
   MoneyGoalRow copyWith({
     Object? id = _Undefined,
     int? familyId,
+    Object? family = _Undefined,
     String? title,
     Object? description = _Undefined,
     int? targetAmountCents,
@@ -267,6 +308,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
     Object? reachedAt = _Undefined,
     Object? archivedAt = _Undefined,
     int? createdByProfileId,
+    Object? createdByProfile = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
     Object? deletedAt = _Undefined,
@@ -275,6 +317,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
     return MoneyGoalRow(
       id: id is int? ? id : this.id,
       familyId: familyId ?? this.familyId,
+      family: family is _i2.FamilyRow? ? family : this.family?.copyWith(),
       title: title ?? this.title,
       description: description is String? ? description : this.description,
       targetAmountCents: targetAmountCents ?? this.targetAmountCents,
@@ -284,6 +327,9 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
       reachedAt: reachedAt is DateTime? ? reachedAt : this.reachedAt,
       archivedAt: archivedAt is DateTime? ? archivedAt : this.archivedAt,
       createdByProfileId: createdByProfileId ?? this.createdByProfileId,
+      createdByProfile: createdByProfile is _i3.AppProfileRow?
+          ? createdByProfile
+          : this.createdByProfile?.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,
@@ -437,6 +483,8 @@ class MoneyGoalRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt familyId;
 
+  _i2.FamilyRowTable? _family;
+
   late final _i1.ColumnString title;
 
   late final _i1.ColumnString description;
@@ -455,6 +503,8 @@ class MoneyGoalRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt createdByProfileId;
 
+  _i3.AppProfileRowTable? _createdByProfile;
+
   late final _i1.ColumnDateTime createdAt;
 
   late final _i1.ColumnDateTime updatedAt;
@@ -462,6 +512,32 @@ class MoneyGoalRowTable extends _i1.Table<int?> {
   late final _i1.ColumnDateTime deletedAt;
 
   late final _i1.ColumnInt version;
+
+  _i2.FamilyRowTable get family {
+    if (_family != null) return _family!;
+    _family = _i1.createRelationTable(
+      relationFieldName: 'family',
+      field: MoneyGoalRow.t.familyId,
+      foreignField: _i2.FamilyRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.FamilyRowTable(tableRelation: foreignTableRelation),
+    );
+    return _family!;
+  }
+
+  _i3.AppProfileRowTable get createdByProfile {
+    if (_createdByProfile != null) return _createdByProfile!;
+    _createdByProfile = _i1.createRelationTable(
+      relationFieldName: 'createdByProfile',
+      field: MoneyGoalRow.t.createdByProfileId,
+      foreignField: _i3.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _createdByProfile!;
+  }
 
   @override
   List<_i1.Column> get columns => [
@@ -481,13 +557,37 @@ class MoneyGoalRowTable extends _i1.Table<int?> {
     deletedAt,
     version,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'family') {
+      return family;
+    }
+    if (relationField == 'createdByProfile') {
+      return createdByProfile;
+    }
+    return null;
+  }
 }
 
 class MoneyGoalRowInclude extends _i1.IncludeObject {
-  MoneyGoalRowInclude._();
+  MoneyGoalRowInclude._({
+    _i2.FamilyRowInclude? family,
+    _i3.AppProfileRowInclude? createdByProfile,
+  }) {
+    _family = family;
+    _createdByProfile = createdByProfile;
+  }
+
+  _i2.FamilyRowInclude? _family;
+
+  _i3.AppProfileRowInclude? _createdByProfile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {
+    'family': _family,
+    'createdByProfile': _createdByProfile,
+  };
 
   @override
   _i1.Table<int?> get table => MoneyGoalRow.t;
@@ -515,6 +615,8 @@ class MoneyGoalRowIncludeList extends _i1.IncludeList {
 
 class MoneyGoalRowRepository {
   const MoneyGoalRowRepository._();
+
+  final attachRow = const MoneyGoalRowAttachRowRepository._();
 
   /// Returns a list of [MoneyGoalRow]s matching the given query parameters.
   ///
@@ -547,6 +649,7 @@ class MoneyGoalRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<MoneyGoalRowTable>? orderByList,
     _i1.Transaction? transaction,
+    MoneyGoalRowInclude? include,
   }) async {
     return session.db.find<MoneyGoalRow>(
       where: where?.call(MoneyGoalRow.t),
@@ -556,6 +659,7 @@ class MoneyGoalRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -584,6 +688,7 @@ class MoneyGoalRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<MoneyGoalRowTable>? orderByList,
     _i1.Transaction? transaction,
+    MoneyGoalRowInclude? include,
   }) async {
     return session.db.findFirstRow<MoneyGoalRow>(
       where: where?.call(MoneyGoalRow.t),
@@ -592,6 +697,7 @@ class MoneyGoalRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -600,10 +706,12 @@ class MoneyGoalRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    MoneyGoalRowInclude? include,
   }) async {
     return session.db.findById<MoneyGoalRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -761,6 +869,58 @@ class MoneyGoalRowRepository {
     return session.db.count<MoneyGoalRow>(
       where: where?.call(MoneyGoalRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class MoneyGoalRowAttachRowRepository {
+  const MoneyGoalRowAttachRowRepository._();
+
+  /// Creates a relation between the given [MoneyGoalRow] and [FamilyRow]
+  /// by setting the [MoneyGoalRow]'s foreign key `familyId` to refer to the [FamilyRow].
+  Future<void> family(
+    _i1.Session session,
+    MoneyGoalRow moneyGoalRow,
+    _i2.FamilyRow family, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (moneyGoalRow.id == null) {
+      throw ArgumentError.notNull('moneyGoalRow.id');
+    }
+    if (family.id == null) {
+      throw ArgumentError.notNull('family.id');
+    }
+
+    var $moneyGoalRow = moneyGoalRow.copyWith(familyId: family.id);
+    await session.db.updateRow<MoneyGoalRow>(
+      $moneyGoalRow,
+      columns: [MoneyGoalRow.t.familyId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [MoneyGoalRow] and [AppProfileRow]
+  /// by setting the [MoneyGoalRow]'s foreign key `createdByProfileId` to refer to the [AppProfileRow].
+  Future<void> createdByProfile(
+    _i1.Session session,
+    MoneyGoalRow moneyGoalRow,
+    _i3.AppProfileRow createdByProfile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (moneyGoalRow.id == null) {
+      throw ArgumentError.notNull('moneyGoalRow.id');
+    }
+    if (createdByProfile.id == null) {
+      throw ArgumentError.notNull('createdByProfile.id');
+    }
+
+    var $moneyGoalRow = moneyGoalRow.copyWith(
+      createdByProfileId: createdByProfile.id,
+    );
+    await session.db.updateRow<MoneyGoalRow>(
+      $moneyGoalRow,
+      columns: [MoneyGoalRow.t.createdByProfileId],
       transaction: transaction,
     );
   }

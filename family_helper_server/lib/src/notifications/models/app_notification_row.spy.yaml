@@ -1,8 +1,8 @@
 class: AppNotificationRow
 table: app_notification
 fields:
-  profileId: int
-  familyId: int
+  profile: AppProfileRow?, relation
+  family: FamilyRow?, relation
   category: String
   title: String
   body: String

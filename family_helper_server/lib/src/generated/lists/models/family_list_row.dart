@@ -8,18 +8,24 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../family/models/family_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i4;
 
 abstract class FamilyListRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   FamilyListRow._({
     this.id,
     required this.familyId,
+    this.family,
     required this.title,
     required this.listType,
     required this.createdByProfileId,
+    this.createdByProfile,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
@@ -29,9 +35,11 @@ abstract class FamilyListRow
   factory FamilyListRow({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String title,
     required String listType,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     required DateTime createdAt,
     required DateTime updatedAt,
     DateTime? deletedAt,
@@ -42,9 +50,19 @@ abstract class FamilyListRow
     return FamilyListRow(
       id: jsonSerialization['id'] as int?,
       familyId: jsonSerialization['familyId'] as int,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       title: jsonSerialization['title'] as String,
       listType: jsonSerialization['listType'] as String,
       createdByProfileId: jsonSerialization['createdByProfileId'] as int,
+      createdByProfile: jsonSerialization['createdByProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['createdByProfile'],
+            ),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -67,11 +85,15 @@ abstract class FamilyListRow
 
   int familyId;
 
+  _i2.FamilyRow? family;
+
   String title;
 
   String listType;
 
   int createdByProfileId;
+
+  _i3.AppProfileRow? createdByProfile;
 
   DateTime createdAt;
 
@@ -90,9 +112,11 @@ abstract class FamilyListRow
   FamilyListRow copyWith({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     String? title,
     String? listType,
     int? createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? deletedAt,
@@ -104,9 +128,12 @@ abstract class FamilyListRow
       '__className__': 'FamilyListRow',
       if (id != null) 'id': id,
       'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'title': title,
       'listType': listType,
       'createdByProfileId': createdByProfileId,
+      if (createdByProfile != null)
+        'createdByProfile': createdByProfile?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
@@ -120,9 +147,12 @@ abstract class FamilyListRow
       '__className__': 'FamilyListRow',
       if (id != null) 'id': id,
       'familyId': familyId,
+      if (family != null) 'family': family?.toJsonForProtocol(),
       'title': title,
       'listType': listType,
       'createdByProfileId': createdByProfileId,
+      if (createdByProfile != null)
+        'createdByProfile': createdByProfile?.toJsonForProtocol(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
@@ -130,8 +160,14 @@ abstract class FamilyListRow
     };
   }
 
-  static FamilyListRowInclude include() {
-    return FamilyListRowInclude._();
+  static FamilyListRowInclude include({
+    _i2.FamilyRowInclude? family,
+    _i3.AppProfileRowInclude? createdByProfile,
+  }) {
+    return FamilyListRowInclude._(
+      family: family,
+      createdByProfile: createdByProfile,
+    );
   }
 
   static FamilyListRowIncludeList includeList({
@@ -166,9 +202,11 @@ class _FamilyListRowImpl extends FamilyListRow {
   _FamilyListRowImpl({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String title,
     required String listType,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     required DateTime createdAt,
     required DateTime updatedAt,
     DateTime? deletedAt,
@@ -176,9 +214,11 @@ class _FamilyListRowImpl extends FamilyListRow {
   }) : super._(
          id: id,
          familyId: familyId,
+         family: family,
          title: title,
          listType: listType,
          createdByProfileId: createdByProfileId,
+         createdByProfile: createdByProfile,
          createdAt: createdAt,
          updatedAt: updatedAt,
          deletedAt: deletedAt,
@@ -192,9 +232,11 @@ class _FamilyListRowImpl extends FamilyListRow {
   FamilyListRow copyWith({
     Object? id = _Undefined,
     int? familyId,
+    Object? family = _Undefined,
     String? title,
     String? listType,
     int? createdByProfileId,
+    Object? createdByProfile = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
     Object? deletedAt = _Undefined,
@@ -203,9 +245,13 @@ class _FamilyListRowImpl extends FamilyListRow {
     return FamilyListRow(
       id: id is int? ? id : this.id,
       familyId: familyId ?? this.familyId,
+      family: family is _i2.FamilyRow? ? family : this.family?.copyWith(),
       title: title ?? this.title,
       listType: listType ?? this.listType,
       createdByProfileId: createdByProfileId ?? this.createdByProfileId,
+      createdByProfile: createdByProfile is _i3.AppProfileRow?
+          ? createdByProfile
+          : this.createdByProfile?.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,
@@ -302,11 +348,15 @@ class FamilyListRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt familyId;
 
+  _i2.FamilyRowTable? _family;
+
   late final _i1.ColumnString title;
 
   late final _i1.ColumnString listType;
 
   late final _i1.ColumnInt createdByProfileId;
+
+  _i3.AppProfileRowTable? _createdByProfile;
 
   late final _i1.ColumnDateTime createdAt;
 
@@ -315,6 +365,32 @@ class FamilyListRowTable extends _i1.Table<int?> {
   late final _i1.ColumnDateTime deletedAt;
 
   late final _i1.ColumnInt version;
+
+  _i2.FamilyRowTable get family {
+    if (_family != null) return _family!;
+    _family = _i1.createRelationTable(
+      relationFieldName: 'family',
+      field: FamilyListRow.t.familyId,
+      foreignField: _i2.FamilyRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.FamilyRowTable(tableRelation: foreignTableRelation),
+    );
+    return _family!;
+  }
+
+  _i3.AppProfileRowTable get createdByProfile {
+    if (_createdByProfile != null) return _createdByProfile!;
+    _createdByProfile = _i1.createRelationTable(
+      relationFieldName: 'createdByProfile',
+      field: FamilyListRow.t.createdByProfileId,
+      foreignField: _i3.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _createdByProfile!;
+  }
 
   @override
   List<_i1.Column> get columns => [
@@ -328,13 +404,37 @@ class FamilyListRowTable extends _i1.Table<int?> {
     deletedAt,
     version,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'family') {
+      return family;
+    }
+    if (relationField == 'createdByProfile') {
+      return createdByProfile;
+    }
+    return null;
+  }
 }
 
 class FamilyListRowInclude extends _i1.IncludeObject {
-  FamilyListRowInclude._();
+  FamilyListRowInclude._({
+    _i2.FamilyRowInclude? family,
+    _i3.AppProfileRowInclude? createdByProfile,
+  }) {
+    _family = family;
+    _createdByProfile = createdByProfile;
+  }
+
+  _i2.FamilyRowInclude? _family;
+
+  _i3.AppProfileRowInclude? _createdByProfile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {
+    'family': _family,
+    'createdByProfile': _createdByProfile,
+  };
 
   @override
   _i1.Table<int?> get table => FamilyListRow.t;
@@ -362,6 +462,8 @@ class FamilyListRowIncludeList extends _i1.IncludeList {
 
 class FamilyListRowRepository {
   const FamilyListRowRepository._();
+
+  final attachRow = const FamilyListRowAttachRowRepository._();
 
   /// Returns a list of [FamilyListRow]s matching the given query parameters.
   ///
@@ -394,6 +496,7 @@ class FamilyListRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<FamilyListRowTable>? orderByList,
     _i1.Transaction? transaction,
+    FamilyListRowInclude? include,
   }) async {
     return session.db.find<FamilyListRow>(
       where: where?.call(FamilyListRow.t),
@@ -403,6 +506,7 @@ class FamilyListRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -431,6 +535,7 @@ class FamilyListRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<FamilyListRowTable>? orderByList,
     _i1.Transaction? transaction,
+    FamilyListRowInclude? include,
   }) async {
     return session.db.findFirstRow<FamilyListRow>(
       where: where?.call(FamilyListRow.t),
@@ -439,6 +544,7 @@ class FamilyListRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -447,10 +553,12 @@ class FamilyListRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    FamilyListRowInclude? include,
   }) async {
     return session.db.findById<FamilyListRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -608,6 +716,58 @@ class FamilyListRowRepository {
     return session.db.count<FamilyListRow>(
       where: where?.call(FamilyListRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class FamilyListRowAttachRowRepository {
+  const FamilyListRowAttachRowRepository._();
+
+  /// Creates a relation between the given [FamilyListRow] and [FamilyRow]
+  /// by setting the [FamilyListRow]'s foreign key `familyId` to refer to the [FamilyRow].
+  Future<void> family(
+    _i1.Session session,
+    FamilyListRow familyListRow,
+    _i2.FamilyRow family, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (familyListRow.id == null) {
+      throw ArgumentError.notNull('familyListRow.id');
+    }
+    if (family.id == null) {
+      throw ArgumentError.notNull('family.id');
+    }
+
+    var $familyListRow = familyListRow.copyWith(familyId: family.id);
+    await session.db.updateRow<FamilyListRow>(
+      $familyListRow,
+      columns: [FamilyListRow.t.familyId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [FamilyListRow] and [AppProfileRow]
+  /// by setting the [FamilyListRow]'s foreign key `createdByProfileId` to refer to the [AppProfileRow].
+  Future<void> createdByProfile(
+    _i1.Session session,
+    FamilyListRow familyListRow,
+    _i3.AppProfileRow createdByProfile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (familyListRow.id == null) {
+      throw ArgumentError.notNull('familyListRow.id');
+    }
+    if (createdByProfile.id == null) {
+      throw ArgumentError.notNull('createdByProfile.id');
+    }
+
+    var $familyListRow = familyListRow.copyWith(
+      createdByProfileId: createdByProfile.id,
+    );
+    await session.db.updateRow<FamilyListRow>(
+      $familyListRow,
+      columns: [FamilyListRow.t.createdByProfileId],
       transaction: transaction,
     );
   }

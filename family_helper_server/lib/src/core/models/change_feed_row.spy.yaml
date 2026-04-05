@@ -1,7 +1,7 @@
 class: ChangeFeedRow
 table: change_feed
 fields:
-  familyId: int?
+  family: FamilyRow?, relation(optional)
   feature: String
   entityType: String
   entityId: int

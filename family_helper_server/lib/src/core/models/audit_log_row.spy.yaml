@@ -1,8 +1,8 @@
 class: AuditLogRow
 table: audit_log
 fields:
-  familyId: int?
-  actorProfileId: int
+  family: FamilyRow?, relation(optional)
+  actorProfile: AppProfileRow?, relation
   action: String
   payloadJson: String
   createdAt: DateTime

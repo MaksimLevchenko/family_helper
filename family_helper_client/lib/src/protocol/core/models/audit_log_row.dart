@@ -11,12 +11,17 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../family/models/family_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i4;
 
 abstract class AuditLogRow implements _i1.SerializableModel {
   AuditLogRow._({
     this.id,
     this.familyId,
+    this.family,
     required this.actorProfileId,
+    this.actorProfile,
     required this.action,
     required this.payloadJson,
     required this.createdAt,
@@ -25,7 +30,9 @@ abstract class AuditLogRow implements _i1.SerializableModel {
   factory AuditLogRow({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     required int actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     required String action,
     required String payloadJson,
     required DateTime createdAt,
@@ -35,7 +42,17 @@ abstract class AuditLogRow implements _i1.SerializableModel {
     return AuditLogRow(
       id: jsonSerialization['id'] as int?,
       familyId: jsonSerialization['familyId'] as int?,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       actorProfileId: jsonSerialization['actorProfileId'] as int,
+      actorProfile: jsonSerialization['actorProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['actorProfile'],
+            ),
       action: jsonSerialization['action'] as String,
       payloadJson: jsonSerialization['payloadJson'] as String,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
@@ -51,7 +68,11 @@ abstract class AuditLogRow implements _i1.SerializableModel {
 
   int? familyId;
 
+  _i2.FamilyRow? family;
+
   int actorProfileId;
+
+  _i3.AppProfileRow? actorProfile;
 
   String action;
 
@@ -65,7 +86,9 @@ abstract class AuditLogRow implements _i1.SerializableModel {
   AuditLogRow copyWith({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     int? actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     String? action,
     String? payloadJson,
     DateTime? createdAt,
@@ -76,7 +99,9 @@ abstract class AuditLogRow implements _i1.SerializableModel {
       '__className__': 'AuditLogRow',
       if (id != null) 'id': id,
       if (familyId != null) 'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'actorProfileId': actorProfileId,
+      if (actorProfile != null) 'actorProfile': actorProfile?.toJson(),
       'action': action,
       'payloadJson': payloadJson,
       'createdAt': createdAt.toJson(),
@@ -95,14 +120,18 @@ class _AuditLogRowImpl extends AuditLogRow {
   _AuditLogRowImpl({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     required int actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     required String action,
     required String payloadJson,
     required DateTime createdAt,
   }) : super._(
          id: id,
          familyId: familyId,
+         family: family,
          actorProfileId: actorProfileId,
+         actorProfile: actorProfile,
          action: action,
          payloadJson: payloadJson,
          createdAt: createdAt,
@@ -115,7 +144,9 @@ class _AuditLogRowImpl extends AuditLogRow {
   AuditLogRow copyWith({
     Object? id = _Undefined,
     Object? familyId = _Undefined,
+    Object? family = _Undefined,
     int? actorProfileId,
+    Object? actorProfile = _Undefined,
     String? action,
     String? payloadJson,
     DateTime? createdAt,
@@ -123,7 +154,11 @@ class _AuditLogRowImpl extends AuditLogRow {
     return AuditLogRow(
       id: id is int? ? id : this.id,
       familyId: familyId is int? ? familyId : this.familyId,
+      family: family is _i2.FamilyRow? ? family : this.family?.copyWith(),
       actorProfileId: actorProfileId ?? this.actorProfileId,
+      actorProfile: actorProfile is _i3.AppProfileRow?
+          ? actorProfile
+          : this.actorProfile?.copyWith(),
       action: action ?? this.action,
       payloadJson: payloadJson ?? this.payloadJson,
       createdAt: createdAt ?? this.createdAt,

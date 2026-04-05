@@ -8,15 +8,19 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../family/models/family_row.dart' as _i2;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i3;
 
 abstract class ChangeFeedRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   ChangeFeedRow._({
     this.id,
     this.familyId,
+    this.family,
     required this.feature,
     required this.entityType,
     required this.entityId,
@@ -30,6 +34,7 @@ abstract class ChangeFeedRow
   factory ChangeFeedRow({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     required String feature,
     required String entityType,
     required int entityId,
@@ -44,6 +49,11 @@ abstract class ChangeFeedRow
     return ChangeFeedRow(
       id: jsonSerialization['id'] as int?,
       familyId: jsonSerialization['familyId'] as int?,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       feature: jsonSerialization['feature'] as String,
       entityType: jsonSerialization['entityType'] as String,
       entityId: jsonSerialization['entityId'] as int,
@@ -65,6 +75,8 @@ abstract class ChangeFeedRow
   int? id;
 
   int? familyId;
+
+  _i2.FamilyRow? family;
 
   String feature;
 
@@ -91,6 +103,7 @@ abstract class ChangeFeedRow
   ChangeFeedRow copyWith({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     String? feature,
     String? entityType,
     int? entityId,
@@ -106,6 +119,7 @@ abstract class ChangeFeedRow
       '__className__': 'ChangeFeedRow',
       if (id != null) 'id': id,
       if (familyId != null) 'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'feature': feature,
       'entityType': entityType,
       'entityId': entityId,
@@ -123,6 +137,7 @@ abstract class ChangeFeedRow
       '__className__': 'ChangeFeedRow',
       if (id != null) 'id': id,
       if (familyId != null) 'familyId': familyId,
+      if (family != null) 'family': family?.toJsonForProtocol(),
       'feature': feature,
       'entityType': entityType,
       'entityId': entityId,
@@ -134,8 +149,8 @@ abstract class ChangeFeedRow
     };
   }
 
-  static ChangeFeedRowInclude include() {
-    return ChangeFeedRowInclude._();
+  static ChangeFeedRowInclude include({_i2.FamilyRowInclude? family}) {
+    return ChangeFeedRowInclude._(family: family);
   }
 
   static ChangeFeedRowIncludeList includeList({
@@ -170,6 +185,7 @@ class _ChangeFeedRowImpl extends ChangeFeedRow {
   _ChangeFeedRowImpl({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     required String feature,
     required String entityType,
     required int entityId,
@@ -181,6 +197,7 @@ class _ChangeFeedRowImpl extends ChangeFeedRow {
   }) : super._(
          id: id,
          familyId: familyId,
+         family: family,
          feature: feature,
          entityType: entityType,
          entityId: entityId,
@@ -198,6 +215,7 @@ class _ChangeFeedRowImpl extends ChangeFeedRow {
   ChangeFeedRow copyWith({
     Object? id = _Undefined,
     Object? familyId = _Undefined,
+    Object? family = _Undefined,
     String? feature,
     String? entityType,
     int? entityId,
@@ -210,6 +228,7 @@ class _ChangeFeedRowImpl extends ChangeFeedRow {
     return ChangeFeedRow(
       id: id is int? ? id : this.id,
       familyId: familyId is int? ? familyId : this.familyId,
+      family: family is _i2.FamilyRow? ? family : this.family?.copyWith(),
       feature: feature ?? this.feature,
       entityType: entityType ?? this.entityType,
       entityId: entityId ?? this.entityId,
@@ -317,6 +336,8 @@ class ChangeFeedRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt familyId;
 
+  _i2.FamilyRowTable? _family;
+
   late final _i1.ColumnString feature;
 
   late final _i1.ColumnString entityType;
@@ -333,6 +354,19 @@ class ChangeFeedRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnString payloadJson;
 
+  _i2.FamilyRowTable get family {
+    if (_family != null) return _family!;
+    _family = _i1.createRelationTable(
+      relationFieldName: 'family',
+      field: ChangeFeedRow.t.familyId,
+      foreignField: _i2.FamilyRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.FamilyRowTable(tableRelation: foreignTableRelation),
+    );
+    return _family!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -346,13 +380,25 @@ class ChangeFeedRowTable extends _i1.Table<int?> {
     version,
     payloadJson,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'family') {
+      return family;
+    }
+    return null;
+  }
 }
 
 class ChangeFeedRowInclude extends _i1.IncludeObject {
-  ChangeFeedRowInclude._();
+  ChangeFeedRowInclude._({_i2.FamilyRowInclude? family}) {
+    _family = family;
+  }
+
+  _i2.FamilyRowInclude? _family;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {'family': _family};
 
   @override
   _i1.Table<int?> get table => ChangeFeedRow.t;
@@ -380,6 +426,10 @@ class ChangeFeedRowIncludeList extends _i1.IncludeList {
 
 class ChangeFeedRowRepository {
   const ChangeFeedRowRepository._();
+
+  final attachRow = const ChangeFeedRowAttachRowRepository._();
+
+  final detachRow = const ChangeFeedRowDetachRowRepository._();
 
   /// Returns a list of [ChangeFeedRow]s matching the given query parameters.
   ///
@@ -412,6 +462,7 @@ class ChangeFeedRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<ChangeFeedRowTable>? orderByList,
     _i1.Transaction? transaction,
+    ChangeFeedRowInclude? include,
   }) async {
     return session.db.find<ChangeFeedRow>(
       where: where?.call(ChangeFeedRow.t),
@@ -421,6 +472,7 @@ class ChangeFeedRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -449,6 +501,7 @@ class ChangeFeedRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<ChangeFeedRowTable>? orderByList,
     _i1.Transaction? transaction,
+    ChangeFeedRowInclude? include,
   }) async {
     return session.db.findFirstRow<ChangeFeedRow>(
       where: where?.call(ChangeFeedRow.t),
@@ -457,6 +510,7 @@ class ChangeFeedRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -465,10 +519,12 @@ class ChangeFeedRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    ChangeFeedRowInclude? include,
   }) async {
     return session.db.findById<ChangeFeedRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -626,6 +682,59 @@ class ChangeFeedRowRepository {
     return session.db.count<ChangeFeedRow>(
       where: where?.call(ChangeFeedRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class ChangeFeedRowAttachRowRepository {
+  const ChangeFeedRowAttachRowRepository._();
+
+  /// Creates a relation between the given [ChangeFeedRow] and [FamilyRow]
+  /// by setting the [ChangeFeedRow]'s foreign key `familyId` to refer to the [FamilyRow].
+  Future<void> family(
+    _i1.Session session,
+    ChangeFeedRow changeFeedRow,
+    _i2.FamilyRow family, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (changeFeedRow.id == null) {
+      throw ArgumentError.notNull('changeFeedRow.id');
+    }
+    if (family.id == null) {
+      throw ArgumentError.notNull('family.id');
+    }
+
+    var $changeFeedRow = changeFeedRow.copyWith(familyId: family.id);
+    await session.db.updateRow<ChangeFeedRow>(
+      $changeFeedRow,
+      columns: [ChangeFeedRow.t.familyId],
+      transaction: transaction,
+    );
+  }
+}
+
+class ChangeFeedRowDetachRowRepository {
+  const ChangeFeedRowDetachRowRepository._();
+
+  /// Detaches the relation between this [ChangeFeedRow] and the [FamilyRow] set in `family`
+  /// by setting the [ChangeFeedRow]'s foreign key `familyId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> family(
+    _i1.Session session,
+    ChangeFeedRow changeFeedRow, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (changeFeedRow.id == null) {
+      throw ArgumentError.notNull('changeFeedRow.id');
+    }
+
+    var $changeFeedRow = changeFeedRow.copyWith(familyId: null);
+    await session.db.updateRow<ChangeFeedRow>(
+      $changeFeedRow,
+      columns: [ChangeFeedRow.t.familyId],
       transaction: transaction,
     );
   }

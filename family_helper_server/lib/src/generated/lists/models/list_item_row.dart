@@ -8,15 +8,20 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../lists/models/family_list_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i4;
 
 abstract class ListItemRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   ListItemRow._({
     this.id,
     required this.listId,
+    this.list,
     required this.title,
     required this.qty,
     this.unit,
@@ -26,8 +31,10 @@ abstract class ListItemRow
     required this.positionIndex,
     required this.isBought,
     this.boughtByProfileId,
+    this.boughtByProfile,
     this.boughtAt,
     required this.createdByProfileId,
+    this.createdByProfile,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
@@ -37,6 +44,7 @@ abstract class ListItemRow
   factory ListItemRow({
     int? id,
     required int listId,
+    _i2.FamilyListRow? list,
     required String title,
     required double qty,
     String? unit,
@@ -46,8 +54,10 @@ abstract class ListItemRow
     required int positionIndex,
     required bool isBought,
     int? boughtByProfileId,
+    _i3.AppProfileRow? boughtByProfile,
     DateTime? boughtAt,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     required DateTime createdAt,
     required DateTime updatedAt,
     DateTime? deletedAt,
@@ -58,6 +68,11 @@ abstract class ListItemRow
     return ListItemRow(
       id: jsonSerialization['id'] as int?,
       listId: jsonSerialization['listId'] as int,
+      list: jsonSerialization['list'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.FamilyListRow>(
+              jsonSerialization['list'],
+            ),
       title: jsonSerialization['title'] as String,
       qty: (jsonSerialization['qty'] as num).toDouble(),
       unit: jsonSerialization['unit'] as String?,
@@ -67,10 +82,20 @@ abstract class ListItemRow
       positionIndex: jsonSerialization['positionIndex'] as int,
       isBought: jsonSerialization['isBought'] as bool,
       boughtByProfileId: jsonSerialization['boughtByProfileId'] as int?,
+      boughtByProfile: jsonSerialization['boughtByProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['boughtByProfile'],
+            ),
       boughtAt: jsonSerialization['boughtAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['boughtAt']),
       createdByProfileId: jsonSerialization['createdByProfileId'] as int,
+      createdByProfile: jsonSerialization['createdByProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['createdByProfile'],
+            ),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -93,6 +118,8 @@ abstract class ListItemRow
 
   int listId;
 
+  _i2.FamilyListRow? list;
+
   String title;
 
   double qty;
@@ -111,9 +138,13 @@ abstract class ListItemRow
 
   int? boughtByProfileId;
 
+  _i3.AppProfileRow? boughtByProfile;
+
   DateTime? boughtAt;
 
   int createdByProfileId;
+
+  _i3.AppProfileRow? createdByProfile;
 
   DateTime createdAt;
 
@@ -132,6 +163,7 @@ abstract class ListItemRow
   ListItemRow copyWith({
     int? id,
     int? listId,
+    _i2.FamilyListRow? list,
     String? title,
     double? qty,
     String? unit,
@@ -141,8 +173,10 @@ abstract class ListItemRow
     int? positionIndex,
     bool? isBought,
     int? boughtByProfileId,
+    _i3.AppProfileRow? boughtByProfile,
     DateTime? boughtAt,
     int? createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? deletedAt,
@@ -154,6 +188,7 @@ abstract class ListItemRow
       '__className__': 'ListItemRow',
       if (id != null) 'id': id,
       'listId': listId,
+      if (list != null) 'list': list?.toJson(),
       'title': title,
       'qty': qty,
       if (unit != null) 'unit': unit,
@@ -163,8 +198,11 @@ abstract class ListItemRow
       'positionIndex': positionIndex,
       'isBought': isBought,
       if (boughtByProfileId != null) 'boughtByProfileId': boughtByProfileId,
+      if (boughtByProfile != null) 'boughtByProfile': boughtByProfile?.toJson(),
       if (boughtAt != null) 'boughtAt': boughtAt?.toJson(),
       'createdByProfileId': createdByProfileId,
+      if (createdByProfile != null)
+        'createdByProfile': createdByProfile?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
@@ -178,6 +216,7 @@ abstract class ListItemRow
       '__className__': 'ListItemRow',
       if (id != null) 'id': id,
       'listId': listId,
+      if (list != null) 'list': list?.toJsonForProtocol(),
       'title': title,
       'qty': qty,
       if (unit != null) 'unit': unit,
@@ -187,8 +226,12 @@ abstract class ListItemRow
       'positionIndex': positionIndex,
       'isBought': isBought,
       if (boughtByProfileId != null) 'boughtByProfileId': boughtByProfileId,
+      if (boughtByProfile != null)
+        'boughtByProfile': boughtByProfile?.toJsonForProtocol(),
       if (boughtAt != null) 'boughtAt': boughtAt?.toJson(),
       'createdByProfileId': createdByProfileId,
+      if (createdByProfile != null)
+        'createdByProfile': createdByProfile?.toJsonForProtocol(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
@@ -196,8 +239,16 @@ abstract class ListItemRow
     };
   }
 
-  static ListItemRowInclude include() {
-    return ListItemRowInclude._();
+  static ListItemRowInclude include({
+    _i2.FamilyListRowInclude? list,
+    _i3.AppProfileRowInclude? boughtByProfile,
+    _i3.AppProfileRowInclude? createdByProfile,
+  }) {
+    return ListItemRowInclude._(
+      list: list,
+      boughtByProfile: boughtByProfile,
+      createdByProfile: createdByProfile,
+    );
   }
 
   static ListItemRowIncludeList includeList({
@@ -232,6 +283,7 @@ class _ListItemRowImpl extends ListItemRow {
   _ListItemRowImpl({
     int? id,
     required int listId,
+    _i2.FamilyListRow? list,
     required String title,
     required double qty,
     String? unit,
@@ -241,8 +293,10 @@ class _ListItemRowImpl extends ListItemRow {
     required int positionIndex,
     required bool isBought,
     int? boughtByProfileId,
+    _i3.AppProfileRow? boughtByProfile,
     DateTime? boughtAt,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     required DateTime createdAt,
     required DateTime updatedAt,
     DateTime? deletedAt,
@@ -250,6 +304,7 @@ class _ListItemRowImpl extends ListItemRow {
   }) : super._(
          id: id,
          listId: listId,
+         list: list,
          title: title,
          qty: qty,
          unit: unit,
@@ -259,8 +314,10 @@ class _ListItemRowImpl extends ListItemRow {
          positionIndex: positionIndex,
          isBought: isBought,
          boughtByProfileId: boughtByProfileId,
+         boughtByProfile: boughtByProfile,
          boughtAt: boughtAt,
          createdByProfileId: createdByProfileId,
+         createdByProfile: createdByProfile,
          createdAt: createdAt,
          updatedAt: updatedAt,
          deletedAt: deletedAt,
@@ -274,6 +331,7 @@ class _ListItemRowImpl extends ListItemRow {
   ListItemRow copyWith({
     Object? id = _Undefined,
     int? listId,
+    Object? list = _Undefined,
     String? title,
     double? qty,
     Object? unit = _Undefined,
@@ -283,8 +341,10 @@ class _ListItemRowImpl extends ListItemRow {
     int? positionIndex,
     bool? isBought,
     Object? boughtByProfileId = _Undefined,
+    Object? boughtByProfile = _Undefined,
     Object? boughtAt = _Undefined,
     int? createdByProfileId,
+    Object? createdByProfile = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
     Object? deletedAt = _Undefined,
@@ -293,6 +353,7 @@ class _ListItemRowImpl extends ListItemRow {
     return ListItemRow(
       id: id is int? ? id : this.id,
       listId: listId ?? this.listId,
+      list: list is _i2.FamilyListRow? ? list : this.list?.copyWith(),
       title: title ?? this.title,
       qty: qty ?? this.qty,
       unit: unit is String? ? unit : this.unit,
@@ -304,8 +365,14 @@ class _ListItemRowImpl extends ListItemRow {
       boughtByProfileId: boughtByProfileId is int?
           ? boughtByProfileId
           : this.boughtByProfileId,
+      boughtByProfile: boughtByProfile is _i3.AppProfileRow?
+          ? boughtByProfile
+          : this.boughtByProfile?.copyWith(),
       boughtAt: boughtAt is DateTime? ? boughtAt : this.boughtAt,
       createdByProfileId: createdByProfileId ?? this.createdByProfileId,
+      createdByProfile: createdByProfile is _i3.AppProfileRow?
+          ? createdByProfile
+          : this.createdByProfile?.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,
@@ -475,6 +542,8 @@ class ListItemRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt listId;
 
+  _i2.FamilyListRowTable? _list;
+
   late final _i1.ColumnString title;
 
   late final _i1.ColumnDouble qty;
@@ -493,9 +562,13 @@ class ListItemRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt boughtByProfileId;
 
+  _i3.AppProfileRowTable? _boughtByProfile;
+
   late final _i1.ColumnDateTime boughtAt;
 
   late final _i1.ColumnInt createdByProfileId;
+
+  _i3.AppProfileRowTable? _createdByProfile;
 
   late final _i1.ColumnDateTime createdAt;
 
@@ -504,6 +577,45 @@ class ListItemRowTable extends _i1.Table<int?> {
   late final _i1.ColumnDateTime deletedAt;
 
   late final _i1.ColumnInt version;
+
+  _i2.FamilyListRowTable get list {
+    if (_list != null) return _list!;
+    _list = _i1.createRelationTable(
+      relationFieldName: 'list',
+      field: ListItemRow.t.listId,
+      foreignField: _i2.FamilyListRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.FamilyListRowTable(tableRelation: foreignTableRelation),
+    );
+    return _list!;
+  }
+
+  _i3.AppProfileRowTable get boughtByProfile {
+    if (_boughtByProfile != null) return _boughtByProfile!;
+    _boughtByProfile = _i1.createRelationTable(
+      relationFieldName: 'boughtByProfile',
+      field: ListItemRow.t.boughtByProfileId,
+      foreignField: _i3.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _boughtByProfile!;
+  }
+
+  _i3.AppProfileRowTable get createdByProfile {
+    if (_createdByProfile != null) return _createdByProfile!;
+    _createdByProfile = _i1.createRelationTable(
+      relationFieldName: 'createdByProfile',
+      field: ListItemRow.t.createdByProfileId,
+      foreignField: _i3.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _createdByProfile!;
+  }
 
   @override
   List<_i1.Column> get columns => [
@@ -525,13 +637,45 @@ class ListItemRowTable extends _i1.Table<int?> {
     deletedAt,
     version,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'list') {
+      return list;
+    }
+    if (relationField == 'boughtByProfile') {
+      return boughtByProfile;
+    }
+    if (relationField == 'createdByProfile') {
+      return createdByProfile;
+    }
+    return null;
+  }
 }
 
 class ListItemRowInclude extends _i1.IncludeObject {
-  ListItemRowInclude._();
+  ListItemRowInclude._({
+    _i2.FamilyListRowInclude? list,
+    _i3.AppProfileRowInclude? boughtByProfile,
+    _i3.AppProfileRowInclude? createdByProfile,
+  }) {
+    _list = list;
+    _boughtByProfile = boughtByProfile;
+    _createdByProfile = createdByProfile;
+  }
+
+  _i2.FamilyListRowInclude? _list;
+
+  _i3.AppProfileRowInclude? _boughtByProfile;
+
+  _i3.AppProfileRowInclude? _createdByProfile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {
+    'list': _list,
+    'boughtByProfile': _boughtByProfile,
+    'createdByProfile': _createdByProfile,
+  };
 
   @override
   _i1.Table<int?> get table => ListItemRow.t;
@@ -559,6 +703,10 @@ class ListItemRowIncludeList extends _i1.IncludeList {
 
 class ListItemRowRepository {
   const ListItemRowRepository._();
+
+  final attachRow = const ListItemRowAttachRowRepository._();
+
+  final detachRow = const ListItemRowDetachRowRepository._();
 
   /// Returns a list of [ListItemRow]s matching the given query parameters.
   ///
@@ -591,6 +739,7 @@ class ListItemRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<ListItemRowTable>? orderByList,
     _i1.Transaction? transaction,
+    ListItemRowInclude? include,
   }) async {
     return session.db.find<ListItemRow>(
       where: where?.call(ListItemRow.t),
@@ -600,6 +749,7 @@ class ListItemRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -628,6 +778,7 @@ class ListItemRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<ListItemRowTable>? orderByList,
     _i1.Transaction? transaction,
+    ListItemRowInclude? include,
   }) async {
     return session.db.findFirstRow<ListItemRow>(
       where: where?.call(ListItemRow.t),
@@ -636,6 +787,7 @@ class ListItemRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -644,10 +796,12 @@ class ListItemRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    ListItemRowInclude? include,
   }) async {
     return session.db.findById<ListItemRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -805,6 +959,109 @@ class ListItemRowRepository {
     return session.db.count<ListItemRow>(
       where: where?.call(ListItemRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class ListItemRowAttachRowRepository {
+  const ListItemRowAttachRowRepository._();
+
+  /// Creates a relation between the given [ListItemRow] and [FamilyListRow]
+  /// by setting the [ListItemRow]'s foreign key `listId` to refer to the [FamilyListRow].
+  Future<void> list(
+    _i1.Session session,
+    ListItemRow listItemRow,
+    _i2.FamilyListRow list, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (listItemRow.id == null) {
+      throw ArgumentError.notNull('listItemRow.id');
+    }
+    if (list.id == null) {
+      throw ArgumentError.notNull('list.id');
+    }
+
+    var $listItemRow = listItemRow.copyWith(listId: list.id);
+    await session.db.updateRow<ListItemRow>(
+      $listItemRow,
+      columns: [ListItemRow.t.listId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [ListItemRow] and [AppProfileRow]
+  /// by setting the [ListItemRow]'s foreign key `boughtByProfileId` to refer to the [AppProfileRow].
+  Future<void> boughtByProfile(
+    _i1.Session session,
+    ListItemRow listItemRow,
+    _i3.AppProfileRow boughtByProfile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (listItemRow.id == null) {
+      throw ArgumentError.notNull('listItemRow.id');
+    }
+    if (boughtByProfile.id == null) {
+      throw ArgumentError.notNull('boughtByProfile.id');
+    }
+
+    var $listItemRow = listItemRow.copyWith(
+      boughtByProfileId: boughtByProfile.id,
+    );
+    await session.db.updateRow<ListItemRow>(
+      $listItemRow,
+      columns: [ListItemRow.t.boughtByProfileId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [ListItemRow] and [AppProfileRow]
+  /// by setting the [ListItemRow]'s foreign key `createdByProfileId` to refer to the [AppProfileRow].
+  Future<void> createdByProfile(
+    _i1.Session session,
+    ListItemRow listItemRow,
+    _i3.AppProfileRow createdByProfile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (listItemRow.id == null) {
+      throw ArgumentError.notNull('listItemRow.id');
+    }
+    if (createdByProfile.id == null) {
+      throw ArgumentError.notNull('createdByProfile.id');
+    }
+
+    var $listItemRow = listItemRow.copyWith(
+      createdByProfileId: createdByProfile.id,
+    );
+    await session.db.updateRow<ListItemRow>(
+      $listItemRow,
+      columns: [ListItemRow.t.createdByProfileId],
+      transaction: transaction,
+    );
+  }
+}
+
+class ListItemRowDetachRowRepository {
+  const ListItemRowDetachRowRepository._();
+
+  /// Detaches the relation between this [ListItemRow] and the [AppProfileRow] set in `boughtByProfile`
+  /// by setting the [ListItemRow]'s foreign key `boughtByProfileId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> boughtByProfile(
+    _i1.Session session,
+    ListItemRow listItemRow, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (listItemRow.id == null) {
+      throw ArgumentError.notNull('listItemRow.id');
+    }
+
+    var $listItemRow = listItemRow.copyWith(boughtByProfileId: null);
+    await session.db.updateRow<ListItemRow>(
+      $listItemRow,
+      columns: [ListItemRow.t.boughtByProfileId],
       transaction: transaction,
     );
   }

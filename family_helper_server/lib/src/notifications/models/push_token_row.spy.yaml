@@ -1,7 +1,7 @@
 class: PushTokenRow
 table: push_token
 fields:
-  profileId: int
+  profile: AppProfileRow?, relation
   token: String
   platform: String
   provider: String?

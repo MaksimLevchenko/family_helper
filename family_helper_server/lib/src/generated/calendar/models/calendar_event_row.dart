@@ -8,15 +8,20 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../family/models/family_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i4;
 
 abstract class CalendarEventRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   CalendarEventRow._({
     this.id,
     required this.familyId,
+    this.family,
     required this.title,
     this.description,
     required this.timezone,
@@ -27,6 +32,7 @@ abstract class CalendarEventRow
     this.colorKey,
     this.category,
     required this.createdByProfileId,
+    this.createdByProfile,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
@@ -36,6 +42,7 @@ abstract class CalendarEventRow
   factory CalendarEventRow({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String title,
     String? description,
     required String timezone,
@@ -46,6 +53,7 @@ abstract class CalendarEventRow
     String? colorKey,
     String? category,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     required DateTime createdAt,
     required DateTime updatedAt,
     DateTime? deletedAt,
@@ -56,6 +64,11 @@ abstract class CalendarEventRow
     return CalendarEventRow(
       id: jsonSerialization['id'] as int?,
       familyId: jsonSerialization['familyId'] as int,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       title: jsonSerialization['title'] as String,
       description: jsonSerialization['description'] as String?,
       timezone: jsonSerialization['timezone'] as String,
@@ -68,6 +81,11 @@ abstract class CalendarEventRow
       colorKey: jsonSerialization['colorKey'] as String?,
       category: jsonSerialization['category'] as String?,
       createdByProfileId: jsonSerialization['createdByProfileId'] as int,
+      createdByProfile: jsonSerialization['createdByProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['createdByProfile'],
+            ),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -90,6 +108,8 @@ abstract class CalendarEventRow
 
   int familyId;
 
+  _i2.FamilyRow? family;
+
   String title;
 
   String? description;
@@ -110,6 +130,8 @@ abstract class CalendarEventRow
 
   int createdByProfileId;
 
+  _i3.AppProfileRow? createdByProfile;
+
   DateTime createdAt;
 
   DateTime updatedAt;
@@ -127,6 +149,7 @@ abstract class CalendarEventRow
   CalendarEventRow copyWith({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     String? title,
     String? description,
     String? timezone,
@@ -137,6 +160,7 @@ abstract class CalendarEventRow
     String? colorKey,
     String? category,
     int? createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? deletedAt,
@@ -148,6 +172,7 @@ abstract class CalendarEventRow
       '__className__': 'CalendarEventRow',
       if (id != null) 'id': id,
       'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'title': title,
       if (description != null) 'description': description,
       'timezone': timezone,
@@ -159,6 +184,8 @@ abstract class CalendarEventRow
       if (colorKey != null) 'colorKey': colorKey,
       if (category != null) 'category': category,
       'createdByProfileId': createdByProfileId,
+      if (createdByProfile != null)
+        'createdByProfile': createdByProfile?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
@@ -172,6 +199,7 @@ abstract class CalendarEventRow
       '__className__': 'CalendarEventRow',
       if (id != null) 'id': id,
       'familyId': familyId,
+      if (family != null) 'family': family?.toJsonForProtocol(),
       'title': title,
       if (description != null) 'description': description,
       'timezone': timezone,
@@ -183,6 +211,8 @@ abstract class CalendarEventRow
       if (colorKey != null) 'colorKey': colorKey,
       if (category != null) 'category': category,
       'createdByProfileId': createdByProfileId,
+      if (createdByProfile != null)
+        'createdByProfile': createdByProfile?.toJsonForProtocol(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
@@ -190,8 +220,14 @@ abstract class CalendarEventRow
     };
   }
 
-  static CalendarEventRowInclude include() {
-    return CalendarEventRowInclude._();
+  static CalendarEventRowInclude include({
+    _i2.FamilyRowInclude? family,
+    _i3.AppProfileRowInclude? createdByProfile,
+  }) {
+    return CalendarEventRowInclude._(
+      family: family,
+      createdByProfile: createdByProfile,
+    );
   }
 
   static CalendarEventRowIncludeList includeList({
@@ -226,6 +262,7 @@ class _CalendarEventRowImpl extends CalendarEventRow {
   _CalendarEventRowImpl({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String title,
     String? description,
     required String timezone,
@@ -236,6 +273,7 @@ class _CalendarEventRowImpl extends CalendarEventRow {
     String? colorKey,
     String? category,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     required DateTime createdAt,
     required DateTime updatedAt,
     DateTime? deletedAt,
@@ -243,6 +281,7 @@ class _CalendarEventRowImpl extends CalendarEventRow {
   }) : super._(
          id: id,
          familyId: familyId,
+         family: family,
          title: title,
          description: description,
          timezone: timezone,
@@ -253,6 +292,7 @@ class _CalendarEventRowImpl extends CalendarEventRow {
          colorKey: colorKey,
          category: category,
          createdByProfileId: createdByProfileId,
+         createdByProfile: createdByProfile,
          createdAt: createdAt,
          updatedAt: updatedAt,
          deletedAt: deletedAt,
@@ -266,6 +306,7 @@ class _CalendarEventRowImpl extends CalendarEventRow {
   CalendarEventRow copyWith({
     Object? id = _Undefined,
     int? familyId,
+    Object? family = _Undefined,
     String? title,
     Object? description = _Undefined,
     String? timezone,
@@ -276,6 +317,7 @@ class _CalendarEventRowImpl extends CalendarEventRow {
     Object? colorKey = _Undefined,
     Object? category = _Undefined,
     int? createdByProfileId,
+    Object? createdByProfile = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
     Object? deletedAt = _Undefined,
@@ -284,6 +326,7 @@ class _CalendarEventRowImpl extends CalendarEventRow {
     return CalendarEventRow(
       id: id is int? ? id : this.id,
       familyId: familyId ?? this.familyId,
+      family: family is _i2.FamilyRow? ? family : this.family?.copyWith(),
       title: title ?? this.title,
       description: description is String? ? description : this.description,
       timezone: timezone ?? this.timezone,
@@ -296,6 +339,9 @@ class _CalendarEventRowImpl extends CalendarEventRow {
       colorKey: colorKey is String? ? colorKey : this.colorKey,
       category: category is String? ? category : this.category,
       createdByProfileId: createdByProfileId ?? this.createdByProfileId,
+      createdByProfile: createdByProfile is _i3.AppProfileRow?
+          ? createdByProfile
+          : this.createdByProfile?.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,
@@ -459,6 +505,8 @@ class CalendarEventRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt familyId;
 
+  _i2.FamilyRowTable? _family;
+
   late final _i1.ColumnString title;
 
   late final _i1.ColumnString description;
@@ -479,6 +527,8 @@ class CalendarEventRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt createdByProfileId;
 
+  _i3.AppProfileRowTable? _createdByProfile;
+
   late final _i1.ColumnDateTime createdAt;
 
   late final _i1.ColumnDateTime updatedAt;
@@ -486,6 +536,32 @@ class CalendarEventRowTable extends _i1.Table<int?> {
   late final _i1.ColumnDateTime deletedAt;
 
   late final _i1.ColumnInt version;
+
+  _i2.FamilyRowTable get family {
+    if (_family != null) return _family!;
+    _family = _i1.createRelationTable(
+      relationFieldName: 'family',
+      field: CalendarEventRow.t.familyId,
+      foreignField: _i2.FamilyRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.FamilyRowTable(tableRelation: foreignTableRelation),
+    );
+    return _family!;
+  }
+
+  _i3.AppProfileRowTable get createdByProfile {
+    if (_createdByProfile != null) return _createdByProfile!;
+    _createdByProfile = _i1.createRelationTable(
+      relationFieldName: 'createdByProfile',
+      field: CalendarEventRow.t.createdByProfileId,
+      foreignField: _i3.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _createdByProfile!;
+  }
 
   @override
   List<_i1.Column> get columns => [
@@ -506,13 +582,37 @@ class CalendarEventRowTable extends _i1.Table<int?> {
     deletedAt,
     version,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'family') {
+      return family;
+    }
+    if (relationField == 'createdByProfile') {
+      return createdByProfile;
+    }
+    return null;
+  }
 }
 
 class CalendarEventRowInclude extends _i1.IncludeObject {
-  CalendarEventRowInclude._();
+  CalendarEventRowInclude._({
+    _i2.FamilyRowInclude? family,
+    _i3.AppProfileRowInclude? createdByProfile,
+  }) {
+    _family = family;
+    _createdByProfile = createdByProfile;
+  }
+
+  _i2.FamilyRowInclude? _family;
+
+  _i3.AppProfileRowInclude? _createdByProfile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {
+    'family': _family,
+    'createdByProfile': _createdByProfile,
+  };
 
   @override
   _i1.Table<int?> get table => CalendarEventRow.t;
@@ -540,6 +640,8 @@ class CalendarEventRowIncludeList extends _i1.IncludeList {
 
 class CalendarEventRowRepository {
   const CalendarEventRowRepository._();
+
+  final attachRow = const CalendarEventRowAttachRowRepository._();
 
   /// Returns a list of [CalendarEventRow]s matching the given query parameters.
   ///
@@ -572,6 +674,7 @@ class CalendarEventRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<CalendarEventRowTable>? orderByList,
     _i1.Transaction? transaction,
+    CalendarEventRowInclude? include,
   }) async {
     return session.db.find<CalendarEventRow>(
       where: where?.call(CalendarEventRow.t),
@@ -581,6 +684,7 @@ class CalendarEventRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -609,6 +713,7 @@ class CalendarEventRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<CalendarEventRowTable>? orderByList,
     _i1.Transaction? transaction,
+    CalendarEventRowInclude? include,
   }) async {
     return session.db.findFirstRow<CalendarEventRow>(
       where: where?.call(CalendarEventRow.t),
@@ -617,6 +722,7 @@ class CalendarEventRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -625,10 +731,12 @@ class CalendarEventRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    CalendarEventRowInclude? include,
   }) async {
     return session.db.findById<CalendarEventRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -788,6 +896,58 @@ class CalendarEventRowRepository {
     return session.db.count<CalendarEventRow>(
       where: where?.call(CalendarEventRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class CalendarEventRowAttachRowRepository {
+  const CalendarEventRowAttachRowRepository._();
+
+  /// Creates a relation between the given [CalendarEventRow] and [FamilyRow]
+  /// by setting the [CalendarEventRow]'s foreign key `familyId` to refer to the [FamilyRow].
+  Future<void> family(
+    _i1.Session session,
+    CalendarEventRow calendarEventRow,
+    _i2.FamilyRow family, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (calendarEventRow.id == null) {
+      throw ArgumentError.notNull('calendarEventRow.id');
+    }
+    if (family.id == null) {
+      throw ArgumentError.notNull('family.id');
+    }
+
+    var $calendarEventRow = calendarEventRow.copyWith(familyId: family.id);
+    await session.db.updateRow<CalendarEventRow>(
+      $calendarEventRow,
+      columns: [CalendarEventRow.t.familyId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [CalendarEventRow] and [AppProfileRow]
+  /// by setting the [CalendarEventRow]'s foreign key `createdByProfileId` to refer to the [AppProfileRow].
+  Future<void> createdByProfile(
+    _i1.Session session,
+    CalendarEventRow calendarEventRow,
+    _i3.AppProfileRow createdByProfile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (calendarEventRow.id == null) {
+      throw ArgumentError.notNull('calendarEventRow.id');
+    }
+    if (createdByProfile.id == null) {
+      throw ArgumentError.notNull('createdByProfile.id');
+    }
+
+    var $calendarEventRow = calendarEventRow.copyWith(
+      createdByProfileId: createdByProfile.id,
+    );
+    await session.db.updateRow<CalendarEventRow>(
+      $calendarEventRow,
+      columns: [CalendarEventRow.t.createdByProfileId],
       transaction: transaction,
     );
   }

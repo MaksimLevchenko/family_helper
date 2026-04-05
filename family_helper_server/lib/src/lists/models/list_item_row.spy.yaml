@@ -1,7 +1,7 @@
 class: ListItemRow
 table: list_item
 fields:
-  listId: int
+  list: FamilyListRow?, relation
   title: String
   qty: double
   unit: String?
@@ -10,9 +10,9 @@ fields:
   category: String?
   positionIndex: int
   isBought: bool
-  boughtByProfileId: int?
+  boughtByProfile: AppProfileRow?, relation(optional)
   boughtAt: DateTime?
-  createdByProfileId: int
+  createdByProfile: AppProfileRow?, relation
   createdAt: DateTime
   updatedAt: DateTime
   deletedAt: DateTime?

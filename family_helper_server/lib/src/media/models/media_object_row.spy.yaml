@@ -1,8 +1,8 @@
 class: MediaObjectRow
 table: media_object
 fields:
-  familyId: int?
-  uploadedByProfileId: int
+  family: FamilyRow?, relation(optional)
+  uploadedByProfile: AppProfileRow?, relation
   objectKey: String
   bucket: String
   mimeType: String

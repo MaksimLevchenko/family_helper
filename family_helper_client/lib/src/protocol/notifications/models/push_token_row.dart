@@ -11,11 +11,14 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../core/models/app_profile_row.dart' as _i2;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i3;
 
 abstract class PushTokenRow implements _i1.SerializableModel {
   PushTokenRow._({
     this.id,
     required this.profileId,
+    this.profile,
     required this.token,
     required this.platform,
     this.provider,
@@ -33,6 +36,7 @@ abstract class PushTokenRow implements _i1.SerializableModel {
   factory PushTokenRow({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String token,
     required String platform,
     String? provider,
@@ -51,6 +55,11 @@ abstract class PushTokenRow implements _i1.SerializableModel {
     return PushTokenRow(
       id: jsonSerialization['id'] as int?,
       profileId: jsonSerialization['profileId'] as int,
+      profile: jsonSerialization['profile'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.AppProfileRow>(
+              jsonSerialization['profile'],
+            ),
       token: jsonSerialization['token'] as String,
       platform: jsonSerialization['platform'] as String,
       provider: jsonSerialization['provider'] as String?,
@@ -87,6 +96,8 @@ abstract class PushTokenRow implements _i1.SerializableModel {
 
   int profileId;
 
+  _i2.AppProfileRow? profile;
+
   String token;
 
   String platform;
@@ -117,6 +128,7 @@ abstract class PushTokenRow implements _i1.SerializableModel {
   PushTokenRow copyWith({
     int? id,
     int? profileId,
+    _i2.AppProfileRow? profile,
     String? token,
     String? platform,
     String? provider,
@@ -136,6 +148,7 @@ abstract class PushTokenRow implements _i1.SerializableModel {
       '__className__': 'PushTokenRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJson(),
       'token': token,
       'platform': platform,
       if (provider != null) 'provider': provider,
@@ -163,6 +176,7 @@ class _PushTokenRowImpl extends PushTokenRow {
   _PushTokenRowImpl({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String token,
     required String platform,
     String? provider,
@@ -178,6 +192,7 @@ class _PushTokenRowImpl extends PushTokenRow {
   }) : super._(
          id: id,
          profileId: profileId,
+         profile: profile,
          token: token,
          platform: platform,
          provider: provider,
@@ -199,6 +214,7 @@ class _PushTokenRowImpl extends PushTokenRow {
   PushTokenRow copyWith({
     Object? id = _Undefined,
     int? profileId,
+    Object? profile = _Undefined,
     String? token,
     String? platform,
     Object? provider = _Undefined,
@@ -215,6 +231,9 @@ class _PushTokenRowImpl extends PushTokenRow {
     return PushTokenRow(
       id: id is int? ? id : this.id,
       profileId: profileId ?? this.profileId,
+      profile: profile is _i2.AppProfileRow?
+          ? profile
+          : this.profile?.copyWith(),
       token: token ?? this.token,
       platform: platform ?? this.platform,
       provider: provider is String? ? provider : this.provider,

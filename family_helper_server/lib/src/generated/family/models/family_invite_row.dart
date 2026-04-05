@@ -8,15 +8,19 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../family/models/family_row.dart' as _i2;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i3;
 
 abstract class FamilyInviteRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   FamilyInviteRow._({
     this.id,
     required this.familyId,
+    this.family,
     required this.inviteType,
     this.email,
     required this.inviteCode,
@@ -31,6 +35,7 @@ abstract class FamilyInviteRow
   factory FamilyInviteRow({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String inviteType,
     String? email,
     required String inviteCode,
@@ -46,6 +51,11 @@ abstract class FamilyInviteRow
     return FamilyInviteRow(
       id: jsonSerialization['id'] as int?,
       familyId: jsonSerialization['familyId'] as int,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       inviteType: jsonSerialization['inviteType'] as String,
       email: jsonSerialization['email'] as String?,
       inviteCode: jsonSerialization['inviteCode'] as String,
@@ -75,6 +85,8 @@ abstract class FamilyInviteRow
 
   int familyId;
 
+  _i2.FamilyRow? family;
+
   String inviteType;
 
   String? email;
@@ -102,6 +114,7 @@ abstract class FamilyInviteRow
   FamilyInviteRow copyWith({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     String? inviteType,
     String? email,
     String? inviteCode,
@@ -118,6 +131,7 @@ abstract class FamilyInviteRow
       '__className__': 'FamilyInviteRow',
       if (id != null) 'id': id,
       'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'inviteType': inviteType,
       if (email != null) 'email': email,
       'inviteCode': inviteCode,
@@ -136,6 +150,7 @@ abstract class FamilyInviteRow
       '__className__': 'FamilyInviteRow',
       if (id != null) 'id': id,
       'familyId': familyId,
+      if (family != null) 'family': family?.toJsonForProtocol(),
       'inviteType': inviteType,
       if (email != null) 'email': email,
       'inviteCode': inviteCode,
@@ -148,8 +163,8 @@ abstract class FamilyInviteRow
     };
   }
 
-  static FamilyInviteRowInclude include() {
-    return FamilyInviteRowInclude._();
+  static FamilyInviteRowInclude include({_i2.FamilyRowInclude? family}) {
+    return FamilyInviteRowInclude._(family: family);
   }
 
   static FamilyInviteRowIncludeList includeList({
@@ -184,6 +199,7 @@ class _FamilyInviteRowImpl extends FamilyInviteRow {
   _FamilyInviteRowImpl({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String inviteType,
     String? email,
     required String inviteCode,
@@ -196,6 +212,7 @@ class _FamilyInviteRowImpl extends FamilyInviteRow {
   }) : super._(
          id: id,
          familyId: familyId,
+         family: family,
          inviteType: inviteType,
          email: email,
          inviteCode: inviteCode,
@@ -214,6 +231,7 @@ class _FamilyInviteRowImpl extends FamilyInviteRow {
   FamilyInviteRow copyWith({
     Object? id = _Undefined,
     int? familyId,
+    Object? family = _Undefined,
     String? inviteType,
     Object? email = _Undefined,
     String? inviteCode,
@@ -227,6 +245,7 @@ class _FamilyInviteRowImpl extends FamilyInviteRow {
     return FamilyInviteRow(
       id: id is int? ? id : this.id,
       familyId: familyId ?? this.familyId,
+      family: family is _i2.FamilyRow? ? family : this.family?.copyWith(),
       inviteType: inviteType ?? this.inviteType,
       email: email is String? ? email : this.email,
       inviteCode: inviteCode ?? this.inviteCode,
@@ -348,6 +367,8 @@ class FamilyInviteRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt familyId;
 
+  _i2.FamilyRowTable? _family;
+
   late final _i1.ColumnString inviteType;
 
   late final _i1.ColumnString email;
@@ -366,6 +387,19 @@ class FamilyInviteRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt version;
 
+  _i2.FamilyRowTable get family {
+    if (_family != null) return _family!;
+    _family = _i1.createRelationTable(
+      relationFieldName: 'family',
+      field: FamilyInviteRow.t.familyId,
+      foreignField: _i2.FamilyRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.FamilyRowTable(tableRelation: foreignTableRelation),
+    );
+    return _family!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -380,13 +414,25 @@ class FamilyInviteRowTable extends _i1.Table<int?> {
     updatedAt,
     version,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'family') {
+      return family;
+    }
+    return null;
+  }
 }
 
 class FamilyInviteRowInclude extends _i1.IncludeObject {
-  FamilyInviteRowInclude._();
+  FamilyInviteRowInclude._({_i2.FamilyRowInclude? family}) {
+    _family = family;
+  }
+
+  _i2.FamilyRowInclude? _family;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {'family': _family};
 
   @override
   _i1.Table<int?> get table => FamilyInviteRow.t;
@@ -414,6 +460,8 @@ class FamilyInviteRowIncludeList extends _i1.IncludeList {
 
 class FamilyInviteRowRepository {
   const FamilyInviteRowRepository._();
+
+  final attachRow = const FamilyInviteRowAttachRowRepository._();
 
   /// Returns a list of [FamilyInviteRow]s matching the given query parameters.
   ///
@@ -446,6 +494,7 @@ class FamilyInviteRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<FamilyInviteRowTable>? orderByList,
     _i1.Transaction? transaction,
+    FamilyInviteRowInclude? include,
   }) async {
     return session.db.find<FamilyInviteRow>(
       where: where?.call(FamilyInviteRow.t),
@@ -455,6 +504,7 @@ class FamilyInviteRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -483,6 +533,7 @@ class FamilyInviteRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<FamilyInviteRowTable>? orderByList,
     _i1.Transaction? transaction,
+    FamilyInviteRowInclude? include,
   }) async {
     return session.db.findFirstRow<FamilyInviteRow>(
       where: where?.call(FamilyInviteRow.t),
@@ -491,6 +542,7 @@ class FamilyInviteRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -499,10 +551,12 @@ class FamilyInviteRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    FamilyInviteRowInclude? include,
   }) async {
     return session.db.findById<FamilyInviteRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -662,6 +716,33 @@ class FamilyInviteRowRepository {
     return session.db.count<FamilyInviteRow>(
       where: where?.call(FamilyInviteRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class FamilyInviteRowAttachRowRepository {
+  const FamilyInviteRowAttachRowRepository._();
+
+  /// Creates a relation between the given [FamilyInviteRow] and [FamilyRow]
+  /// by setting the [FamilyInviteRow]'s foreign key `familyId` to refer to the [FamilyRow].
+  Future<void> family(
+    _i1.Session session,
+    FamilyInviteRow familyInviteRow,
+    _i2.FamilyRow family, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (familyInviteRow.id == null) {
+      throw ArgumentError.notNull('familyInviteRow.id');
+    }
+    if (family.id == null) {
+      throw ArgumentError.notNull('family.id');
+    }
+
+    var $familyInviteRow = familyInviteRow.copyWith(familyId: family.id);
+    await session.db.updateRow<FamilyInviteRow>(
+      $familyInviteRow,
+      columns: [FamilyInviteRow.t.familyId],
       transaction: transaction,
     );
   }

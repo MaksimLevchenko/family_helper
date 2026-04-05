@@ -8,16 +8,22 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../family/models/family_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i4;
 
 abstract class AuditLogRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   AuditLogRow._({
     this.id,
     this.familyId,
+    this.family,
     required this.actorProfileId,
+    this.actorProfile,
     required this.action,
     required this.payloadJson,
     required this.createdAt,
@@ -26,7 +32,9 @@ abstract class AuditLogRow
   factory AuditLogRow({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     required int actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     required String action,
     required String payloadJson,
     required DateTime createdAt,
@@ -36,7 +44,17 @@ abstract class AuditLogRow
     return AuditLogRow(
       id: jsonSerialization['id'] as int?,
       familyId: jsonSerialization['familyId'] as int?,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       actorProfileId: jsonSerialization['actorProfileId'] as int,
+      actorProfile: jsonSerialization['actorProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['actorProfile'],
+            ),
       action: jsonSerialization['action'] as String,
       payloadJson: jsonSerialization['payloadJson'] as String,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
@@ -54,7 +72,11 @@ abstract class AuditLogRow
 
   int? familyId;
 
+  _i2.FamilyRow? family;
+
   int actorProfileId;
+
+  _i3.AppProfileRow? actorProfile;
 
   String action;
 
@@ -71,7 +93,9 @@ abstract class AuditLogRow
   AuditLogRow copyWith({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     int? actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     String? action,
     String? payloadJson,
     DateTime? createdAt,
@@ -82,7 +106,9 @@ abstract class AuditLogRow
       '__className__': 'AuditLogRow',
       if (id != null) 'id': id,
       if (familyId != null) 'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'actorProfileId': actorProfileId,
+      if (actorProfile != null) 'actorProfile': actorProfile?.toJson(),
       'action': action,
       'payloadJson': payloadJson,
       'createdAt': createdAt.toJson(),
@@ -95,15 +121,24 @@ abstract class AuditLogRow
       '__className__': 'AuditLogRow',
       if (id != null) 'id': id,
       if (familyId != null) 'familyId': familyId,
+      if (family != null) 'family': family?.toJsonForProtocol(),
       'actorProfileId': actorProfileId,
+      if (actorProfile != null)
+        'actorProfile': actorProfile?.toJsonForProtocol(),
       'action': action,
       'payloadJson': payloadJson,
       'createdAt': createdAt.toJson(),
     };
   }
 
-  static AuditLogRowInclude include() {
-    return AuditLogRowInclude._();
+  static AuditLogRowInclude include({
+    _i2.FamilyRowInclude? family,
+    _i3.AppProfileRowInclude? actorProfile,
+  }) {
+    return AuditLogRowInclude._(
+      family: family,
+      actorProfile: actorProfile,
+    );
   }
 
   static AuditLogRowIncludeList includeList({
@@ -138,14 +173,18 @@ class _AuditLogRowImpl extends AuditLogRow {
   _AuditLogRowImpl({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     required int actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     required String action,
     required String payloadJson,
     required DateTime createdAt,
   }) : super._(
          id: id,
          familyId: familyId,
+         family: family,
          actorProfileId: actorProfileId,
+         actorProfile: actorProfile,
          action: action,
          payloadJson: payloadJson,
          createdAt: createdAt,
@@ -158,7 +197,9 @@ class _AuditLogRowImpl extends AuditLogRow {
   AuditLogRow copyWith({
     Object? id = _Undefined,
     Object? familyId = _Undefined,
+    Object? family = _Undefined,
     int? actorProfileId,
+    Object? actorProfile = _Undefined,
     String? action,
     String? payloadJson,
     DateTime? createdAt,
@@ -166,7 +207,11 @@ class _AuditLogRowImpl extends AuditLogRow {
     return AuditLogRow(
       id: id is int? ? id : this.id,
       familyId: familyId is int? ? familyId : this.familyId,
+      family: family is _i2.FamilyRow? ? family : this.family?.copyWith(),
       actorProfileId: actorProfileId ?? this.actorProfileId,
+      actorProfile: actorProfile is _i3.AppProfileRow?
+          ? actorProfile
+          : this.actorProfile?.copyWith(),
       action: action ?? this.action,
       payloadJson: payloadJson ?? this.payloadJson,
       createdAt: createdAt ?? this.createdAt,
@@ -233,13 +278,43 @@ class AuditLogRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt familyId;
 
+  _i2.FamilyRowTable? _family;
+
   late final _i1.ColumnInt actorProfileId;
+
+  _i3.AppProfileRowTable? _actorProfile;
 
   late final _i1.ColumnString action;
 
   late final _i1.ColumnString payloadJson;
 
   late final _i1.ColumnDateTime createdAt;
+
+  _i2.FamilyRowTable get family {
+    if (_family != null) return _family!;
+    _family = _i1.createRelationTable(
+      relationFieldName: 'family',
+      field: AuditLogRow.t.familyId,
+      foreignField: _i2.FamilyRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.FamilyRowTable(tableRelation: foreignTableRelation),
+    );
+    return _family!;
+  }
+
+  _i3.AppProfileRowTable get actorProfile {
+    if (_actorProfile != null) return _actorProfile!;
+    _actorProfile = _i1.createRelationTable(
+      relationFieldName: 'actorProfile',
+      field: AuditLogRow.t.actorProfileId,
+      foreignField: _i3.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _actorProfile!;
+  }
 
   @override
   List<_i1.Column> get columns => [
@@ -250,13 +325,37 @@ class AuditLogRowTable extends _i1.Table<int?> {
     payloadJson,
     createdAt,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'family') {
+      return family;
+    }
+    if (relationField == 'actorProfile') {
+      return actorProfile;
+    }
+    return null;
+  }
 }
 
 class AuditLogRowInclude extends _i1.IncludeObject {
-  AuditLogRowInclude._();
+  AuditLogRowInclude._({
+    _i2.FamilyRowInclude? family,
+    _i3.AppProfileRowInclude? actorProfile,
+  }) {
+    _family = family;
+    _actorProfile = actorProfile;
+  }
+
+  _i2.FamilyRowInclude? _family;
+
+  _i3.AppProfileRowInclude? _actorProfile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {
+    'family': _family,
+    'actorProfile': _actorProfile,
+  };
 
   @override
   _i1.Table<int?> get table => AuditLogRow.t;
@@ -284,6 +383,10 @@ class AuditLogRowIncludeList extends _i1.IncludeList {
 
 class AuditLogRowRepository {
   const AuditLogRowRepository._();
+
+  final attachRow = const AuditLogRowAttachRowRepository._();
+
+  final detachRow = const AuditLogRowDetachRowRepository._();
 
   /// Returns a list of [AuditLogRow]s matching the given query parameters.
   ///
@@ -316,6 +419,7 @@ class AuditLogRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<AuditLogRowTable>? orderByList,
     _i1.Transaction? transaction,
+    AuditLogRowInclude? include,
   }) async {
     return session.db.find<AuditLogRow>(
       where: where?.call(AuditLogRow.t),
@@ -325,6 +429,7 @@ class AuditLogRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -353,6 +458,7 @@ class AuditLogRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<AuditLogRowTable>? orderByList,
     _i1.Transaction? transaction,
+    AuditLogRowInclude? include,
   }) async {
     return session.db.findFirstRow<AuditLogRow>(
       where: where?.call(AuditLogRow.t),
@@ -361,6 +467,7 @@ class AuditLogRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -369,10 +476,12 @@ class AuditLogRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    AuditLogRowInclude? include,
   }) async {
     return session.db.findById<AuditLogRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -530,6 +639,82 @@ class AuditLogRowRepository {
     return session.db.count<AuditLogRow>(
       where: where?.call(AuditLogRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class AuditLogRowAttachRowRepository {
+  const AuditLogRowAttachRowRepository._();
+
+  /// Creates a relation between the given [AuditLogRow] and [FamilyRow]
+  /// by setting the [AuditLogRow]'s foreign key `familyId` to refer to the [FamilyRow].
+  Future<void> family(
+    _i1.Session session,
+    AuditLogRow auditLogRow,
+    _i2.FamilyRow family, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (auditLogRow.id == null) {
+      throw ArgumentError.notNull('auditLogRow.id');
+    }
+    if (family.id == null) {
+      throw ArgumentError.notNull('family.id');
+    }
+
+    var $auditLogRow = auditLogRow.copyWith(familyId: family.id);
+    await session.db.updateRow<AuditLogRow>(
+      $auditLogRow,
+      columns: [AuditLogRow.t.familyId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [AuditLogRow] and [AppProfileRow]
+  /// by setting the [AuditLogRow]'s foreign key `actorProfileId` to refer to the [AppProfileRow].
+  Future<void> actorProfile(
+    _i1.Session session,
+    AuditLogRow auditLogRow,
+    _i3.AppProfileRow actorProfile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (auditLogRow.id == null) {
+      throw ArgumentError.notNull('auditLogRow.id');
+    }
+    if (actorProfile.id == null) {
+      throw ArgumentError.notNull('actorProfile.id');
+    }
+
+    var $auditLogRow = auditLogRow.copyWith(actorProfileId: actorProfile.id);
+    await session.db.updateRow<AuditLogRow>(
+      $auditLogRow,
+      columns: [AuditLogRow.t.actorProfileId],
+      transaction: transaction,
+    );
+  }
+}
+
+class AuditLogRowDetachRowRepository {
+  const AuditLogRowDetachRowRepository._();
+
+  /// Detaches the relation between this [AuditLogRow] and the [FamilyRow] set in `family`
+  /// by setting the [AuditLogRow]'s foreign key `familyId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> family(
+    _i1.Session session,
+    AuditLogRow auditLogRow, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (auditLogRow.id == null) {
+      throw ArgumentError.notNull('auditLogRow.id');
+    }
+
+    var $auditLogRow = auditLogRow.copyWith(familyId: null);
+    await session.db.updateRow<AuditLogRow>(
+      $auditLogRow,
+      columns: [AuditLogRow.t.familyId],
       transaction: transaction,
     );
   }

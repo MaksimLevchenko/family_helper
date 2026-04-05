@@ -1,7 +1,7 @@
 class: MoneyGoalRow
 table: money_goal
 fields:
-  familyId: int
+  family: FamilyRow?, relation
   title: String
   description: String?
   targetAmountCents: int
@@ -10,7 +10,7 @@ fields:
   deadlineAt: DateTime?
   reachedAt: DateTime?
   archivedAt: DateTime?
-  createdByProfileId: int
+  createdByProfile: AppProfileRow?, relation
   createdAt: DateTime
   updatedAt: DateTime
   deletedAt: DateTime?

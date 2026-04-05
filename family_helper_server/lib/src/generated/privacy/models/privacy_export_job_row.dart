@@ -8,15 +8,19 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../core/models/app_profile_row.dart' as _i2;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i3;
 
 abstract class PrivacyExportJobRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   PrivacyExportJobRow._({
     this.id,
     required this.profileId,
+    this.profile,
     required this.status,
     required this.objectKey,
     this.signedUrl,
@@ -28,6 +32,7 @@ abstract class PrivacyExportJobRow
   factory PrivacyExportJobRow({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String status,
     required String objectKey,
     String? signedUrl,
@@ -40,6 +45,11 @@ abstract class PrivacyExportJobRow
     return PrivacyExportJobRow(
       id: jsonSerialization['id'] as int?,
       profileId: jsonSerialization['profileId'] as int,
+      profile: jsonSerialization['profile'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.AppProfileRow>(
+              jsonSerialization['profile'],
+            ),
       status: jsonSerialization['status'] as String,
       objectKey: jsonSerialization['objectKey'] as String,
       signedUrl: jsonSerialization['signedUrl'] as String?,
@@ -66,6 +76,8 @@ abstract class PrivacyExportJobRow
 
   int profileId;
 
+  _i2.AppProfileRow? profile;
+
   String status;
 
   String objectKey;
@@ -87,6 +99,7 @@ abstract class PrivacyExportJobRow
   PrivacyExportJobRow copyWith({
     int? id,
     int? profileId,
+    _i2.AppProfileRow? profile,
     String? status,
     String? objectKey,
     String? signedUrl,
@@ -100,6 +113,7 @@ abstract class PrivacyExportJobRow
       '__className__': 'PrivacyExportJobRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJson(),
       'status': status,
       'objectKey': objectKey,
       if (signedUrl != null) 'signedUrl': signedUrl,
@@ -115,6 +129,7 @@ abstract class PrivacyExportJobRow
       '__className__': 'PrivacyExportJobRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJsonForProtocol(),
       'status': status,
       'objectKey': objectKey,
       if (signedUrl != null) 'signedUrl': signedUrl,
@@ -124,8 +139,10 @@ abstract class PrivacyExportJobRow
     };
   }
 
-  static PrivacyExportJobRowInclude include() {
-    return PrivacyExportJobRowInclude._();
+  static PrivacyExportJobRowInclude include({
+    _i2.AppProfileRowInclude? profile,
+  }) {
+    return PrivacyExportJobRowInclude._(profile: profile);
   }
 
   static PrivacyExportJobRowIncludeList includeList({
@@ -160,6 +177,7 @@ class _PrivacyExportJobRowImpl extends PrivacyExportJobRow {
   _PrivacyExportJobRowImpl({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String status,
     required String objectKey,
     String? signedUrl,
@@ -169,6 +187,7 @@ class _PrivacyExportJobRowImpl extends PrivacyExportJobRow {
   }) : super._(
          id: id,
          profileId: profileId,
+         profile: profile,
          status: status,
          objectKey: objectKey,
          signedUrl: signedUrl,
@@ -184,6 +203,7 @@ class _PrivacyExportJobRowImpl extends PrivacyExportJobRow {
   PrivacyExportJobRow copyWith({
     Object? id = _Undefined,
     int? profileId,
+    Object? profile = _Undefined,
     String? status,
     String? objectKey,
     Object? signedUrl = _Undefined,
@@ -194,6 +214,9 @@ class _PrivacyExportJobRowImpl extends PrivacyExportJobRow {
     return PrivacyExportJobRow(
       id: id is int? ? id : this.id,
       profileId: profileId ?? this.profileId,
+      profile: profile is _i2.AppProfileRow?
+          ? profile
+          : this.profile?.copyWith(),
       status: status ?? this.status,
       objectKey: objectKey ?? this.objectKey,
       signedUrl: signedUrl is String? ? signedUrl : this.signedUrl,
@@ -285,6 +308,8 @@ class PrivacyExportJobRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt profileId;
 
+  _i2.AppProfileRowTable? _profile;
+
   late final _i1.ColumnString status;
 
   late final _i1.ColumnString objectKey;
@@ -297,6 +322,19 @@ class PrivacyExportJobRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnDateTime completedAt;
 
+  _i2.AppProfileRowTable get profile {
+    if (_profile != null) return _profile!;
+    _profile = _i1.createRelationTable(
+      relationFieldName: 'profile',
+      field: PrivacyExportJobRow.t.profileId,
+      foreignField: _i2.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _profile!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -308,13 +346,25 @@ class PrivacyExportJobRowTable extends _i1.Table<int?> {
     createdAt,
     completedAt,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'profile') {
+      return profile;
+    }
+    return null;
+  }
 }
 
 class PrivacyExportJobRowInclude extends _i1.IncludeObject {
-  PrivacyExportJobRowInclude._();
+  PrivacyExportJobRowInclude._({_i2.AppProfileRowInclude? profile}) {
+    _profile = profile;
+  }
+
+  _i2.AppProfileRowInclude? _profile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {'profile': _profile};
 
   @override
   _i1.Table<int?> get table => PrivacyExportJobRow.t;
@@ -342,6 +392,8 @@ class PrivacyExportJobRowIncludeList extends _i1.IncludeList {
 
 class PrivacyExportJobRowRepository {
   const PrivacyExportJobRowRepository._();
+
+  final attachRow = const PrivacyExportJobRowAttachRowRepository._();
 
   /// Returns a list of [PrivacyExportJobRow]s matching the given query parameters.
   ///
@@ -374,6 +426,7 @@ class PrivacyExportJobRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<PrivacyExportJobRowTable>? orderByList,
     _i1.Transaction? transaction,
+    PrivacyExportJobRowInclude? include,
   }) async {
     return session.db.find<PrivacyExportJobRow>(
       where: where?.call(PrivacyExportJobRow.t),
@@ -383,6 +436,7 @@ class PrivacyExportJobRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -411,6 +465,7 @@ class PrivacyExportJobRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<PrivacyExportJobRowTable>? orderByList,
     _i1.Transaction? transaction,
+    PrivacyExportJobRowInclude? include,
   }) async {
     return session.db.findFirstRow<PrivacyExportJobRow>(
       where: where?.call(PrivacyExportJobRow.t),
@@ -419,6 +474,7 @@ class PrivacyExportJobRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -427,10 +483,12 @@ class PrivacyExportJobRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    PrivacyExportJobRowInclude? include,
   }) async {
     return session.db.findById<PrivacyExportJobRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -590,6 +648,35 @@ class PrivacyExportJobRowRepository {
     return session.db.count<PrivacyExportJobRow>(
       where: where?.call(PrivacyExportJobRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class PrivacyExportJobRowAttachRowRepository {
+  const PrivacyExportJobRowAttachRowRepository._();
+
+  /// Creates a relation between the given [PrivacyExportJobRow] and [AppProfileRow]
+  /// by setting the [PrivacyExportJobRow]'s foreign key `profileId` to refer to the [AppProfileRow].
+  Future<void> profile(
+    _i1.Session session,
+    PrivacyExportJobRow privacyExportJobRow,
+    _i2.AppProfileRow profile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (privacyExportJobRow.id == null) {
+      throw ArgumentError.notNull('privacyExportJobRow.id');
+    }
+    if (profile.id == null) {
+      throw ArgumentError.notNull('profile.id');
+    }
+
+    var $privacyExportJobRow = privacyExportJobRow.copyWith(
+      profileId: profile.id,
+    );
+    await session.db.updateRow<PrivacyExportJobRow>(
+      $privacyExportJobRow,
+      columns: [PrivacyExportJobRow.t.profileId],
       transaction: transaction,
     );
   }

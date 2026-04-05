@@ -1,8 +1,8 @@
 class: TaskHistoryRow
 table: task_history
 fields:
-  taskId: int
-  actorProfileId: int
+  task: TaskRow?, relation
+  actorProfile: AppProfileRow?, relation
   eventType: String
   details: String?
   createdAt: DateTime

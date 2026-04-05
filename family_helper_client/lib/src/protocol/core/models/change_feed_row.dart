@@ -11,11 +11,14 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../family/models/family_row.dart' as _i2;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i3;
 
 abstract class ChangeFeedRow implements _i1.SerializableModel {
   ChangeFeedRow._({
     this.id,
     this.familyId,
+    this.family,
     required this.feature,
     required this.entityType,
     required this.entityId,
@@ -29,6 +32,7 @@ abstract class ChangeFeedRow implements _i1.SerializableModel {
   factory ChangeFeedRow({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     required String feature,
     required String entityType,
     required int entityId,
@@ -43,6 +47,11 @@ abstract class ChangeFeedRow implements _i1.SerializableModel {
     return ChangeFeedRow(
       id: jsonSerialization['id'] as int?,
       familyId: jsonSerialization['familyId'] as int?,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       feature: jsonSerialization['feature'] as String,
       entityType: jsonSerialization['entityType'] as String,
       entityId: jsonSerialization['entityId'] as int,
@@ -62,6 +71,8 @@ abstract class ChangeFeedRow implements _i1.SerializableModel {
   int? id;
 
   int? familyId;
+
+  _i2.FamilyRow? family;
 
   String feature;
 
@@ -85,6 +96,7 @@ abstract class ChangeFeedRow implements _i1.SerializableModel {
   ChangeFeedRow copyWith({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     String? feature,
     String? entityType,
     int? entityId,
@@ -100,6 +112,7 @@ abstract class ChangeFeedRow implements _i1.SerializableModel {
       '__className__': 'ChangeFeedRow',
       if (id != null) 'id': id,
       if (familyId != null) 'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'feature': feature,
       'entityType': entityType,
       'entityId': entityId,
@@ -123,6 +136,7 @@ class _ChangeFeedRowImpl extends ChangeFeedRow {
   _ChangeFeedRowImpl({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     required String feature,
     required String entityType,
     required int entityId,
@@ -134,6 +148,7 @@ class _ChangeFeedRowImpl extends ChangeFeedRow {
   }) : super._(
          id: id,
          familyId: familyId,
+         family: family,
          feature: feature,
          entityType: entityType,
          entityId: entityId,
@@ -151,6 +166,7 @@ class _ChangeFeedRowImpl extends ChangeFeedRow {
   ChangeFeedRow copyWith({
     Object? id = _Undefined,
     Object? familyId = _Undefined,
+    Object? family = _Undefined,
     String? feature,
     String? entityType,
     int? entityId,
@@ -163,6 +179,7 @@ class _ChangeFeedRowImpl extends ChangeFeedRow {
     return ChangeFeedRow(
       id: id is int? ? id : this.id,
       familyId: familyId is int? ? familyId : this.familyId,
+      family: family is _i2.FamilyRow? ? family : this.family?.copyWith(),
       feature: feature ?? this.feature,
       entityType: entityType ?? this.entityType,
       entityId: entityId ?? this.entityId,

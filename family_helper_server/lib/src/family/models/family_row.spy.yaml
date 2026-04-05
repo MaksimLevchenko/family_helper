@@ -2,7 +2,7 @@ class: FamilyRow
 table: family
 fields:
   title: String
-  ownerProfileId: int
+  ownerProfile: AppProfileRow?, relation
   memberLimit: int
   createdAt: DateTime
   updatedAt: DateTime

@@ -11,12 +11,15 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../core/models/app_profile_row.dart' as _i2;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i3;
 
 abstract class FamilyRow implements _i1.SerializableModel {
   FamilyRow._({
     this.id,
     required this.title,
     required this.ownerProfileId,
+    this.ownerProfile,
     required this.memberLimit,
     required this.createdAt,
     required this.updatedAt,
@@ -28,6 +31,7 @@ abstract class FamilyRow implements _i1.SerializableModel {
     int? id,
     required String title,
     required int ownerProfileId,
+    _i2.AppProfileRow? ownerProfile,
     required int memberLimit,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -40,6 +44,11 @@ abstract class FamilyRow implements _i1.SerializableModel {
       id: jsonSerialization['id'] as int?,
       title: jsonSerialization['title'] as String,
       ownerProfileId: jsonSerialization['ownerProfileId'] as int,
+      ownerProfile: jsonSerialization['ownerProfile'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.AppProfileRow>(
+              jsonSerialization['ownerProfile'],
+            ),
       memberLimit: jsonSerialization['memberLimit'] as int,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
@@ -63,6 +72,8 @@ abstract class FamilyRow implements _i1.SerializableModel {
 
   int ownerProfileId;
 
+  _i2.AppProfileRow? ownerProfile;
+
   int memberLimit;
 
   DateTime createdAt;
@@ -80,6 +91,7 @@ abstract class FamilyRow implements _i1.SerializableModel {
     int? id,
     String? title,
     int? ownerProfileId,
+    _i2.AppProfileRow? ownerProfile,
     int? memberLimit,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -93,6 +105,7 @@ abstract class FamilyRow implements _i1.SerializableModel {
       if (id != null) 'id': id,
       'title': title,
       'ownerProfileId': ownerProfileId,
+      if (ownerProfile != null) 'ownerProfile': ownerProfile?.toJson(),
       'memberLimit': memberLimit,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -114,6 +127,7 @@ class _FamilyRowImpl extends FamilyRow {
     int? id,
     required String title,
     required int ownerProfileId,
+    _i2.AppProfileRow? ownerProfile,
     required int memberLimit,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -123,6 +137,7 @@ class _FamilyRowImpl extends FamilyRow {
          id: id,
          title: title,
          ownerProfileId: ownerProfileId,
+         ownerProfile: ownerProfile,
          memberLimit: memberLimit,
          createdAt: createdAt,
          updatedAt: updatedAt,
@@ -138,6 +153,7 @@ class _FamilyRowImpl extends FamilyRow {
     Object? id = _Undefined,
     String? title,
     int? ownerProfileId,
+    Object? ownerProfile = _Undefined,
     int? memberLimit,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -148,6 +164,9 @@ class _FamilyRowImpl extends FamilyRow {
       id: id is int? ? id : this.id,
       title: title ?? this.title,
       ownerProfileId: ownerProfileId ?? this.ownerProfileId,
+      ownerProfile: ownerProfile is _i2.AppProfileRow?
+          ? ownerProfile
+          : this.ownerProfile?.copyWith(),
       memberLimit: memberLimit ?? this.memberLimit,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

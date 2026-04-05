@@ -1,8 +1,8 @@
 class: MoneyContributionRow
 table: money_contribution
 fields:
-  goalId: int
-  profileId: int
+  goal: MoneyGoalRow?, relation
+  profile: AppProfileRow?, relation
   amountCents: int
   currency: String
   note: String?

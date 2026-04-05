@@ -11,12 +11,17 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../money_goals/models/money_goal_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i4;
 
 abstract class MoneyContributionRow implements _i1.SerializableModel {
   MoneyContributionRow._({
     this.id,
     required this.goalId,
+    this.goal,
     required this.profileId,
+    this.profile,
     required this.amountCents,
     required this.currency,
     this.note,
@@ -28,7 +33,9 @@ abstract class MoneyContributionRow implements _i1.SerializableModel {
   factory MoneyContributionRow({
     int? id,
     required int goalId,
+    _i2.MoneyGoalRow? goal,
     required int profileId,
+    _i3.AppProfileRow? profile,
     required int amountCents,
     required String currency,
     String? note,
@@ -43,7 +50,17 @@ abstract class MoneyContributionRow implements _i1.SerializableModel {
     return MoneyContributionRow(
       id: jsonSerialization['id'] as int?,
       goalId: jsonSerialization['goalId'] as int,
+      goal: jsonSerialization['goal'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.MoneyGoalRow>(
+              jsonSerialization['goal'],
+            ),
       profileId: jsonSerialization['profileId'] as int,
+      profile: jsonSerialization['profile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['profile'],
+            ),
       amountCents: jsonSerialization['amountCents'] as int,
       currency: jsonSerialization['currency'] as String,
       note: jsonSerialization['note'] as String?,
@@ -64,7 +81,11 @@ abstract class MoneyContributionRow implements _i1.SerializableModel {
 
   int goalId;
 
+  _i2.MoneyGoalRow? goal;
+
   int profileId;
+
+  _i3.AppProfileRow? profile;
 
   int amountCents;
 
@@ -84,7 +105,9 @@ abstract class MoneyContributionRow implements _i1.SerializableModel {
   MoneyContributionRow copyWith({
     int? id,
     int? goalId,
+    _i2.MoneyGoalRow? goal,
     int? profileId,
+    _i3.AppProfileRow? profile,
     int? amountCents,
     String? currency,
     String? note,
@@ -98,7 +121,9 @@ abstract class MoneyContributionRow implements _i1.SerializableModel {
       '__className__': 'MoneyContributionRow',
       if (id != null) 'id': id,
       'goalId': goalId,
+      if (goal != null) 'goal': goal?.toJson(),
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJson(),
       'amountCents': amountCents,
       'currency': currency,
       if (note != null) 'note': note,
@@ -120,7 +145,9 @@ class _MoneyContributionRowImpl extends MoneyContributionRow {
   _MoneyContributionRowImpl({
     int? id,
     required int goalId,
+    _i2.MoneyGoalRow? goal,
     required int profileId,
+    _i3.AppProfileRow? profile,
     required int amountCents,
     required String currency,
     String? note,
@@ -130,7 +157,9 @@ class _MoneyContributionRowImpl extends MoneyContributionRow {
   }) : super._(
          id: id,
          goalId: goalId,
+         goal: goal,
          profileId: profileId,
+         profile: profile,
          amountCents: amountCents,
          currency: currency,
          note: note,
@@ -146,7 +175,9 @@ class _MoneyContributionRowImpl extends MoneyContributionRow {
   MoneyContributionRow copyWith({
     Object? id = _Undefined,
     int? goalId,
+    Object? goal = _Undefined,
     int? profileId,
+    Object? profile = _Undefined,
     int? amountCents,
     String? currency,
     Object? note = _Undefined,
@@ -157,7 +188,11 @@ class _MoneyContributionRowImpl extends MoneyContributionRow {
     return MoneyContributionRow(
       id: id is int? ? id : this.id,
       goalId: goalId ?? this.goalId,
+      goal: goal is _i2.MoneyGoalRow? ? goal : this.goal?.copyWith(),
       profileId: profileId ?? this.profileId,
+      profile: profile is _i3.AppProfileRow?
+          ? profile
+          : this.profile?.copyWith(),
       amountCents: amountCents ?? this.amountCents,
       currency: currency ?? this.currency,
       note: note is String? ? note : this.note,

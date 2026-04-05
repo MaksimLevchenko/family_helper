@@ -11,12 +11,17 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../core/models/app_profile_row.dart' as _i2;
+import '../../family/models/family_row.dart' as _i3;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i4;
 
 abstract class AppNotificationRow implements _i1.SerializableModel {
   AppNotificationRow._({
     this.id,
     required this.profileId,
+    this.profile,
     required this.familyId,
+    this.family,
     required this.category,
     required this.title,
     required this.body,
@@ -35,7 +40,9 @@ abstract class AppNotificationRow implements _i1.SerializableModel {
   factory AppNotificationRow({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required int familyId,
+    _i3.FamilyRow? family,
     required String category,
     required String title,
     required String body,
@@ -55,7 +62,17 @@ abstract class AppNotificationRow implements _i1.SerializableModel {
     return AppNotificationRow(
       id: jsonSerialization['id'] as int?,
       profileId: jsonSerialization['profileId'] as int,
+      profile: jsonSerialization['profile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.AppProfileRow>(
+              jsonSerialization['profile'],
+            ),
       familyId: jsonSerialization['familyId'] as int,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       category: jsonSerialization['category'] as String,
       title: jsonSerialization['title'] as String,
       body: jsonSerialization['body'] as String,
@@ -85,7 +102,11 @@ abstract class AppNotificationRow implements _i1.SerializableModel {
 
   int profileId;
 
+  _i2.AppProfileRow? profile;
+
   int familyId;
+
+  _i3.FamilyRow? family;
 
   String category;
 
@@ -119,7 +140,9 @@ abstract class AppNotificationRow implements _i1.SerializableModel {
   AppNotificationRow copyWith({
     int? id,
     int? profileId,
+    _i2.AppProfileRow? profile,
     int? familyId,
+    _i3.FamilyRow? family,
     String? category,
     String? title,
     String? body,
@@ -140,7 +163,9 @@ abstract class AppNotificationRow implements _i1.SerializableModel {
       '__className__': 'AppNotificationRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJson(),
       'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'category': category,
       'title': title,
       'body': body,
@@ -169,7 +194,9 @@ class _AppNotificationRowImpl extends AppNotificationRow {
   _AppNotificationRowImpl({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required int familyId,
+    _i3.FamilyRow? family,
     required String category,
     required String title,
     required String body,
@@ -186,7 +213,9 @@ class _AppNotificationRowImpl extends AppNotificationRow {
   }) : super._(
          id: id,
          profileId: profileId,
+         profile: profile,
          familyId: familyId,
+         family: family,
          category: category,
          title: title,
          body: body,
@@ -209,7 +238,9 @@ class _AppNotificationRowImpl extends AppNotificationRow {
   AppNotificationRow copyWith({
     Object? id = _Undefined,
     int? profileId,
+    Object? profile = _Undefined,
     int? familyId,
+    Object? family = _Undefined,
     String? category,
     String? title,
     String? body,
@@ -227,7 +258,11 @@ class _AppNotificationRowImpl extends AppNotificationRow {
     return AppNotificationRow(
       id: id is int? ? id : this.id,
       profileId: profileId ?? this.profileId,
+      profile: profile is _i2.AppProfileRow?
+          ? profile
+          : this.profile?.copyWith(),
       familyId: familyId ?? this.familyId,
+      family: family is _i3.FamilyRow? ? family : this.family?.copyWith(),
       category: category ?? this.category,
       title: title ?? this.title,
       body: body ?? this.body,

@@ -1,7 +1,7 @@
 class: CalendarEventRow
 table: calendar_event
 fields:
-  familyId: int
+  family: FamilyRow?, relation
   title: String
   description: String?
   timezone: String
@@ -11,7 +11,7 @@ fields:
   reminderOffsetMinutes: int?
   colorKey: String?
   category: String?
-  createdByProfileId: int
+  createdByProfile: AppProfileRow?, relation
   createdAt: DateTime
   updatedAt: DateTime
   deletedAt: DateTime?

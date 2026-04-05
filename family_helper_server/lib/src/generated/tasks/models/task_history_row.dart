@@ -8,16 +8,22 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../tasks/models/task_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i4;
 
 abstract class TaskHistoryRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   TaskHistoryRow._({
     this.id,
     required this.taskId,
+    this.task,
     required this.actorProfileId,
+    this.actorProfile,
     required this.eventType,
     this.details,
     required this.createdAt,
@@ -26,7 +32,9 @@ abstract class TaskHistoryRow
   factory TaskHistoryRow({
     int? id,
     required int taskId,
+    _i2.TaskRow? task,
     required int actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     required String eventType,
     String? details,
     required DateTime createdAt,
@@ -36,7 +44,15 @@ abstract class TaskHistoryRow
     return TaskHistoryRow(
       id: jsonSerialization['id'] as int?,
       taskId: jsonSerialization['taskId'] as int,
+      task: jsonSerialization['task'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.TaskRow>(jsonSerialization['task']),
       actorProfileId: jsonSerialization['actorProfileId'] as int,
+      actorProfile: jsonSerialization['actorProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['actorProfile'],
+            ),
       eventType: jsonSerialization['eventType'] as String,
       details: jsonSerialization['details'] as String?,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
@@ -54,7 +70,11 @@ abstract class TaskHistoryRow
 
   int taskId;
 
+  _i2.TaskRow? task;
+
   int actorProfileId;
+
+  _i3.AppProfileRow? actorProfile;
 
   String eventType;
 
@@ -71,7 +91,9 @@ abstract class TaskHistoryRow
   TaskHistoryRow copyWith({
     int? id,
     int? taskId,
+    _i2.TaskRow? task,
     int? actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     String? eventType,
     String? details,
     DateTime? createdAt,
@@ -82,7 +104,9 @@ abstract class TaskHistoryRow
       '__className__': 'TaskHistoryRow',
       if (id != null) 'id': id,
       'taskId': taskId,
+      if (task != null) 'task': task?.toJson(),
       'actorProfileId': actorProfileId,
+      if (actorProfile != null) 'actorProfile': actorProfile?.toJson(),
       'eventType': eventType,
       if (details != null) 'details': details,
       'createdAt': createdAt.toJson(),
@@ -95,15 +119,24 @@ abstract class TaskHistoryRow
       '__className__': 'TaskHistoryRow',
       if (id != null) 'id': id,
       'taskId': taskId,
+      if (task != null) 'task': task?.toJsonForProtocol(),
       'actorProfileId': actorProfileId,
+      if (actorProfile != null)
+        'actorProfile': actorProfile?.toJsonForProtocol(),
       'eventType': eventType,
       if (details != null) 'details': details,
       'createdAt': createdAt.toJson(),
     };
   }
 
-  static TaskHistoryRowInclude include() {
-    return TaskHistoryRowInclude._();
+  static TaskHistoryRowInclude include({
+    _i2.TaskRowInclude? task,
+    _i3.AppProfileRowInclude? actorProfile,
+  }) {
+    return TaskHistoryRowInclude._(
+      task: task,
+      actorProfile: actorProfile,
+    );
   }
 
   static TaskHistoryRowIncludeList includeList({
@@ -138,14 +171,18 @@ class _TaskHistoryRowImpl extends TaskHistoryRow {
   _TaskHistoryRowImpl({
     int? id,
     required int taskId,
+    _i2.TaskRow? task,
     required int actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     required String eventType,
     String? details,
     required DateTime createdAt,
   }) : super._(
          id: id,
          taskId: taskId,
+         task: task,
          actorProfileId: actorProfileId,
+         actorProfile: actorProfile,
          eventType: eventType,
          details: details,
          createdAt: createdAt,
@@ -158,7 +195,9 @@ class _TaskHistoryRowImpl extends TaskHistoryRow {
   TaskHistoryRow copyWith({
     Object? id = _Undefined,
     int? taskId,
+    Object? task = _Undefined,
     int? actorProfileId,
+    Object? actorProfile = _Undefined,
     String? eventType,
     Object? details = _Undefined,
     DateTime? createdAt,
@@ -166,7 +205,11 @@ class _TaskHistoryRowImpl extends TaskHistoryRow {
     return TaskHistoryRow(
       id: id is int? ? id : this.id,
       taskId: taskId ?? this.taskId,
+      task: task is _i2.TaskRow? ? task : this.task?.copyWith(),
       actorProfileId: actorProfileId ?? this.actorProfileId,
+      actorProfile: actorProfile is _i3.AppProfileRow?
+          ? actorProfile
+          : this.actorProfile?.copyWith(),
       eventType: eventType ?? this.eventType,
       details: details is String? ? details : this.details,
       createdAt: createdAt ?? this.createdAt,
@@ -234,13 +277,43 @@ class TaskHistoryRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt taskId;
 
+  _i2.TaskRowTable? _task;
+
   late final _i1.ColumnInt actorProfileId;
+
+  _i3.AppProfileRowTable? _actorProfile;
 
   late final _i1.ColumnString eventType;
 
   late final _i1.ColumnString details;
 
   late final _i1.ColumnDateTime createdAt;
+
+  _i2.TaskRowTable get task {
+    if (_task != null) return _task!;
+    _task = _i1.createRelationTable(
+      relationFieldName: 'task',
+      field: TaskHistoryRow.t.taskId,
+      foreignField: _i2.TaskRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.TaskRowTable(tableRelation: foreignTableRelation),
+    );
+    return _task!;
+  }
+
+  _i3.AppProfileRowTable get actorProfile {
+    if (_actorProfile != null) return _actorProfile!;
+    _actorProfile = _i1.createRelationTable(
+      relationFieldName: 'actorProfile',
+      field: TaskHistoryRow.t.actorProfileId,
+      foreignField: _i3.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _actorProfile!;
+  }
 
   @override
   List<_i1.Column> get columns => [
@@ -251,13 +324,37 @@ class TaskHistoryRowTable extends _i1.Table<int?> {
     details,
     createdAt,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'task') {
+      return task;
+    }
+    if (relationField == 'actorProfile') {
+      return actorProfile;
+    }
+    return null;
+  }
 }
 
 class TaskHistoryRowInclude extends _i1.IncludeObject {
-  TaskHistoryRowInclude._();
+  TaskHistoryRowInclude._({
+    _i2.TaskRowInclude? task,
+    _i3.AppProfileRowInclude? actorProfile,
+  }) {
+    _task = task;
+    _actorProfile = actorProfile;
+  }
+
+  _i2.TaskRowInclude? _task;
+
+  _i3.AppProfileRowInclude? _actorProfile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {
+    'task': _task,
+    'actorProfile': _actorProfile,
+  };
 
   @override
   _i1.Table<int?> get table => TaskHistoryRow.t;
@@ -285,6 +382,8 @@ class TaskHistoryRowIncludeList extends _i1.IncludeList {
 
 class TaskHistoryRowRepository {
   const TaskHistoryRowRepository._();
+
+  final attachRow = const TaskHistoryRowAttachRowRepository._();
 
   /// Returns a list of [TaskHistoryRow]s matching the given query parameters.
   ///
@@ -317,6 +416,7 @@ class TaskHistoryRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<TaskHistoryRowTable>? orderByList,
     _i1.Transaction? transaction,
+    TaskHistoryRowInclude? include,
   }) async {
     return session.db.find<TaskHistoryRow>(
       where: where?.call(TaskHistoryRow.t),
@@ -326,6 +426,7 @@ class TaskHistoryRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -354,6 +455,7 @@ class TaskHistoryRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<TaskHistoryRowTable>? orderByList,
     _i1.Transaction? transaction,
+    TaskHistoryRowInclude? include,
   }) async {
     return session.db.findFirstRow<TaskHistoryRow>(
       where: where?.call(TaskHistoryRow.t),
@@ -362,6 +464,7 @@ class TaskHistoryRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -370,10 +473,12 @@ class TaskHistoryRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    TaskHistoryRowInclude? include,
   }) async {
     return session.db.findById<TaskHistoryRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -531,6 +636,58 @@ class TaskHistoryRowRepository {
     return session.db.count<TaskHistoryRow>(
       where: where?.call(TaskHistoryRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class TaskHistoryRowAttachRowRepository {
+  const TaskHistoryRowAttachRowRepository._();
+
+  /// Creates a relation between the given [TaskHistoryRow] and [TaskRow]
+  /// by setting the [TaskHistoryRow]'s foreign key `taskId` to refer to the [TaskRow].
+  Future<void> task(
+    _i1.Session session,
+    TaskHistoryRow taskHistoryRow,
+    _i2.TaskRow task, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (taskHistoryRow.id == null) {
+      throw ArgumentError.notNull('taskHistoryRow.id');
+    }
+    if (task.id == null) {
+      throw ArgumentError.notNull('task.id');
+    }
+
+    var $taskHistoryRow = taskHistoryRow.copyWith(taskId: task.id);
+    await session.db.updateRow<TaskHistoryRow>(
+      $taskHistoryRow,
+      columns: [TaskHistoryRow.t.taskId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [TaskHistoryRow] and [AppProfileRow]
+  /// by setting the [TaskHistoryRow]'s foreign key `actorProfileId` to refer to the [AppProfileRow].
+  Future<void> actorProfile(
+    _i1.Session session,
+    TaskHistoryRow taskHistoryRow,
+    _i3.AppProfileRow actorProfile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (taskHistoryRow.id == null) {
+      throw ArgumentError.notNull('taskHistoryRow.id');
+    }
+    if (actorProfile.id == null) {
+      throw ArgumentError.notNull('actorProfile.id');
+    }
+
+    var $taskHistoryRow = taskHistoryRow.copyWith(
+      actorProfileId: actorProfile.id,
+    );
+    await session.db.updateRow<TaskHistoryRow>(
+      $taskHistoryRow,
+      columns: [TaskHistoryRow.t.actorProfileId],
       transaction: transaction,
     );
   }

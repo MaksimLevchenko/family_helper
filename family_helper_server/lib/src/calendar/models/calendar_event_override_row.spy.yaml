@@ -1,7 +1,7 @@
 class: CalendarEventOverrideRow
 table: calendar_event_override
 fields:
-  eventId: int
+  event: CalendarEventRow?, relation
   occurrenceStart: DateTime
   overrideTitle: String?
   overrideStartsAt: DateTime?

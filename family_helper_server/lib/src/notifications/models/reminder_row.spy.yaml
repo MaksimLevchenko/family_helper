@@ -1,10 +1,10 @@
 class: ReminderRow
 table: reminder
 fields:
-  familyId: int
+  family: FamilyRow?, relation
   entityType: String
   entityId: int
-  profileId: int
+  profile: AppProfileRow?, relation
   remindAt: DateTime
   status: String
   payloadJson: String

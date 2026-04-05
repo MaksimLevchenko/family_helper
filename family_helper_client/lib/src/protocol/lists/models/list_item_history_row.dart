@@ -11,12 +11,17 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../lists/models/list_item_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i4;
 
 abstract class ListItemHistoryRow implements _i1.SerializableModel {
   ListItemHistoryRow._({
     this.id,
     required this.itemId,
+    this.item,
     required this.actorProfileId,
+    this.actorProfile,
     required this.eventType,
     required this.createdAt,
   });
@@ -24,7 +29,9 @@ abstract class ListItemHistoryRow implements _i1.SerializableModel {
   factory ListItemHistoryRow({
     int? id,
     required int itemId,
+    _i2.ListItemRow? item,
     required int actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     required String eventType,
     required DateTime createdAt,
   }) = _ListItemHistoryRowImpl;
@@ -33,7 +40,17 @@ abstract class ListItemHistoryRow implements _i1.SerializableModel {
     return ListItemHistoryRow(
       id: jsonSerialization['id'] as int?,
       itemId: jsonSerialization['itemId'] as int,
+      item: jsonSerialization['item'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.ListItemRow>(
+              jsonSerialization['item'],
+            ),
       actorProfileId: jsonSerialization['actorProfileId'] as int,
+      actorProfile: jsonSerialization['actorProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['actorProfile'],
+            ),
       eventType: jsonSerialization['eventType'] as String,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
@@ -48,7 +65,11 @@ abstract class ListItemHistoryRow implements _i1.SerializableModel {
 
   int itemId;
 
+  _i2.ListItemRow? item;
+
   int actorProfileId;
+
+  _i3.AppProfileRow? actorProfile;
 
   String eventType;
 
@@ -60,7 +81,9 @@ abstract class ListItemHistoryRow implements _i1.SerializableModel {
   ListItemHistoryRow copyWith({
     int? id,
     int? itemId,
+    _i2.ListItemRow? item,
     int? actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     String? eventType,
     DateTime? createdAt,
   });
@@ -70,7 +93,9 @@ abstract class ListItemHistoryRow implements _i1.SerializableModel {
       '__className__': 'ListItemHistoryRow',
       if (id != null) 'id': id,
       'itemId': itemId,
+      if (item != null) 'item': item?.toJson(),
       'actorProfileId': actorProfileId,
+      if (actorProfile != null) 'actorProfile': actorProfile?.toJson(),
       'eventType': eventType,
       'createdAt': createdAt.toJson(),
     };
@@ -88,13 +113,17 @@ class _ListItemHistoryRowImpl extends ListItemHistoryRow {
   _ListItemHistoryRowImpl({
     int? id,
     required int itemId,
+    _i2.ListItemRow? item,
     required int actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     required String eventType,
     required DateTime createdAt,
   }) : super._(
          id: id,
          itemId: itemId,
+         item: item,
          actorProfileId: actorProfileId,
+         actorProfile: actorProfile,
          eventType: eventType,
          createdAt: createdAt,
        );
@@ -106,14 +135,20 @@ class _ListItemHistoryRowImpl extends ListItemHistoryRow {
   ListItemHistoryRow copyWith({
     Object? id = _Undefined,
     int? itemId,
+    Object? item = _Undefined,
     int? actorProfileId,
+    Object? actorProfile = _Undefined,
     String? eventType,
     DateTime? createdAt,
   }) {
     return ListItemHistoryRow(
       id: id is int? ? id : this.id,
       itemId: itemId ?? this.itemId,
+      item: item is _i2.ListItemRow? ? item : this.item?.copyWith(),
       actorProfileId: actorProfileId ?? this.actorProfileId,
+      actorProfile: actorProfile is _i3.AppProfileRow?
+          ? actorProfile
+          : this.actorProfile?.copyWith(),
       eventType: eventType ?? this.eventType,
       createdAt: createdAt ?? this.createdAt,
     );

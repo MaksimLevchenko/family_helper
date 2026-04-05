@@ -1,7 +1,7 @@
 class: ListItemHistoryRow
 table: list_item_history
 fields:
-  itemId: int
-  actorProfileId: int
+  item: ListItemRow?, relation
+  actorProfile: AppProfileRow?, relation
   eventType: String
   createdAt: DateTime

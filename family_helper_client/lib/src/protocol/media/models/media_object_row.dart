@@ -11,12 +11,17 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../family/models/family_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i4;
 
 abstract class MediaObjectRow implements _i1.SerializableModel {
   MediaObjectRow._({
     this.id,
     this.familyId,
+    this.family,
     required this.uploadedByProfileId,
+    this.uploadedByProfile,
     required this.objectKey,
     required this.bucket,
     required this.mimeType,
@@ -34,7 +39,9 @@ abstract class MediaObjectRow implements _i1.SerializableModel {
   factory MediaObjectRow({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     required int uploadedByProfileId,
+    _i3.AppProfileRow? uploadedByProfile,
     required String objectKey,
     required String bucket,
     required String mimeType,
@@ -53,7 +60,17 @@ abstract class MediaObjectRow implements _i1.SerializableModel {
     return MediaObjectRow(
       id: jsonSerialization['id'] as int?,
       familyId: jsonSerialization['familyId'] as int?,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       uploadedByProfileId: jsonSerialization['uploadedByProfileId'] as int,
+      uploadedByProfile: jsonSerialization['uploadedByProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['uploadedByProfile'],
+            ),
       objectKey: jsonSerialization['objectKey'] as String,
       bucket: jsonSerialization['bucket'] as String,
       mimeType: jsonSerialization['mimeType'] as String,
@@ -86,7 +103,11 @@ abstract class MediaObjectRow implements _i1.SerializableModel {
 
   int? familyId;
 
+  _i2.FamilyRow? family;
+
   int uploadedByProfileId;
+
+  _i3.AppProfileRow? uploadedByProfile;
 
   String objectKey;
 
@@ -118,7 +139,9 @@ abstract class MediaObjectRow implements _i1.SerializableModel {
   MediaObjectRow copyWith({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     int? uploadedByProfileId,
+    _i3.AppProfileRow? uploadedByProfile,
     String? objectKey,
     String? bucket,
     String? mimeType,
@@ -138,7 +161,10 @@ abstract class MediaObjectRow implements _i1.SerializableModel {
       '__className__': 'MediaObjectRow',
       if (id != null) 'id': id,
       if (familyId != null) 'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'uploadedByProfileId': uploadedByProfileId,
+      if (uploadedByProfile != null)
+        'uploadedByProfile': uploadedByProfile?.toJson(),
       'objectKey': objectKey,
       'bucket': bucket,
       'mimeType': mimeType,
@@ -166,7 +192,9 @@ class _MediaObjectRowImpl extends MediaObjectRow {
   _MediaObjectRowImpl({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     required int uploadedByProfileId,
+    _i3.AppProfileRow? uploadedByProfile,
     required String objectKey,
     required String bucket,
     required String mimeType,
@@ -182,7 +210,9 @@ class _MediaObjectRowImpl extends MediaObjectRow {
   }) : super._(
          id: id,
          familyId: familyId,
+         family: family,
          uploadedByProfileId: uploadedByProfileId,
+         uploadedByProfile: uploadedByProfile,
          objectKey: objectKey,
          bucket: bucket,
          mimeType: mimeType,
@@ -204,7 +234,9 @@ class _MediaObjectRowImpl extends MediaObjectRow {
   MediaObjectRow copyWith({
     Object? id = _Undefined,
     Object? familyId = _Undefined,
+    Object? family = _Undefined,
     int? uploadedByProfileId,
+    Object? uploadedByProfile = _Undefined,
     String? objectKey,
     String? bucket,
     String? mimeType,
@@ -221,7 +253,11 @@ class _MediaObjectRowImpl extends MediaObjectRow {
     return MediaObjectRow(
       id: id is int? ? id : this.id,
       familyId: familyId is int? ? familyId : this.familyId,
+      family: family is _i2.FamilyRow? ? family : this.family?.copyWith(),
       uploadedByProfileId: uploadedByProfileId ?? this.uploadedByProfileId,
+      uploadedByProfile: uploadedByProfile is _i3.AppProfileRow?
+          ? uploadedByProfile
+          : this.uploadedByProfile?.copyWith(),
       objectKey: objectKey ?? this.objectKey,
       bucket: bucket ?? this.bucket,
       mimeType: mimeType ?? this.mimeType,

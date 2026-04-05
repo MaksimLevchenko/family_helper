@@ -11,11 +11,15 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../family/models/family_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i4;
 
 abstract class MoneyGoalRow implements _i1.SerializableModel {
   MoneyGoalRow._({
     this.id,
     required this.familyId,
+    this.family,
     required this.title,
     this.description,
     required this.targetAmountCents,
@@ -25,6 +29,7 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
     this.reachedAt,
     this.archivedAt,
     required this.createdByProfileId,
+    this.createdByProfile,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
@@ -34,6 +39,7 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
   factory MoneyGoalRow({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String title,
     String? description,
     required int targetAmountCents,
@@ -43,6 +49,7 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
     DateTime? reachedAt,
     DateTime? archivedAt,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     required DateTime createdAt,
     required DateTime updatedAt,
     DateTime? deletedAt,
@@ -53,6 +60,11 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
     return MoneyGoalRow(
       id: jsonSerialization['id'] as int?,
       familyId: jsonSerialization['familyId'] as int,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       title: jsonSerialization['title'] as String,
       description: jsonSerialization['description'] as String?,
       targetAmountCents: jsonSerialization['targetAmountCents'] as int,
@@ -68,6 +80,11 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['archivedAt']),
       createdByProfileId: jsonSerialization['createdByProfileId'] as int,
+      createdByProfile: jsonSerialization['createdByProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['createdByProfile'],
+            ),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -88,6 +105,8 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
 
   int familyId;
 
+  _i2.FamilyRow? family;
+
   String title;
 
   String? description;
@@ -106,6 +125,8 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
 
   int createdByProfileId;
 
+  _i3.AppProfileRow? createdByProfile;
+
   DateTime createdAt;
 
   DateTime updatedAt;
@@ -120,6 +141,7 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
   MoneyGoalRow copyWith({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     String? title,
     String? description,
     int? targetAmountCents,
@@ -129,6 +151,7 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
     DateTime? reachedAt,
     DateTime? archivedAt,
     int? createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? deletedAt,
@@ -140,6 +163,7 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
       '__className__': 'MoneyGoalRow',
       if (id != null) 'id': id,
       'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'title': title,
       if (description != null) 'description': description,
       'targetAmountCents': targetAmountCents,
@@ -149,6 +173,8 @@ abstract class MoneyGoalRow implements _i1.SerializableModel {
       if (reachedAt != null) 'reachedAt': reachedAt?.toJson(),
       if (archivedAt != null) 'archivedAt': archivedAt?.toJson(),
       'createdByProfileId': createdByProfileId,
+      if (createdByProfile != null)
+        'createdByProfile': createdByProfile?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
@@ -168,6 +194,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
   _MoneyGoalRowImpl({
     int? id,
     required int familyId,
+    _i2.FamilyRow? family,
     required String title,
     String? description,
     required int targetAmountCents,
@@ -177,6 +204,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
     DateTime? reachedAt,
     DateTime? archivedAt,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     required DateTime createdAt,
     required DateTime updatedAt,
     DateTime? deletedAt,
@@ -184,6 +212,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
   }) : super._(
          id: id,
          familyId: familyId,
+         family: family,
          title: title,
          description: description,
          targetAmountCents: targetAmountCents,
@@ -193,6 +222,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
          reachedAt: reachedAt,
          archivedAt: archivedAt,
          createdByProfileId: createdByProfileId,
+         createdByProfile: createdByProfile,
          createdAt: createdAt,
          updatedAt: updatedAt,
          deletedAt: deletedAt,
@@ -206,6 +236,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
   MoneyGoalRow copyWith({
     Object? id = _Undefined,
     int? familyId,
+    Object? family = _Undefined,
     String? title,
     Object? description = _Undefined,
     int? targetAmountCents,
@@ -215,6 +246,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
     Object? reachedAt = _Undefined,
     Object? archivedAt = _Undefined,
     int? createdByProfileId,
+    Object? createdByProfile = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
     Object? deletedAt = _Undefined,
@@ -223,6 +255,7 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
     return MoneyGoalRow(
       id: id is int? ? id : this.id,
       familyId: familyId ?? this.familyId,
+      family: family is _i2.FamilyRow? ? family : this.family?.copyWith(),
       title: title ?? this.title,
       description: description is String? ? description : this.description,
       targetAmountCents: targetAmountCents ?? this.targetAmountCents,
@@ -232,6 +265,9 @@ class _MoneyGoalRowImpl extends MoneyGoalRow {
       reachedAt: reachedAt is DateTime? ? reachedAt : this.reachedAt,
       archivedAt: archivedAt is DateTime? ? archivedAt : this.archivedAt,
       createdByProfileId: createdByProfileId ?? this.createdByProfileId,
+      createdByProfile: createdByProfile is _i3.AppProfileRow?
+          ? createdByProfile
+          : this.createdByProfile?.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,

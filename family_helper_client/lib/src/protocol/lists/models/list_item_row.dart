@@ -11,11 +11,15 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../lists/models/family_list_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i4;
 
 abstract class ListItemRow implements _i1.SerializableModel {
   ListItemRow._({
     this.id,
     required this.listId,
+    this.list,
     required this.title,
     required this.qty,
     this.unit,
@@ -25,8 +29,10 @@ abstract class ListItemRow implements _i1.SerializableModel {
     required this.positionIndex,
     required this.isBought,
     this.boughtByProfileId,
+    this.boughtByProfile,
     this.boughtAt,
     required this.createdByProfileId,
+    this.createdByProfile,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
@@ -36,6 +42,7 @@ abstract class ListItemRow implements _i1.SerializableModel {
   factory ListItemRow({
     int? id,
     required int listId,
+    _i2.FamilyListRow? list,
     required String title,
     required double qty,
     String? unit,
@@ -45,8 +52,10 @@ abstract class ListItemRow implements _i1.SerializableModel {
     required int positionIndex,
     required bool isBought,
     int? boughtByProfileId,
+    _i3.AppProfileRow? boughtByProfile,
     DateTime? boughtAt,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     required DateTime createdAt,
     required DateTime updatedAt,
     DateTime? deletedAt,
@@ -57,6 +66,11 @@ abstract class ListItemRow implements _i1.SerializableModel {
     return ListItemRow(
       id: jsonSerialization['id'] as int?,
       listId: jsonSerialization['listId'] as int,
+      list: jsonSerialization['list'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.FamilyListRow>(
+              jsonSerialization['list'],
+            ),
       title: jsonSerialization['title'] as String,
       qty: (jsonSerialization['qty'] as num).toDouble(),
       unit: jsonSerialization['unit'] as String?,
@@ -66,10 +80,20 @@ abstract class ListItemRow implements _i1.SerializableModel {
       positionIndex: jsonSerialization['positionIndex'] as int,
       isBought: jsonSerialization['isBought'] as bool,
       boughtByProfileId: jsonSerialization['boughtByProfileId'] as int?,
+      boughtByProfile: jsonSerialization['boughtByProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['boughtByProfile'],
+            ),
       boughtAt: jsonSerialization['boughtAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['boughtAt']),
       createdByProfileId: jsonSerialization['createdByProfileId'] as int,
+      createdByProfile: jsonSerialization['createdByProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['createdByProfile'],
+            ),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -90,6 +114,8 @@ abstract class ListItemRow implements _i1.SerializableModel {
 
   int listId;
 
+  _i2.FamilyListRow? list;
+
   String title;
 
   double qty;
@@ -108,9 +134,13 @@ abstract class ListItemRow implements _i1.SerializableModel {
 
   int? boughtByProfileId;
 
+  _i3.AppProfileRow? boughtByProfile;
+
   DateTime? boughtAt;
 
   int createdByProfileId;
+
+  _i3.AppProfileRow? createdByProfile;
 
   DateTime createdAt;
 
@@ -126,6 +156,7 @@ abstract class ListItemRow implements _i1.SerializableModel {
   ListItemRow copyWith({
     int? id,
     int? listId,
+    _i2.FamilyListRow? list,
     String? title,
     double? qty,
     String? unit,
@@ -135,8 +166,10 @@ abstract class ListItemRow implements _i1.SerializableModel {
     int? positionIndex,
     bool? isBought,
     int? boughtByProfileId,
+    _i3.AppProfileRow? boughtByProfile,
     DateTime? boughtAt,
     int? createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? deletedAt,
@@ -148,6 +181,7 @@ abstract class ListItemRow implements _i1.SerializableModel {
       '__className__': 'ListItemRow',
       if (id != null) 'id': id,
       'listId': listId,
+      if (list != null) 'list': list?.toJson(),
       'title': title,
       'qty': qty,
       if (unit != null) 'unit': unit,
@@ -157,8 +191,11 @@ abstract class ListItemRow implements _i1.SerializableModel {
       'positionIndex': positionIndex,
       'isBought': isBought,
       if (boughtByProfileId != null) 'boughtByProfileId': boughtByProfileId,
+      if (boughtByProfile != null) 'boughtByProfile': boughtByProfile?.toJson(),
       if (boughtAt != null) 'boughtAt': boughtAt?.toJson(),
       'createdByProfileId': createdByProfileId,
+      if (createdByProfile != null)
+        'createdByProfile': createdByProfile?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
@@ -178,6 +215,7 @@ class _ListItemRowImpl extends ListItemRow {
   _ListItemRowImpl({
     int? id,
     required int listId,
+    _i2.FamilyListRow? list,
     required String title,
     required double qty,
     String? unit,
@@ -187,8 +225,10 @@ class _ListItemRowImpl extends ListItemRow {
     required int positionIndex,
     required bool isBought,
     int? boughtByProfileId,
+    _i3.AppProfileRow? boughtByProfile,
     DateTime? boughtAt,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     required DateTime createdAt,
     required DateTime updatedAt,
     DateTime? deletedAt,
@@ -196,6 +236,7 @@ class _ListItemRowImpl extends ListItemRow {
   }) : super._(
          id: id,
          listId: listId,
+         list: list,
          title: title,
          qty: qty,
          unit: unit,
@@ -205,8 +246,10 @@ class _ListItemRowImpl extends ListItemRow {
          positionIndex: positionIndex,
          isBought: isBought,
          boughtByProfileId: boughtByProfileId,
+         boughtByProfile: boughtByProfile,
          boughtAt: boughtAt,
          createdByProfileId: createdByProfileId,
+         createdByProfile: createdByProfile,
          createdAt: createdAt,
          updatedAt: updatedAt,
          deletedAt: deletedAt,
@@ -220,6 +263,7 @@ class _ListItemRowImpl extends ListItemRow {
   ListItemRow copyWith({
     Object? id = _Undefined,
     int? listId,
+    Object? list = _Undefined,
     String? title,
     double? qty,
     Object? unit = _Undefined,
@@ -229,8 +273,10 @@ class _ListItemRowImpl extends ListItemRow {
     int? positionIndex,
     bool? isBought,
     Object? boughtByProfileId = _Undefined,
+    Object? boughtByProfile = _Undefined,
     Object? boughtAt = _Undefined,
     int? createdByProfileId,
+    Object? createdByProfile = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
     Object? deletedAt = _Undefined,
@@ -239,6 +285,7 @@ class _ListItemRowImpl extends ListItemRow {
     return ListItemRow(
       id: id is int? ? id : this.id,
       listId: listId ?? this.listId,
+      list: list is _i2.FamilyListRow? ? list : this.list?.copyWith(),
       title: title ?? this.title,
       qty: qty ?? this.qty,
       unit: unit is String? ? unit : this.unit,
@@ -250,8 +297,14 @@ class _ListItemRowImpl extends ListItemRow {
       boughtByProfileId: boughtByProfileId is int?
           ? boughtByProfileId
           : this.boughtByProfileId,
+      boughtByProfile: boughtByProfile is _i3.AppProfileRow?
+          ? boughtByProfile
+          : this.boughtByProfile?.copyWith(),
       boughtAt: boughtAt is DateTime? ? boughtAt : this.boughtAt,
       createdByProfileId: createdByProfileId ?? this.createdByProfileId,
+      createdByProfile: createdByProfile is _i3.AppProfileRow?
+          ? createdByProfile
+          : this.createdByProfile?.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,

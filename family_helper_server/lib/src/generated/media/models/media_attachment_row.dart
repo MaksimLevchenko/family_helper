@@ -8,18 +8,24 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../media/models/media_object_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i4;
 
 abstract class MediaAttachmentRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   MediaAttachmentRow._({
     this.id,
     required this.mediaId,
+    this.media,
     required this.entityType,
     required this.entityId,
     required this.createdByProfileId,
+    this.createdByProfile,
     required this.createdAt,
     this.deletedAt,
     required this.version,
@@ -28,9 +34,11 @@ abstract class MediaAttachmentRow
   factory MediaAttachmentRow({
     int? id,
     required int mediaId,
+    _i2.MediaObjectRow? media,
     required String entityType,
     required int entityId,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     required DateTime createdAt,
     DateTime? deletedAt,
     required int version,
@@ -40,9 +48,19 @@ abstract class MediaAttachmentRow
     return MediaAttachmentRow(
       id: jsonSerialization['id'] as int?,
       mediaId: jsonSerialization['mediaId'] as int,
+      media: jsonSerialization['media'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.MediaObjectRow>(
+              jsonSerialization['media'],
+            ),
       entityType: jsonSerialization['entityType'] as String,
       entityId: jsonSerialization['entityId'] as int,
       createdByProfileId: jsonSerialization['createdByProfileId'] as int,
+      createdByProfile: jsonSerialization['createdByProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['createdByProfile'],
+            ),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -62,11 +80,15 @@ abstract class MediaAttachmentRow
 
   int mediaId;
 
+  _i2.MediaObjectRow? media;
+
   String entityType;
 
   int entityId;
 
   int createdByProfileId;
+
+  _i3.AppProfileRow? createdByProfile;
 
   DateTime createdAt;
 
@@ -83,9 +105,11 @@ abstract class MediaAttachmentRow
   MediaAttachmentRow copyWith({
     int? id,
     int? mediaId,
+    _i2.MediaObjectRow? media,
     String? entityType,
     int? entityId,
     int? createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     DateTime? createdAt,
     DateTime? deletedAt,
     int? version,
@@ -96,9 +120,12 @@ abstract class MediaAttachmentRow
       '__className__': 'MediaAttachmentRow',
       if (id != null) 'id': id,
       'mediaId': mediaId,
+      if (media != null) 'media': media?.toJson(),
       'entityType': entityType,
       'entityId': entityId,
       'createdByProfileId': createdByProfileId,
+      if (createdByProfile != null)
+        'createdByProfile': createdByProfile?.toJson(),
       'createdAt': createdAt.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
       'version': version,
@@ -111,17 +138,26 @@ abstract class MediaAttachmentRow
       '__className__': 'MediaAttachmentRow',
       if (id != null) 'id': id,
       'mediaId': mediaId,
+      if (media != null) 'media': media?.toJsonForProtocol(),
       'entityType': entityType,
       'entityId': entityId,
       'createdByProfileId': createdByProfileId,
+      if (createdByProfile != null)
+        'createdByProfile': createdByProfile?.toJsonForProtocol(),
       'createdAt': createdAt.toJson(),
       if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
       'version': version,
     };
   }
 
-  static MediaAttachmentRowInclude include() {
-    return MediaAttachmentRowInclude._();
+  static MediaAttachmentRowInclude include({
+    _i2.MediaObjectRowInclude? media,
+    _i3.AppProfileRowInclude? createdByProfile,
+  }) {
+    return MediaAttachmentRowInclude._(
+      media: media,
+      createdByProfile: createdByProfile,
+    );
   }
 
   static MediaAttachmentRowIncludeList includeList({
@@ -156,18 +192,22 @@ class _MediaAttachmentRowImpl extends MediaAttachmentRow {
   _MediaAttachmentRowImpl({
     int? id,
     required int mediaId,
+    _i2.MediaObjectRow? media,
     required String entityType,
     required int entityId,
     required int createdByProfileId,
+    _i3.AppProfileRow? createdByProfile,
     required DateTime createdAt,
     DateTime? deletedAt,
     required int version,
   }) : super._(
          id: id,
          mediaId: mediaId,
+         media: media,
          entityType: entityType,
          entityId: entityId,
          createdByProfileId: createdByProfileId,
+         createdByProfile: createdByProfile,
          createdAt: createdAt,
          deletedAt: deletedAt,
          version: version,
@@ -180,9 +220,11 @@ class _MediaAttachmentRowImpl extends MediaAttachmentRow {
   MediaAttachmentRow copyWith({
     Object? id = _Undefined,
     int? mediaId,
+    Object? media = _Undefined,
     String? entityType,
     int? entityId,
     int? createdByProfileId,
+    Object? createdByProfile = _Undefined,
     DateTime? createdAt,
     Object? deletedAt = _Undefined,
     int? version,
@@ -190,9 +232,13 @@ class _MediaAttachmentRowImpl extends MediaAttachmentRow {
     return MediaAttachmentRow(
       id: id is int? ? id : this.id,
       mediaId: mediaId ?? this.mediaId,
+      media: media is _i2.MediaObjectRow? ? media : this.media?.copyWith(),
       entityType: entityType ?? this.entityType,
       entityId: entityId ?? this.entityId,
       createdByProfileId: createdByProfileId ?? this.createdByProfileId,
+      createdByProfile: createdByProfile is _i3.AppProfileRow?
+          ? createdByProfile
+          : this.createdByProfile?.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,
       version: version ?? this.version,
@@ -280,17 +326,47 @@ class MediaAttachmentRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt mediaId;
 
+  _i2.MediaObjectRowTable? _media;
+
   late final _i1.ColumnString entityType;
 
   late final _i1.ColumnInt entityId;
 
   late final _i1.ColumnInt createdByProfileId;
 
+  _i3.AppProfileRowTable? _createdByProfile;
+
   late final _i1.ColumnDateTime createdAt;
 
   late final _i1.ColumnDateTime deletedAt;
 
   late final _i1.ColumnInt version;
+
+  _i2.MediaObjectRowTable get media {
+    if (_media != null) return _media!;
+    _media = _i1.createRelationTable(
+      relationFieldName: 'media',
+      field: MediaAttachmentRow.t.mediaId,
+      foreignField: _i2.MediaObjectRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.MediaObjectRowTable(tableRelation: foreignTableRelation),
+    );
+    return _media!;
+  }
+
+  _i3.AppProfileRowTable get createdByProfile {
+    if (_createdByProfile != null) return _createdByProfile!;
+    _createdByProfile = _i1.createRelationTable(
+      relationFieldName: 'createdByProfile',
+      field: MediaAttachmentRow.t.createdByProfileId,
+      foreignField: _i3.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _createdByProfile!;
+  }
 
   @override
   List<_i1.Column> get columns => [
@@ -303,13 +379,37 @@ class MediaAttachmentRowTable extends _i1.Table<int?> {
     deletedAt,
     version,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'media') {
+      return media;
+    }
+    if (relationField == 'createdByProfile') {
+      return createdByProfile;
+    }
+    return null;
+  }
 }
 
 class MediaAttachmentRowInclude extends _i1.IncludeObject {
-  MediaAttachmentRowInclude._();
+  MediaAttachmentRowInclude._({
+    _i2.MediaObjectRowInclude? media,
+    _i3.AppProfileRowInclude? createdByProfile,
+  }) {
+    _media = media;
+    _createdByProfile = createdByProfile;
+  }
+
+  _i2.MediaObjectRowInclude? _media;
+
+  _i3.AppProfileRowInclude? _createdByProfile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {
+    'media': _media,
+    'createdByProfile': _createdByProfile,
+  };
 
   @override
   _i1.Table<int?> get table => MediaAttachmentRow.t;
@@ -337,6 +437,8 @@ class MediaAttachmentRowIncludeList extends _i1.IncludeList {
 
 class MediaAttachmentRowRepository {
   const MediaAttachmentRowRepository._();
+
+  final attachRow = const MediaAttachmentRowAttachRowRepository._();
 
   /// Returns a list of [MediaAttachmentRow]s matching the given query parameters.
   ///
@@ -369,6 +471,7 @@ class MediaAttachmentRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<MediaAttachmentRowTable>? orderByList,
     _i1.Transaction? transaction,
+    MediaAttachmentRowInclude? include,
   }) async {
     return session.db.find<MediaAttachmentRow>(
       where: where?.call(MediaAttachmentRow.t),
@@ -378,6 +481,7 @@ class MediaAttachmentRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -406,6 +510,7 @@ class MediaAttachmentRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<MediaAttachmentRowTable>? orderByList,
     _i1.Transaction? transaction,
+    MediaAttachmentRowInclude? include,
   }) async {
     return session.db.findFirstRow<MediaAttachmentRow>(
       where: where?.call(MediaAttachmentRow.t),
@@ -414,6 +519,7 @@ class MediaAttachmentRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -422,10 +528,12 @@ class MediaAttachmentRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    MediaAttachmentRowInclude? include,
   }) async {
     return session.db.findById<MediaAttachmentRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -585,6 +693,58 @@ class MediaAttachmentRowRepository {
     return session.db.count<MediaAttachmentRow>(
       where: where?.call(MediaAttachmentRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class MediaAttachmentRowAttachRowRepository {
+  const MediaAttachmentRowAttachRowRepository._();
+
+  /// Creates a relation between the given [MediaAttachmentRow] and [MediaObjectRow]
+  /// by setting the [MediaAttachmentRow]'s foreign key `mediaId` to refer to the [MediaObjectRow].
+  Future<void> media(
+    _i1.Session session,
+    MediaAttachmentRow mediaAttachmentRow,
+    _i2.MediaObjectRow media, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (mediaAttachmentRow.id == null) {
+      throw ArgumentError.notNull('mediaAttachmentRow.id');
+    }
+    if (media.id == null) {
+      throw ArgumentError.notNull('media.id');
+    }
+
+    var $mediaAttachmentRow = mediaAttachmentRow.copyWith(mediaId: media.id);
+    await session.db.updateRow<MediaAttachmentRow>(
+      $mediaAttachmentRow,
+      columns: [MediaAttachmentRow.t.mediaId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [MediaAttachmentRow] and [AppProfileRow]
+  /// by setting the [MediaAttachmentRow]'s foreign key `createdByProfileId` to refer to the [AppProfileRow].
+  Future<void> createdByProfile(
+    _i1.Session session,
+    MediaAttachmentRow mediaAttachmentRow,
+    _i3.AppProfileRow createdByProfile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (mediaAttachmentRow.id == null) {
+      throw ArgumentError.notNull('mediaAttachmentRow.id');
+    }
+    if (createdByProfile.id == null) {
+      throw ArgumentError.notNull('createdByProfile.id');
+    }
+
+    var $mediaAttachmentRow = mediaAttachmentRow.copyWith(
+      createdByProfileId: createdByProfile.id,
+    );
+    await session.db.updateRow<MediaAttachmentRow>(
+      $mediaAttachmentRow,
+      columns: [MediaAttachmentRow.t.createdByProfileId],
       transaction: transaction,
     );
   }

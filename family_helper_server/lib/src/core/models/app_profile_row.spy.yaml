@@ -5,7 +5,7 @@ fields:
   displayName: String
   timezone: String
   locale: String, defaultModel='en', defaultPersist='en'
-  avatarMediaId: int?
+  avatarMedia: MediaObjectRow?, relation(optional)
   analyticsOptIn: bool
   createdAt: DateTime
   updatedAt: DateTime

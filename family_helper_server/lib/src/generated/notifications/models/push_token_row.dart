@@ -8,15 +8,19 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../core/models/app_profile_row.dart' as _i2;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i3;
 
 abstract class PushTokenRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   PushTokenRow._({
     this.id,
     required this.profileId,
+    this.profile,
     required this.token,
     required this.platform,
     this.provider,
@@ -34,6 +38,7 @@ abstract class PushTokenRow
   factory PushTokenRow({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String token,
     required String platform,
     String? provider,
@@ -52,6 +57,11 @@ abstract class PushTokenRow
     return PushTokenRow(
       id: jsonSerialization['id'] as int?,
       profileId: jsonSerialization['profileId'] as int,
+      profile: jsonSerialization['profile'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.AppProfileRow>(
+              jsonSerialization['profile'],
+            ),
       token: jsonSerialization['token'] as String,
       platform: jsonSerialization['platform'] as String,
       provider: jsonSerialization['provider'] as String?,
@@ -90,6 +100,8 @@ abstract class PushTokenRow
 
   int profileId;
 
+  _i2.AppProfileRow? profile;
+
   String token;
 
   String platform;
@@ -123,6 +135,7 @@ abstract class PushTokenRow
   PushTokenRow copyWith({
     int? id,
     int? profileId,
+    _i2.AppProfileRow? profile,
     String? token,
     String? platform,
     String? provider,
@@ -142,6 +155,7 @@ abstract class PushTokenRow
       '__className__': 'PushTokenRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJson(),
       'token': token,
       'platform': platform,
       if (provider != null) 'provider': provider,
@@ -163,6 +177,7 @@ abstract class PushTokenRow
       '__className__': 'PushTokenRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJsonForProtocol(),
       'token': token,
       'platform': platform,
       if (provider != null) 'provider': provider,
@@ -178,8 +193,8 @@ abstract class PushTokenRow
     };
   }
 
-  static PushTokenRowInclude include() {
-    return PushTokenRowInclude._();
+  static PushTokenRowInclude include({_i2.AppProfileRowInclude? profile}) {
+    return PushTokenRowInclude._(profile: profile);
   }
 
   static PushTokenRowIncludeList includeList({
@@ -214,6 +229,7 @@ class _PushTokenRowImpl extends PushTokenRow {
   _PushTokenRowImpl({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String token,
     required String platform,
     String? provider,
@@ -229,6 +245,7 @@ class _PushTokenRowImpl extends PushTokenRow {
   }) : super._(
          id: id,
          profileId: profileId,
+         profile: profile,
          token: token,
          platform: platform,
          provider: provider,
@@ -250,6 +267,7 @@ class _PushTokenRowImpl extends PushTokenRow {
   PushTokenRow copyWith({
     Object? id = _Undefined,
     int? profileId,
+    Object? profile = _Undefined,
     String? token,
     String? platform,
     Object? provider = _Undefined,
@@ -266,6 +284,9 @@ class _PushTokenRowImpl extends PushTokenRow {
     return PushTokenRow(
       id: id is int? ? id : this.id,
       profileId: profileId ?? this.profileId,
+      profile: profile is _i2.AppProfileRow?
+          ? profile
+          : this.profile?.copyWith(),
       token: token ?? this.token,
       platform: platform ?? this.platform,
       provider: provider is String? ? provider : this.provider,
@@ -418,6 +439,8 @@ class PushTokenRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt profileId;
 
+  _i2.AppProfileRowTable? _profile;
+
   late final _i1.ColumnString token;
 
   late final _i1.ColumnString platform;
@@ -442,6 +465,19 @@ class PushTokenRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt version;
 
+  _i2.AppProfileRowTable get profile {
+    if (_profile != null) return _profile!;
+    _profile = _i1.createRelationTable(
+      relationFieldName: 'profile',
+      field: PushTokenRow.t.profileId,
+      foreignField: _i2.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _profile!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -459,13 +495,25 @@ class PushTokenRowTable extends _i1.Table<int?> {
     disabledAt,
     version,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'profile') {
+      return profile;
+    }
+    return null;
+  }
 }
 
 class PushTokenRowInclude extends _i1.IncludeObject {
-  PushTokenRowInclude._();
+  PushTokenRowInclude._({_i2.AppProfileRowInclude? profile}) {
+    _profile = profile;
+  }
+
+  _i2.AppProfileRowInclude? _profile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {'profile': _profile};
 
   @override
   _i1.Table<int?> get table => PushTokenRow.t;
@@ -493,6 +541,8 @@ class PushTokenRowIncludeList extends _i1.IncludeList {
 
 class PushTokenRowRepository {
   const PushTokenRowRepository._();
+
+  final attachRow = const PushTokenRowAttachRowRepository._();
 
   /// Returns a list of [PushTokenRow]s matching the given query parameters.
   ///
@@ -525,6 +575,7 @@ class PushTokenRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<PushTokenRowTable>? orderByList,
     _i1.Transaction? transaction,
+    PushTokenRowInclude? include,
   }) async {
     return session.db.find<PushTokenRow>(
       where: where?.call(PushTokenRow.t),
@@ -534,6 +585,7 @@ class PushTokenRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -562,6 +614,7 @@ class PushTokenRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<PushTokenRowTable>? orderByList,
     _i1.Transaction? transaction,
+    PushTokenRowInclude? include,
   }) async {
     return session.db.findFirstRow<PushTokenRow>(
       where: where?.call(PushTokenRow.t),
@@ -570,6 +623,7 @@ class PushTokenRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -578,10 +632,12 @@ class PushTokenRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    PushTokenRowInclude? include,
   }) async {
     return session.db.findById<PushTokenRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -739,6 +795,33 @@ class PushTokenRowRepository {
     return session.db.count<PushTokenRow>(
       where: where?.call(PushTokenRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class PushTokenRowAttachRowRepository {
+  const PushTokenRowAttachRowRepository._();
+
+  /// Creates a relation between the given [PushTokenRow] and [AppProfileRow]
+  /// by setting the [PushTokenRow]'s foreign key `profileId` to refer to the [AppProfileRow].
+  Future<void> profile(
+    _i1.Session session,
+    PushTokenRow pushTokenRow,
+    _i2.AppProfileRow profile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (pushTokenRow.id == null) {
+      throw ArgumentError.notNull('pushTokenRow.id');
+    }
+    if (profile.id == null) {
+      throw ArgumentError.notNull('profile.id');
+    }
+
+    var $pushTokenRow = pushTokenRow.copyWith(profileId: profile.id);
+    await session.db.updateRow<PushTokenRow>(
+      $pushTokenRow,
+      columns: [PushTokenRow.t.profileId],
       transaction: transaction,
     );
   }

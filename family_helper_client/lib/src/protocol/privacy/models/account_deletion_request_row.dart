@@ -11,11 +11,14 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../core/models/app_profile_row.dart' as _i2;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i3;
 
 abstract class AccountDeletionRequestRow implements _i1.SerializableModel {
   AccountDeletionRequestRow._({
     this.id,
     required this.profileId,
+    this.profile,
     required this.status,
     required this.scheduledHardDeleteAt,
     required this.createdAt,
@@ -25,6 +28,7 @@ abstract class AccountDeletionRequestRow implements _i1.SerializableModel {
   factory AccountDeletionRequestRow({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String status,
     required DateTime scheduledHardDeleteAt,
     required DateTime createdAt,
@@ -37,6 +41,11 @@ abstract class AccountDeletionRequestRow implements _i1.SerializableModel {
     return AccountDeletionRequestRow(
       id: jsonSerialization['id'] as int?,
       profileId: jsonSerialization['profileId'] as int,
+      profile: jsonSerialization['profile'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.AppProfileRow>(
+              jsonSerialization['profile'],
+            ),
       status: jsonSerialization['status'] as String,
       scheduledHardDeleteAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['scheduledHardDeleteAt'],
@@ -59,6 +68,8 @@ abstract class AccountDeletionRequestRow implements _i1.SerializableModel {
 
   int profileId;
 
+  _i2.AppProfileRow? profile;
+
   String status;
 
   DateTime scheduledHardDeleteAt;
@@ -73,6 +84,7 @@ abstract class AccountDeletionRequestRow implements _i1.SerializableModel {
   AccountDeletionRequestRow copyWith({
     int? id,
     int? profileId,
+    _i2.AppProfileRow? profile,
     String? status,
     DateTime? scheduledHardDeleteAt,
     DateTime? createdAt,
@@ -84,6 +96,7 @@ abstract class AccountDeletionRequestRow implements _i1.SerializableModel {
       '__className__': 'AccountDeletionRequestRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJson(),
       'status': status,
       'scheduledHardDeleteAt': scheduledHardDeleteAt.toJson(),
       'createdAt': createdAt.toJson(),
@@ -103,6 +116,7 @@ class _AccountDeletionRequestRowImpl extends AccountDeletionRequestRow {
   _AccountDeletionRequestRowImpl({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String status,
     required DateTime scheduledHardDeleteAt,
     required DateTime createdAt,
@@ -110,6 +124,7 @@ class _AccountDeletionRequestRowImpl extends AccountDeletionRequestRow {
   }) : super._(
          id: id,
          profileId: profileId,
+         profile: profile,
          status: status,
          scheduledHardDeleteAt: scheduledHardDeleteAt,
          createdAt: createdAt,
@@ -123,6 +138,7 @@ class _AccountDeletionRequestRowImpl extends AccountDeletionRequestRow {
   AccountDeletionRequestRow copyWith({
     Object? id = _Undefined,
     int? profileId,
+    Object? profile = _Undefined,
     String? status,
     DateTime? scheduledHardDeleteAt,
     DateTime? createdAt,
@@ -131,6 +147,9 @@ class _AccountDeletionRequestRowImpl extends AccountDeletionRequestRow {
     return AccountDeletionRequestRow(
       id: id is int? ? id : this.id,
       profileId: profileId ?? this.profileId,
+      profile: profile is _i2.AppProfileRow?
+          ? profile
+          : this.profile?.copyWith(),
       status: status ?? this.status,
       scheduledHardDeleteAt:
           scheduledHardDeleteAt ?? this.scheduledHardDeleteAt,

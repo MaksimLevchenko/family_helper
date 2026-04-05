@@ -1,7 +1,7 @@
 class: AccountDeletionRequestRow
 table: account_deletion_request
 fields:
-  profileId: int
+  profile: AppProfileRow?, relation
   status: String
   scheduledHardDeleteAt: DateTime
   createdAt: DateTime

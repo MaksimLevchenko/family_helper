@@ -8,15 +8,19 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../core/models/app_profile_row.dart' as _i2;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i3;
 
 abstract class NotificationPreferenceRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   NotificationPreferenceRow._({
     this.id,
     required this.profileId,
+    this.profile,
     required this.notificationType,
     required this.enabled,
     this.quietHoursStart,
@@ -28,6 +32,7 @@ abstract class NotificationPreferenceRow
   factory NotificationPreferenceRow({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String notificationType,
     required bool enabled,
     String? quietHoursStart,
@@ -42,6 +47,11 @@ abstract class NotificationPreferenceRow
     return NotificationPreferenceRow(
       id: jsonSerialization['id'] as int?,
       profileId: jsonSerialization['profileId'] as int,
+      profile: jsonSerialization['profile'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.AppProfileRow>(
+              jsonSerialization['profile'],
+            ),
       notificationType: jsonSerialization['notificationType'] as String,
       enabled: jsonSerialization['enabled'] as bool,
       quietHoursStart: jsonSerialization['quietHoursStart'] as String?,
@@ -61,6 +71,8 @@ abstract class NotificationPreferenceRow
   int? id;
 
   int profileId;
+
+  _i2.AppProfileRow? profile;
 
   String notificationType;
 
@@ -83,6 +95,7 @@ abstract class NotificationPreferenceRow
   NotificationPreferenceRow copyWith({
     int? id,
     int? profileId,
+    _i2.AppProfileRow? profile,
     String? notificationType,
     bool? enabled,
     String? quietHoursStart,
@@ -96,6 +109,7 @@ abstract class NotificationPreferenceRow
       '__className__': 'NotificationPreferenceRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJson(),
       'notificationType': notificationType,
       'enabled': enabled,
       if (quietHoursStart != null) 'quietHoursStart': quietHoursStart,
@@ -111,6 +125,7 @@ abstract class NotificationPreferenceRow
       '__className__': 'NotificationPreferenceRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJsonForProtocol(),
       'notificationType': notificationType,
       'enabled': enabled,
       if (quietHoursStart != null) 'quietHoursStart': quietHoursStart,
@@ -120,8 +135,10 @@ abstract class NotificationPreferenceRow
     };
   }
 
-  static NotificationPreferenceRowInclude include() {
-    return NotificationPreferenceRowInclude._();
+  static NotificationPreferenceRowInclude include({
+    _i2.AppProfileRowInclude? profile,
+  }) {
+    return NotificationPreferenceRowInclude._(profile: profile);
   }
 
   static NotificationPreferenceRowIncludeList includeList({
@@ -156,6 +173,7 @@ class _NotificationPreferenceRowImpl extends NotificationPreferenceRow {
   _NotificationPreferenceRowImpl({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String notificationType,
     required bool enabled,
     String? quietHoursStart,
@@ -165,6 +183,7 @@ class _NotificationPreferenceRowImpl extends NotificationPreferenceRow {
   }) : super._(
          id: id,
          profileId: profileId,
+         profile: profile,
          notificationType: notificationType,
          enabled: enabled,
          quietHoursStart: quietHoursStart,
@@ -180,6 +199,7 @@ class _NotificationPreferenceRowImpl extends NotificationPreferenceRow {
   NotificationPreferenceRow copyWith({
     Object? id = _Undefined,
     int? profileId,
+    Object? profile = _Undefined,
     String? notificationType,
     bool? enabled,
     Object? quietHoursStart = _Undefined,
@@ -190,6 +210,9 @@ class _NotificationPreferenceRowImpl extends NotificationPreferenceRow {
     return NotificationPreferenceRow(
       id: id is int? ? id : this.id,
       profileId: profileId ?? this.profileId,
+      profile: profile is _i2.AppProfileRow?
+          ? profile
+          : this.profile?.copyWith(),
       notificationType: notificationType ?? this.notificationType,
       enabled: enabled ?? this.enabled,
       quietHoursStart: quietHoursStart is String?
@@ -286,6 +309,8 @@ class NotificationPreferenceRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt profileId;
 
+  _i2.AppProfileRowTable? _profile;
+
   late final _i1.ColumnString notificationType;
 
   late final _i1.ColumnBool enabled;
@@ -298,6 +323,19 @@ class NotificationPreferenceRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt version;
 
+  _i2.AppProfileRowTable get profile {
+    if (_profile != null) return _profile!;
+    _profile = _i1.createRelationTable(
+      relationFieldName: 'profile',
+      field: NotificationPreferenceRow.t.profileId,
+      foreignField: _i2.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _profile!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -309,13 +347,25 @@ class NotificationPreferenceRowTable extends _i1.Table<int?> {
     updatedAt,
     version,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'profile') {
+      return profile;
+    }
+    return null;
+  }
 }
 
 class NotificationPreferenceRowInclude extends _i1.IncludeObject {
-  NotificationPreferenceRowInclude._();
+  NotificationPreferenceRowInclude._({_i2.AppProfileRowInclude? profile}) {
+    _profile = profile;
+  }
+
+  _i2.AppProfileRowInclude? _profile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {'profile': _profile};
 
   @override
   _i1.Table<int?> get table => NotificationPreferenceRow.t;
@@ -343,6 +393,8 @@ class NotificationPreferenceRowIncludeList extends _i1.IncludeList {
 
 class NotificationPreferenceRowRepository {
   const NotificationPreferenceRowRepository._();
+
+  final attachRow = const NotificationPreferenceRowAttachRowRepository._();
 
   /// Returns a list of [NotificationPreferenceRow]s matching the given query parameters.
   ///
@@ -375,6 +427,7 @@ class NotificationPreferenceRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<NotificationPreferenceRowTable>? orderByList,
     _i1.Transaction? transaction,
+    NotificationPreferenceRowInclude? include,
   }) async {
     return session.db.find<NotificationPreferenceRow>(
       where: where?.call(NotificationPreferenceRow.t),
@@ -384,6 +437,7 @@ class NotificationPreferenceRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -412,6 +466,7 @@ class NotificationPreferenceRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<NotificationPreferenceRowTable>? orderByList,
     _i1.Transaction? transaction,
+    NotificationPreferenceRowInclude? include,
   }) async {
     return session.db.findFirstRow<NotificationPreferenceRow>(
       where: where?.call(NotificationPreferenceRow.t),
@@ -420,6 +475,7 @@ class NotificationPreferenceRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -428,10 +484,12 @@ class NotificationPreferenceRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    NotificationPreferenceRowInclude? include,
   }) async {
     return session.db.findById<NotificationPreferenceRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -591,6 +649,35 @@ class NotificationPreferenceRowRepository {
     return session.db.count<NotificationPreferenceRow>(
       where: where?.call(NotificationPreferenceRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class NotificationPreferenceRowAttachRowRepository {
+  const NotificationPreferenceRowAttachRowRepository._();
+
+  /// Creates a relation between the given [NotificationPreferenceRow] and [AppProfileRow]
+  /// by setting the [NotificationPreferenceRow]'s foreign key `profileId` to refer to the [AppProfileRow].
+  Future<void> profile(
+    _i1.Session session,
+    NotificationPreferenceRow notificationPreferenceRow,
+    _i2.AppProfileRow profile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (notificationPreferenceRow.id == null) {
+      throw ArgumentError.notNull('notificationPreferenceRow.id');
+    }
+    if (profile.id == null) {
+      throw ArgumentError.notNull('profile.id');
+    }
+
+    var $notificationPreferenceRow = notificationPreferenceRow.copyWith(
+      profileId: profile.id,
+    );
+    await session.db.updateRow<NotificationPreferenceRow>(
+      $notificationPreferenceRow,
+      columns: [NotificationPreferenceRow.t.profileId],
       transaction: transaction,
     );
   }

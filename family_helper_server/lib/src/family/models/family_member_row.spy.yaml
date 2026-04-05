@@ -1,8 +1,8 @@
 class: FamilyMemberRow
 table: family_member
 fields:
-  familyId: int
-  profileId: int
+  family: FamilyRow?, relation
+  profile: AppProfileRow?, relation
   role: String
   status: String
   createdAt: DateTime

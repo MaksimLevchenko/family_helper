@@ -11,6 +11,8 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../media/models/media_object_row.dart' as _i2;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i3;
 
 abstract class AppProfileRow implements _i1.SerializableModel {
   AppProfileRow._({
@@ -20,6 +22,7 @@ abstract class AppProfileRow implements _i1.SerializableModel {
     required this.timezone,
     String? locale,
     this.avatarMediaId,
+    this.avatarMedia,
     required this.analyticsOptIn,
     required this.createdAt,
     required this.updatedAt,
@@ -34,6 +37,7 @@ abstract class AppProfileRow implements _i1.SerializableModel {
     required String timezone,
     String? locale,
     int? avatarMediaId,
+    _i2.MediaObjectRow? avatarMedia,
     required bool analyticsOptIn,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -49,6 +53,11 @@ abstract class AppProfileRow implements _i1.SerializableModel {
       timezone: jsonSerialization['timezone'] as String,
       locale: jsonSerialization['locale'] as String?,
       avatarMediaId: jsonSerialization['avatarMediaId'] as int?,
+      avatarMedia: jsonSerialization['avatarMedia'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.MediaObjectRow>(
+              jsonSerialization['avatarMedia'],
+            ),
       analyticsOptIn: jsonSerialization['analyticsOptIn'] as bool,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
@@ -78,6 +87,8 @@ abstract class AppProfileRow implements _i1.SerializableModel {
 
   int? avatarMediaId;
 
+  _i2.MediaObjectRow? avatarMedia;
+
   bool analyticsOptIn;
 
   DateTime createdAt;
@@ -98,6 +109,7 @@ abstract class AppProfileRow implements _i1.SerializableModel {
     String? timezone,
     String? locale,
     int? avatarMediaId,
+    _i2.MediaObjectRow? avatarMedia,
     bool? analyticsOptIn,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -114,6 +126,7 @@ abstract class AppProfileRow implements _i1.SerializableModel {
       'timezone': timezone,
       'locale': locale,
       if (avatarMediaId != null) 'avatarMediaId': avatarMediaId,
+      if (avatarMedia != null) 'avatarMedia': avatarMedia?.toJson(),
       'analyticsOptIn': analyticsOptIn,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -138,6 +151,7 @@ class _AppProfileRowImpl extends AppProfileRow {
     required String timezone,
     String? locale,
     int? avatarMediaId,
+    _i2.MediaObjectRow? avatarMedia,
     required bool analyticsOptIn,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -150,6 +164,7 @@ class _AppProfileRowImpl extends AppProfileRow {
          timezone: timezone,
          locale: locale,
          avatarMediaId: avatarMediaId,
+         avatarMedia: avatarMedia,
          analyticsOptIn: analyticsOptIn,
          createdAt: createdAt,
          updatedAt: updatedAt,
@@ -168,6 +183,7 @@ class _AppProfileRowImpl extends AppProfileRow {
     String? timezone,
     String? locale,
     Object? avatarMediaId = _Undefined,
+    Object? avatarMedia = _Undefined,
     bool? analyticsOptIn,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -181,6 +197,9 @@ class _AppProfileRowImpl extends AppProfileRow {
       timezone: timezone ?? this.timezone,
       locale: locale ?? this.locale,
       avatarMediaId: avatarMediaId is int? ? avatarMediaId : this.avatarMediaId,
+      avatarMedia: avatarMedia is _i2.MediaObjectRow?
+          ? avatarMedia
+          : this.avatarMedia?.copyWith(),
       analyticsOptIn: analyticsOptIn ?? this.analyticsOptIn,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

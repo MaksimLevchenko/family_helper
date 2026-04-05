@@ -8,16 +8,22 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../core/models/app_profile_row.dart' as _i2;
+import '../../family/models/family_row.dart' as _i3;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i4;
 
 abstract class AppNotificationRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   AppNotificationRow._({
     this.id,
     required this.profileId,
+    this.profile,
     required this.familyId,
+    this.family,
     required this.category,
     required this.title,
     required this.body,
@@ -36,7 +42,9 @@ abstract class AppNotificationRow
   factory AppNotificationRow({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required int familyId,
+    _i3.FamilyRow? family,
     required String category,
     required String title,
     required String body,
@@ -56,7 +64,17 @@ abstract class AppNotificationRow
     return AppNotificationRow(
       id: jsonSerialization['id'] as int?,
       profileId: jsonSerialization['profileId'] as int,
+      profile: jsonSerialization['profile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.AppProfileRow>(
+              jsonSerialization['profile'],
+            ),
       familyId: jsonSerialization['familyId'] as int,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       category: jsonSerialization['category'] as String,
       title: jsonSerialization['title'] as String,
       body: jsonSerialization['body'] as String,
@@ -88,7 +106,11 @@ abstract class AppNotificationRow
 
   int profileId;
 
+  _i2.AppProfileRow? profile;
+
   int familyId;
+
+  _i3.FamilyRow? family;
 
   String category;
 
@@ -125,7 +147,9 @@ abstract class AppNotificationRow
   AppNotificationRow copyWith({
     int? id,
     int? profileId,
+    _i2.AppProfileRow? profile,
     int? familyId,
+    _i3.FamilyRow? family,
     String? category,
     String? title,
     String? body,
@@ -146,7 +170,9 @@ abstract class AppNotificationRow
       '__className__': 'AppNotificationRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJson(),
       'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'category': category,
       'title': title,
       'body': body,
@@ -169,7 +195,9 @@ abstract class AppNotificationRow
       '__className__': 'AppNotificationRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJsonForProtocol(),
       'familyId': familyId,
+      if (family != null) 'family': family?.toJsonForProtocol(),
       'category': category,
       'title': title,
       'body': body,
@@ -186,8 +214,14 @@ abstract class AppNotificationRow
     };
   }
 
-  static AppNotificationRowInclude include() {
-    return AppNotificationRowInclude._();
+  static AppNotificationRowInclude include({
+    _i2.AppProfileRowInclude? profile,
+    _i3.FamilyRowInclude? family,
+  }) {
+    return AppNotificationRowInclude._(
+      profile: profile,
+      family: family,
+    );
   }
 
   static AppNotificationRowIncludeList includeList({
@@ -222,7 +256,9 @@ class _AppNotificationRowImpl extends AppNotificationRow {
   _AppNotificationRowImpl({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required int familyId,
+    _i3.FamilyRow? family,
     required String category,
     required String title,
     required String body,
@@ -239,7 +275,9 @@ class _AppNotificationRowImpl extends AppNotificationRow {
   }) : super._(
          id: id,
          profileId: profileId,
+         profile: profile,
          familyId: familyId,
+         family: family,
          category: category,
          title: title,
          body: body,
@@ -262,7 +300,9 @@ class _AppNotificationRowImpl extends AppNotificationRow {
   AppNotificationRow copyWith({
     Object? id = _Undefined,
     int? profileId,
+    Object? profile = _Undefined,
     int? familyId,
+    Object? family = _Undefined,
     String? category,
     String? title,
     String? body,
@@ -280,7 +320,11 @@ class _AppNotificationRowImpl extends AppNotificationRow {
     return AppNotificationRow(
       id: id is int? ? id : this.id,
       profileId: profileId ?? this.profileId,
+      profile: profile is _i2.AppProfileRow?
+          ? profile
+          : this.profile?.copyWith(),
       familyId: familyId ?? this.familyId,
+      family: family is _i3.FamilyRow? ? family : this.family?.copyWith(),
       category: category ?? this.category,
       title: title ?? this.title,
       body: body ?? this.body,
@@ -451,7 +495,11 @@ class AppNotificationRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt profileId;
 
+  _i2.AppProfileRowTable? _profile;
+
   late final _i1.ColumnInt familyId;
+
+  _i3.FamilyRowTable? _family;
 
   late final _i1.ColumnString category;
 
@@ -479,6 +527,32 @@ class AppNotificationRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt version;
 
+  _i2.AppProfileRowTable get profile {
+    if (_profile != null) return _profile!;
+    _profile = _i1.createRelationTable(
+      relationFieldName: 'profile',
+      field: AppNotificationRow.t.profileId,
+      foreignField: _i2.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _profile!;
+  }
+
+  _i3.FamilyRowTable get family {
+    if (_family != null) return _family!;
+    _family = _i1.createRelationTable(
+      relationFieldName: 'family',
+      field: AppNotificationRow.t.familyId,
+      foreignField: _i3.FamilyRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.FamilyRowTable(tableRelation: foreignTableRelation),
+    );
+    return _family!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -498,13 +572,37 @@ class AppNotificationRowTable extends _i1.Table<int?> {
     pushStatus,
     version,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'profile') {
+      return profile;
+    }
+    if (relationField == 'family') {
+      return family;
+    }
+    return null;
+  }
 }
 
 class AppNotificationRowInclude extends _i1.IncludeObject {
-  AppNotificationRowInclude._();
+  AppNotificationRowInclude._({
+    _i2.AppProfileRowInclude? profile,
+    _i3.FamilyRowInclude? family,
+  }) {
+    _profile = profile;
+    _family = family;
+  }
+
+  _i2.AppProfileRowInclude? _profile;
+
+  _i3.FamilyRowInclude? _family;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {
+    'profile': _profile,
+    'family': _family,
+  };
 
   @override
   _i1.Table<int?> get table => AppNotificationRow.t;
@@ -532,6 +630,8 @@ class AppNotificationRowIncludeList extends _i1.IncludeList {
 
 class AppNotificationRowRepository {
   const AppNotificationRowRepository._();
+
+  final attachRow = const AppNotificationRowAttachRowRepository._();
 
   /// Returns a list of [AppNotificationRow]s matching the given query parameters.
   ///
@@ -564,6 +664,7 @@ class AppNotificationRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<AppNotificationRowTable>? orderByList,
     _i1.Transaction? transaction,
+    AppNotificationRowInclude? include,
   }) async {
     return session.db.find<AppNotificationRow>(
       where: where?.call(AppNotificationRow.t),
@@ -573,6 +674,7 @@ class AppNotificationRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -601,6 +703,7 @@ class AppNotificationRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<AppNotificationRowTable>? orderByList,
     _i1.Transaction? transaction,
+    AppNotificationRowInclude? include,
   }) async {
     return session.db.findFirstRow<AppNotificationRow>(
       where: where?.call(AppNotificationRow.t),
@@ -609,6 +712,7 @@ class AppNotificationRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -617,10 +721,12 @@ class AppNotificationRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    AppNotificationRowInclude? include,
   }) async {
     return session.db.findById<AppNotificationRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -780,6 +886,58 @@ class AppNotificationRowRepository {
     return session.db.count<AppNotificationRow>(
       where: where?.call(AppNotificationRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class AppNotificationRowAttachRowRepository {
+  const AppNotificationRowAttachRowRepository._();
+
+  /// Creates a relation between the given [AppNotificationRow] and [AppProfileRow]
+  /// by setting the [AppNotificationRow]'s foreign key `profileId` to refer to the [AppProfileRow].
+  Future<void> profile(
+    _i1.Session session,
+    AppNotificationRow appNotificationRow,
+    _i2.AppProfileRow profile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (appNotificationRow.id == null) {
+      throw ArgumentError.notNull('appNotificationRow.id');
+    }
+    if (profile.id == null) {
+      throw ArgumentError.notNull('profile.id');
+    }
+
+    var $appNotificationRow = appNotificationRow.copyWith(
+      profileId: profile.id,
+    );
+    await session.db.updateRow<AppNotificationRow>(
+      $appNotificationRow,
+      columns: [AppNotificationRow.t.profileId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [AppNotificationRow] and [FamilyRow]
+  /// by setting the [AppNotificationRow]'s foreign key `familyId` to refer to the [FamilyRow].
+  Future<void> family(
+    _i1.Session session,
+    AppNotificationRow appNotificationRow,
+    _i3.FamilyRow family, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (appNotificationRow.id == null) {
+      throw ArgumentError.notNull('appNotificationRow.id');
+    }
+    if (family.id == null) {
+      throw ArgumentError.notNull('family.id');
+    }
+
+    var $appNotificationRow = appNotificationRow.copyWith(familyId: family.id);
+    await session.db.updateRow<AppNotificationRow>(
+      $appNotificationRow,
+      columns: [AppNotificationRow.t.familyId],
       transaction: transaction,
     );
   }

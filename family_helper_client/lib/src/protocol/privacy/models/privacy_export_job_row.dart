@@ -11,11 +11,14 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../core/models/app_profile_row.dart' as _i2;
+import 'package:family_helper_client/src/protocol/protocol.dart' as _i3;
 
 abstract class PrivacyExportJobRow implements _i1.SerializableModel {
   PrivacyExportJobRow._({
     this.id,
     required this.profileId,
+    this.profile,
     required this.status,
     required this.objectKey,
     this.signedUrl,
@@ -27,6 +30,7 @@ abstract class PrivacyExportJobRow implements _i1.SerializableModel {
   factory PrivacyExportJobRow({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String status,
     required String objectKey,
     String? signedUrl,
@@ -39,6 +43,11 @@ abstract class PrivacyExportJobRow implements _i1.SerializableModel {
     return PrivacyExportJobRow(
       id: jsonSerialization['id'] as int?,
       profileId: jsonSerialization['profileId'] as int,
+      profile: jsonSerialization['profile'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.AppProfileRow>(
+              jsonSerialization['profile'],
+            ),
       status: jsonSerialization['status'] as String,
       objectKey: jsonSerialization['objectKey'] as String,
       signedUrl: jsonSerialization['signedUrl'] as String?,
@@ -63,6 +72,8 @@ abstract class PrivacyExportJobRow implements _i1.SerializableModel {
 
   int profileId;
 
+  _i2.AppProfileRow? profile;
+
   String status;
 
   String objectKey;
@@ -81,6 +92,7 @@ abstract class PrivacyExportJobRow implements _i1.SerializableModel {
   PrivacyExportJobRow copyWith({
     int? id,
     int? profileId,
+    _i2.AppProfileRow? profile,
     String? status,
     String? objectKey,
     String? signedUrl,
@@ -94,6 +106,7 @@ abstract class PrivacyExportJobRow implements _i1.SerializableModel {
       '__className__': 'PrivacyExportJobRow',
       if (id != null) 'id': id,
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJson(),
       'status': status,
       'objectKey': objectKey,
       if (signedUrl != null) 'signedUrl': signedUrl,
@@ -115,6 +128,7 @@ class _PrivacyExportJobRowImpl extends PrivacyExportJobRow {
   _PrivacyExportJobRowImpl({
     int? id,
     required int profileId,
+    _i2.AppProfileRow? profile,
     required String status,
     required String objectKey,
     String? signedUrl,
@@ -124,6 +138,7 @@ class _PrivacyExportJobRowImpl extends PrivacyExportJobRow {
   }) : super._(
          id: id,
          profileId: profileId,
+         profile: profile,
          status: status,
          objectKey: objectKey,
          signedUrl: signedUrl,
@@ -139,6 +154,7 @@ class _PrivacyExportJobRowImpl extends PrivacyExportJobRow {
   PrivacyExportJobRow copyWith({
     Object? id = _Undefined,
     int? profileId,
+    Object? profile = _Undefined,
     String? status,
     String? objectKey,
     Object? signedUrl = _Undefined,
@@ -149,6 +165,9 @@ class _PrivacyExportJobRowImpl extends PrivacyExportJobRow {
     return PrivacyExportJobRow(
       id: id is int? ? id : this.id,
       profileId: profileId ?? this.profileId,
+      profile: profile is _i2.AppProfileRow?
+          ? profile
+          : this.profile?.copyWith(),
       status: status ?? this.status,
       objectKey: objectKey ?? this.objectKey,
       signedUrl: signedUrl is String? ? signedUrl : this.signedUrl,

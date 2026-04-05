@@ -8,16 +8,22 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../money_goals/models/money_goal_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i4;
 
 abstract class MoneyContributionRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   MoneyContributionRow._({
     this.id,
     required this.goalId,
+    this.goal,
     required this.profileId,
+    this.profile,
     required this.amountCents,
     required this.currency,
     this.note,
@@ -29,7 +35,9 @@ abstract class MoneyContributionRow
   factory MoneyContributionRow({
     int? id,
     required int goalId,
+    _i2.MoneyGoalRow? goal,
     required int profileId,
+    _i3.AppProfileRow? profile,
     required int amountCents,
     required String currency,
     String? note,
@@ -44,7 +52,17 @@ abstract class MoneyContributionRow
     return MoneyContributionRow(
       id: jsonSerialization['id'] as int?,
       goalId: jsonSerialization['goalId'] as int,
+      goal: jsonSerialization['goal'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.MoneyGoalRow>(
+              jsonSerialization['goal'],
+            ),
       profileId: jsonSerialization['profileId'] as int,
+      profile: jsonSerialization['profile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['profile'],
+            ),
       amountCents: jsonSerialization['amountCents'] as int,
       currency: jsonSerialization['currency'] as String,
       note: jsonSerialization['note'] as String?,
@@ -67,7 +85,11 @@ abstract class MoneyContributionRow
 
   int goalId;
 
+  _i2.MoneyGoalRow? goal;
+
   int profileId;
+
+  _i3.AppProfileRow? profile;
 
   int amountCents;
 
@@ -90,7 +112,9 @@ abstract class MoneyContributionRow
   MoneyContributionRow copyWith({
     int? id,
     int? goalId,
+    _i2.MoneyGoalRow? goal,
     int? profileId,
+    _i3.AppProfileRow? profile,
     int? amountCents,
     String? currency,
     String? note,
@@ -104,7 +128,9 @@ abstract class MoneyContributionRow
       '__className__': 'MoneyContributionRow',
       if (id != null) 'id': id,
       'goalId': goalId,
+      if (goal != null) 'goal': goal?.toJson(),
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJson(),
       'amountCents': amountCents,
       'currency': currency,
       if (note != null) 'note': note,
@@ -120,7 +146,9 @@ abstract class MoneyContributionRow
       '__className__': 'MoneyContributionRow',
       if (id != null) 'id': id,
       'goalId': goalId,
+      if (goal != null) 'goal': goal?.toJsonForProtocol(),
       'profileId': profileId,
+      if (profile != null) 'profile': profile?.toJsonForProtocol(),
       'amountCents': amountCents,
       'currency': currency,
       if (note != null) 'note': note,
@@ -130,8 +158,14 @@ abstract class MoneyContributionRow
     };
   }
 
-  static MoneyContributionRowInclude include() {
-    return MoneyContributionRowInclude._();
+  static MoneyContributionRowInclude include({
+    _i2.MoneyGoalRowInclude? goal,
+    _i3.AppProfileRowInclude? profile,
+  }) {
+    return MoneyContributionRowInclude._(
+      goal: goal,
+      profile: profile,
+    );
   }
 
   static MoneyContributionRowIncludeList includeList({
@@ -166,7 +200,9 @@ class _MoneyContributionRowImpl extends MoneyContributionRow {
   _MoneyContributionRowImpl({
     int? id,
     required int goalId,
+    _i2.MoneyGoalRow? goal,
     required int profileId,
+    _i3.AppProfileRow? profile,
     required int amountCents,
     required String currency,
     String? note,
@@ -176,7 +212,9 @@ class _MoneyContributionRowImpl extends MoneyContributionRow {
   }) : super._(
          id: id,
          goalId: goalId,
+         goal: goal,
          profileId: profileId,
+         profile: profile,
          amountCents: amountCents,
          currency: currency,
          note: note,
@@ -192,7 +230,9 @@ class _MoneyContributionRowImpl extends MoneyContributionRow {
   MoneyContributionRow copyWith({
     Object? id = _Undefined,
     int? goalId,
+    Object? goal = _Undefined,
     int? profileId,
+    Object? profile = _Undefined,
     int? amountCents,
     String? currency,
     Object? note = _Undefined,
@@ -203,7 +243,11 @@ class _MoneyContributionRowImpl extends MoneyContributionRow {
     return MoneyContributionRow(
       id: id is int? ? id : this.id,
       goalId: goalId ?? this.goalId,
+      goal: goal is _i2.MoneyGoalRow? ? goal : this.goal?.copyWith(),
       profileId: profileId ?? this.profileId,
+      profile: profile is _i3.AppProfileRow?
+          ? profile
+          : this.profile?.copyWith(),
       amountCents: amountCents ?? this.amountCents,
       currency: currency ?? this.currency,
       note: note is String? ? note : this.note,
@@ -306,7 +350,11 @@ class MoneyContributionRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt goalId;
 
+  _i2.MoneyGoalRowTable? _goal;
+
   late final _i1.ColumnInt profileId;
+
+  _i3.AppProfileRowTable? _profile;
 
   late final _i1.ColumnInt amountCents;
 
@@ -320,6 +368,32 @@ class MoneyContributionRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnDateTime revokedAt;
 
+  _i2.MoneyGoalRowTable get goal {
+    if (_goal != null) return _goal!;
+    _goal = _i1.createRelationTable(
+      relationFieldName: 'goal',
+      field: MoneyContributionRow.t.goalId,
+      foreignField: _i2.MoneyGoalRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.MoneyGoalRowTable(tableRelation: foreignTableRelation),
+    );
+    return _goal!;
+  }
+
+  _i3.AppProfileRowTable get profile {
+    if (_profile != null) return _profile!;
+    _profile = _i1.createRelationTable(
+      relationFieldName: 'profile',
+      field: MoneyContributionRow.t.profileId,
+      foreignField: _i3.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _profile!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -332,13 +406,37 @@ class MoneyContributionRowTable extends _i1.Table<int?> {
     createdAt,
     revokedAt,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'goal') {
+      return goal;
+    }
+    if (relationField == 'profile') {
+      return profile;
+    }
+    return null;
+  }
 }
 
 class MoneyContributionRowInclude extends _i1.IncludeObject {
-  MoneyContributionRowInclude._();
+  MoneyContributionRowInclude._({
+    _i2.MoneyGoalRowInclude? goal,
+    _i3.AppProfileRowInclude? profile,
+  }) {
+    _goal = goal;
+    _profile = profile;
+  }
+
+  _i2.MoneyGoalRowInclude? _goal;
+
+  _i3.AppProfileRowInclude? _profile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {
+    'goal': _goal,
+    'profile': _profile,
+  };
 
   @override
   _i1.Table<int?> get table => MoneyContributionRow.t;
@@ -366,6 +464,8 @@ class MoneyContributionRowIncludeList extends _i1.IncludeList {
 
 class MoneyContributionRowRepository {
   const MoneyContributionRowRepository._();
+
+  final attachRow = const MoneyContributionRowAttachRowRepository._();
 
   /// Returns a list of [MoneyContributionRow]s matching the given query parameters.
   ///
@@ -398,6 +498,7 @@ class MoneyContributionRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<MoneyContributionRowTable>? orderByList,
     _i1.Transaction? transaction,
+    MoneyContributionRowInclude? include,
   }) async {
     return session.db.find<MoneyContributionRow>(
       where: where?.call(MoneyContributionRow.t),
@@ -407,6 +508,7 @@ class MoneyContributionRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -435,6 +537,7 @@ class MoneyContributionRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<MoneyContributionRowTable>? orderByList,
     _i1.Transaction? transaction,
+    MoneyContributionRowInclude? include,
   }) async {
     return session.db.findFirstRow<MoneyContributionRow>(
       where: where?.call(MoneyContributionRow.t),
@@ -443,6 +546,7 @@ class MoneyContributionRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -451,10 +555,12 @@ class MoneyContributionRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    MoneyContributionRowInclude? include,
   }) async {
     return session.db.findById<MoneyContributionRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -614,6 +720,58 @@ class MoneyContributionRowRepository {
     return session.db.count<MoneyContributionRow>(
       where: where?.call(MoneyContributionRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class MoneyContributionRowAttachRowRepository {
+  const MoneyContributionRowAttachRowRepository._();
+
+  /// Creates a relation between the given [MoneyContributionRow] and [MoneyGoalRow]
+  /// by setting the [MoneyContributionRow]'s foreign key `goalId` to refer to the [MoneyGoalRow].
+  Future<void> goal(
+    _i1.Session session,
+    MoneyContributionRow moneyContributionRow,
+    _i2.MoneyGoalRow goal, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (moneyContributionRow.id == null) {
+      throw ArgumentError.notNull('moneyContributionRow.id');
+    }
+    if (goal.id == null) {
+      throw ArgumentError.notNull('goal.id');
+    }
+
+    var $moneyContributionRow = moneyContributionRow.copyWith(goalId: goal.id);
+    await session.db.updateRow<MoneyContributionRow>(
+      $moneyContributionRow,
+      columns: [MoneyContributionRow.t.goalId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [MoneyContributionRow] and [AppProfileRow]
+  /// by setting the [MoneyContributionRow]'s foreign key `profileId` to refer to the [AppProfileRow].
+  Future<void> profile(
+    _i1.Session session,
+    MoneyContributionRow moneyContributionRow,
+    _i3.AppProfileRow profile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (moneyContributionRow.id == null) {
+      throw ArgumentError.notNull('moneyContributionRow.id');
+    }
+    if (profile.id == null) {
+      throw ArgumentError.notNull('profile.id');
+    }
+
+    var $moneyContributionRow = moneyContributionRow.copyWith(
+      profileId: profile.id,
+    );
+    await session.db.updateRow<MoneyContributionRow>(
+      $moneyContributionRow,
+      columns: [MoneyContributionRow.t.profileId],
       transaction: transaction,
     );
   }

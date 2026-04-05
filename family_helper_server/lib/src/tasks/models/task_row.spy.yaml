@@ -1,7 +1,7 @@
 class: TaskRow
 table: task
 fields:
-  familyId: int
+  family: FamilyRow?, relation
   title: String
   description: String?
   isPersonal: bool
@@ -13,10 +13,10 @@ fields:
   dueOffsetUnit: String?
   recurrenceMode: String?
   recurrenceRrule: String?
-  assigneeProfileId: int?
-  createdByProfileId: int
+  assigneeProfile: AppProfileRow?, relation(optional)
+  createdByProfile: AppProfileRow?, relation
   completedAt: DateTime?
-  sourceTaskId: int?
+  sourceTask: TaskRow?, relation(optional)
   createdAt: DateTime
   updatedAt: DateTime
   deletedAt: DateTime?

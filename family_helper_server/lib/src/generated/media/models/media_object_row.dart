@@ -8,16 +8,22 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../family/models/family_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i4;
 
 abstract class MediaObjectRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   MediaObjectRow._({
     this.id,
     this.familyId,
+    this.family,
     required this.uploadedByProfileId,
+    this.uploadedByProfile,
     required this.objectKey,
     required this.bucket,
     required this.mimeType,
@@ -35,7 +41,9 @@ abstract class MediaObjectRow
   factory MediaObjectRow({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     required int uploadedByProfileId,
+    _i3.AppProfileRow? uploadedByProfile,
     required String objectKey,
     required String bucket,
     required String mimeType,
@@ -54,7 +62,17 @@ abstract class MediaObjectRow
     return MediaObjectRow(
       id: jsonSerialization['id'] as int?,
       familyId: jsonSerialization['familyId'] as int?,
+      family: jsonSerialization['family'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.FamilyRow>(
+              jsonSerialization['family'],
+            ),
       uploadedByProfileId: jsonSerialization['uploadedByProfileId'] as int,
+      uploadedByProfile: jsonSerialization['uploadedByProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['uploadedByProfile'],
+            ),
       objectKey: jsonSerialization['objectKey'] as String,
       bucket: jsonSerialization['bucket'] as String,
       mimeType: jsonSerialization['mimeType'] as String,
@@ -89,7 +107,11 @@ abstract class MediaObjectRow
 
   int? familyId;
 
+  _i2.FamilyRow? family;
+
   int uploadedByProfileId;
+
+  _i3.AppProfileRow? uploadedByProfile;
 
   String objectKey;
 
@@ -124,7 +146,9 @@ abstract class MediaObjectRow
   MediaObjectRow copyWith({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     int? uploadedByProfileId,
+    _i3.AppProfileRow? uploadedByProfile,
     String? objectKey,
     String? bucket,
     String? mimeType,
@@ -144,7 +168,10 @@ abstract class MediaObjectRow
       '__className__': 'MediaObjectRow',
       if (id != null) 'id': id,
       if (familyId != null) 'familyId': familyId,
+      if (family != null) 'family': family?.toJson(),
       'uploadedByProfileId': uploadedByProfileId,
+      if (uploadedByProfile != null)
+        'uploadedByProfile': uploadedByProfile?.toJson(),
       'objectKey': objectKey,
       'bucket': bucket,
       'mimeType': mimeType,
@@ -166,7 +193,10 @@ abstract class MediaObjectRow
       '__className__': 'MediaObjectRow',
       if (id != null) 'id': id,
       if (familyId != null) 'familyId': familyId,
+      if (family != null) 'family': family?.toJsonForProtocol(),
       'uploadedByProfileId': uploadedByProfileId,
+      if (uploadedByProfile != null)
+        'uploadedByProfile': uploadedByProfile?.toJsonForProtocol(),
       'objectKey': objectKey,
       'bucket': bucket,
       'mimeType': mimeType,
@@ -182,8 +212,14 @@ abstract class MediaObjectRow
     };
   }
 
-  static MediaObjectRowInclude include() {
-    return MediaObjectRowInclude._();
+  static MediaObjectRowInclude include({
+    _i2.FamilyRowInclude? family,
+    _i3.AppProfileRowInclude? uploadedByProfile,
+  }) {
+    return MediaObjectRowInclude._(
+      family: family,
+      uploadedByProfile: uploadedByProfile,
+    );
   }
 
   static MediaObjectRowIncludeList includeList({
@@ -218,7 +254,9 @@ class _MediaObjectRowImpl extends MediaObjectRow {
   _MediaObjectRowImpl({
     int? id,
     int? familyId,
+    _i2.FamilyRow? family,
     required int uploadedByProfileId,
+    _i3.AppProfileRow? uploadedByProfile,
     required String objectKey,
     required String bucket,
     required String mimeType,
@@ -234,7 +272,9 @@ class _MediaObjectRowImpl extends MediaObjectRow {
   }) : super._(
          id: id,
          familyId: familyId,
+         family: family,
          uploadedByProfileId: uploadedByProfileId,
+         uploadedByProfile: uploadedByProfile,
          objectKey: objectKey,
          bucket: bucket,
          mimeType: mimeType,
@@ -256,7 +296,9 @@ class _MediaObjectRowImpl extends MediaObjectRow {
   MediaObjectRow copyWith({
     Object? id = _Undefined,
     Object? familyId = _Undefined,
+    Object? family = _Undefined,
     int? uploadedByProfileId,
+    Object? uploadedByProfile = _Undefined,
     String? objectKey,
     String? bucket,
     String? mimeType,
@@ -273,7 +315,11 @@ class _MediaObjectRowImpl extends MediaObjectRow {
     return MediaObjectRow(
       id: id is int? ? id : this.id,
       familyId: familyId is int? ? familyId : this.familyId,
+      family: family is _i2.FamilyRow? ? family : this.family?.copyWith(),
       uploadedByProfileId: uploadedByProfileId ?? this.uploadedByProfileId,
+      uploadedByProfile: uploadedByProfile is _i3.AppProfileRow?
+          ? uploadedByProfile
+          : this.uploadedByProfile?.copyWith(),
       objectKey: objectKey ?? this.objectKey,
       bucket: bucket ?? this.bucket,
       mimeType: mimeType ?? this.mimeType,
@@ -440,7 +486,11 @@ class MediaObjectRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt familyId;
 
+  _i2.FamilyRowTable? _family;
+
   late final _i1.ColumnInt uploadedByProfileId;
+
+  _i3.AppProfileRowTable? _uploadedByProfile;
 
   late final _i1.ColumnString objectKey;
 
@@ -466,6 +516,32 @@ class MediaObjectRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt version;
 
+  _i2.FamilyRowTable get family {
+    if (_family != null) return _family!;
+    _family = _i1.createRelationTable(
+      relationFieldName: 'family',
+      field: MediaObjectRow.t.familyId,
+      foreignField: _i2.FamilyRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.FamilyRowTable(tableRelation: foreignTableRelation),
+    );
+    return _family!;
+  }
+
+  _i3.AppProfileRowTable get uploadedByProfile {
+    if (_uploadedByProfile != null) return _uploadedByProfile!;
+    _uploadedByProfile = _i1.createRelationTable(
+      relationFieldName: 'uploadedByProfile',
+      field: MediaObjectRow.t.uploadedByProfileId,
+      foreignField: _i3.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _uploadedByProfile!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -484,13 +560,37 @@ class MediaObjectRowTable extends _i1.Table<int?> {
     deletedAt,
     version,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'family') {
+      return family;
+    }
+    if (relationField == 'uploadedByProfile') {
+      return uploadedByProfile;
+    }
+    return null;
+  }
 }
 
 class MediaObjectRowInclude extends _i1.IncludeObject {
-  MediaObjectRowInclude._();
+  MediaObjectRowInclude._({
+    _i2.FamilyRowInclude? family,
+    _i3.AppProfileRowInclude? uploadedByProfile,
+  }) {
+    _family = family;
+    _uploadedByProfile = uploadedByProfile;
+  }
+
+  _i2.FamilyRowInclude? _family;
+
+  _i3.AppProfileRowInclude? _uploadedByProfile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {
+    'family': _family,
+    'uploadedByProfile': _uploadedByProfile,
+  };
 
   @override
   _i1.Table<int?> get table => MediaObjectRow.t;
@@ -518,6 +618,10 @@ class MediaObjectRowIncludeList extends _i1.IncludeList {
 
 class MediaObjectRowRepository {
   const MediaObjectRowRepository._();
+
+  final attachRow = const MediaObjectRowAttachRowRepository._();
+
+  final detachRow = const MediaObjectRowDetachRowRepository._();
 
   /// Returns a list of [MediaObjectRow]s matching the given query parameters.
   ///
@@ -550,6 +654,7 @@ class MediaObjectRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<MediaObjectRowTable>? orderByList,
     _i1.Transaction? transaction,
+    MediaObjectRowInclude? include,
   }) async {
     return session.db.find<MediaObjectRow>(
       where: where?.call(MediaObjectRow.t),
@@ -559,6 +664,7 @@ class MediaObjectRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -587,6 +693,7 @@ class MediaObjectRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<MediaObjectRowTable>? orderByList,
     _i1.Transaction? transaction,
+    MediaObjectRowInclude? include,
   }) async {
     return session.db.findFirstRow<MediaObjectRow>(
       where: where?.call(MediaObjectRow.t),
@@ -595,6 +702,7 @@ class MediaObjectRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -603,10 +711,12 @@ class MediaObjectRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    MediaObjectRowInclude? include,
   }) async {
     return session.db.findById<MediaObjectRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -764,6 +874,84 @@ class MediaObjectRowRepository {
     return session.db.count<MediaObjectRow>(
       where: where?.call(MediaObjectRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class MediaObjectRowAttachRowRepository {
+  const MediaObjectRowAttachRowRepository._();
+
+  /// Creates a relation between the given [MediaObjectRow] and [FamilyRow]
+  /// by setting the [MediaObjectRow]'s foreign key `familyId` to refer to the [FamilyRow].
+  Future<void> family(
+    _i1.Session session,
+    MediaObjectRow mediaObjectRow,
+    _i2.FamilyRow family, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (mediaObjectRow.id == null) {
+      throw ArgumentError.notNull('mediaObjectRow.id');
+    }
+    if (family.id == null) {
+      throw ArgumentError.notNull('family.id');
+    }
+
+    var $mediaObjectRow = mediaObjectRow.copyWith(familyId: family.id);
+    await session.db.updateRow<MediaObjectRow>(
+      $mediaObjectRow,
+      columns: [MediaObjectRow.t.familyId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [MediaObjectRow] and [AppProfileRow]
+  /// by setting the [MediaObjectRow]'s foreign key `uploadedByProfileId` to refer to the [AppProfileRow].
+  Future<void> uploadedByProfile(
+    _i1.Session session,
+    MediaObjectRow mediaObjectRow,
+    _i3.AppProfileRow uploadedByProfile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (mediaObjectRow.id == null) {
+      throw ArgumentError.notNull('mediaObjectRow.id');
+    }
+    if (uploadedByProfile.id == null) {
+      throw ArgumentError.notNull('uploadedByProfile.id');
+    }
+
+    var $mediaObjectRow = mediaObjectRow.copyWith(
+      uploadedByProfileId: uploadedByProfile.id,
+    );
+    await session.db.updateRow<MediaObjectRow>(
+      $mediaObjectRow,
+      columns: [MediaObjectRow.t.uploadedByProfileId],
+      transaction: transaction,
+    );
+  }
+}
+
+class MediaObjectRowDetachRowRepository {
+  const MediaObjectRowDetachRowRepository._();
+
+  /// Detaches the relation between this [MediaObjectRow] and the [FamilyRow] set in `family`
+  /// by setting the [MediaObjectRow]'s foreign key `familyId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> family(
+    _i1.Session session,
+    MediaObjectRow mediaObjectRow, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (mediaObjectRow.id == null) {
+      throw ArgumentError.notNull('mediaObjectRow.id');
+    }
+
+    var $mediaObjectRow = mediaObjectRow.copyWith(familyId: null);
+    await session.db.updateRow<MediaObjectRow>(
+      $mediaObjectRow,
+      columns: [MediaObjectRow.t.familyId],
       transaction: transaction,
     );
   }

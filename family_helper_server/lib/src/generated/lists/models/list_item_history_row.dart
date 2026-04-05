@@ -8,16 +8,22 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../lists/models/list_item_row.dart' as _i2;
+import '../../core/models/app_profile_row.dart' as _i3;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i4;
 
 abstract class ListItemHistoryRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   ListItemHistoryRow._({
     this.id,
     required this.itemId,
+    this.item,
     required this.actorProfileId,
+    this.actorProfile,
     required this.eventType,
     required this.createdAt,
   });
@@ -25,7 +31,9 @@ abstract class ListItemHistoryRow
   factory ListItemHistoryRow({
     int? id,
     required int itemId,
+    _i2.ListItemRow? item,
     required int actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     required String eventType,
     required DateTime createdAt,
   }) = _ListItemHistoryRowImpl;
@@ -34,7 +42,17 @@ abstract class ListItemHistoryRow
     return ListItemHistoryRow(
       id: jsonSerialization['id'] as int?,
       itemId: jsonSerialization['itemId'] as int,
+      item: jsonSerialization['item'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i2.ListItemRow>(
+              jsonSerialization['item'],
+            ),
       actorProfileId: jsonSerialization['actorProfileId'] as int,
+      actorProfile: jsonSerialization['actorProfile'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppProfileRow>(
+              jsonSerialization['actorProfile'],
+            ),
       eventType: jsonSerialization['eventType'] as String,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
@@ -51,7 +69,11 @@ abstract class ListItemHistoryRow
 
   int itemId;
 
+  _i2.ListItemRow? item;
+
   int actorProfileId;
+
+  _i3.AppProfileRow? actorProfile;
 
   String eventType;
 
@@ -66,7 +88,9 @@ abstract class ListItemHistoryRow
   ListItemHistoryRow copyWith({
     int? id,
     int? itemId,
+    _i2.ListItemRow? item,
     int? actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     String? eventType,
     DateTime? createdAt,
   });
@@ -76,7 +100,9 @@ abstract class ListItemHistoryRow
       '__className__': 'ListItemHistoryRow',
       if (id != null) 'id': id,
       'itemId': itemId,
+      if (item != null) 'item': item?.toJson(),
       'actorProfileId': actorProfileId,
+      if (actorProfile != null) 'actorProfile': actorProfile?.toJson(),
       'eventType': eventType,
       'createdAt': createdAt.toJson(),
     };
@@ -88,14 +114,23 @@ abstract class ListItemHistoryRow
       '__className__': 'ListItemHistoryRow',
       if (id != null) 'id': id,
       'itemId': itemId,
+      if (item != null) 'item': item?.toJsonForProtocol(),
       'actorProfileId': actorProfileId,
+      if (actorProfile != null)
+        'actorProfile': actorProfile?.toJsonForProtocol(),
       'eventType': eventType,
       'createdAt': createdAt.toJson(),
     };
   }
 
-  static ListItemHistoryRowInclude include() {
-    return ListItemHistoryRowInclude._();
+  static ListItemHistoryRowInclude include({
+    _i2.ListItemRowInclude? item,
+    _i3.AppProfileRowInclude? actorProfile,
+  }) {
+    return ListItemHistoryRowInclude._(
+      item: item,
+      actorProfile: actorProfile,
+    );
   }
 
   static ListItemHistoryRowIncludeList includeList({
@@ -130,13 +165,17 @@ class _ListItemHistoryRowImpl extends ListItemHistoryRow {
   _ListItemHistoryRowImpl({
     int? id,
     required int itemId,
+    _i2.ListItemRow? item,
     required int actorProfileId,
+    _i3.AppProfileRow? actorProfile,
     required String eventType,
     required DateTime createdAt,
   }) : super._(
          id: id,
          itemId: itemId,
+         item: item,
          actorProfileId: actorProfileId,
+         actorProfile: actorProfile,
          eventType: eventType,
          createdAt: createdAt,
        );
@@ -148,14 +187,20 @@ class _ListItemHistoryRowImpl extends ListItemHistoryRow {
   ListItemHistoryRow copyWith({
     Object? id = _Undefined,
     int? itemId,
+    Object? item = _Undefined,
     int? actorProfileId,
+    Object? actorProfile = _Undefined,
     String? eventType,
     DateTime? createdAt,
   }) {
     return ListItemHistoryRow(
       id: id is int? ? id : this.id,
       itemId: itemId ?? this.itemId,
+      item: item is _i2.ListItemRow? ? item : this.item?.copyWith(),
       actorProfileId: actorProfileId ?? this.actorProfileId,
+      actorProfile: actorProfile is _i3.AppProfileRow?
+          ? actorProfile
+          : this.actorProfile?.copyWith(),
       eventType: eventType ?? this.eventType,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -214,11 +259,41 @@ class ListItemHistoryRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt itemId;
 
+  _i2.ListItemRowTable? _item;
+
   late final _i1.ColumnInt actorProfileId;
+
+  _i3.AppProfileRowTable? _actorProfile;
 
   late final _i1.ColumnString eventType;
 
   late final _i1.ColumnDateTime createdAt;
+
+  _i2.ListItemRowTable get item {
+    if (_item != null) return _item!;
+    _item = _i1.createRelationTable(
+      relationFieldName: 'item',
+      field: ListItemHistoryRow.t.itemId,
+      foreignField: _i2.ListItemRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.ListItemRowTable(tableRelation: foreignTableRelation),
+    );
+    return _item!;
+  }
+
+  _i3.AppProfileRowTable get actorProfile {
+    if (_actorProfile != null) return _actorProfile!;
+    _actorProfile = _i1.createRelationTable(
+      relationFieldName: 'actorProfile',
+      field: ListItemHistoryRow.t.actorProfileId,
+      foreignField: _i3.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _actorProfile!;
+  }
 
   @override
   List<_i1.Column> get columns => [
@@ -228,13 +303,37 @@ class ListItemHistoryRowTable extends _i1.Table<int?> {
     eventType,
     createdAt,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'item') {
+      return item;
+    }
+    if (relationField == 'actorProfile') {
+      return actorProfile;
+    }
+    return null;
+  }
 }
 
 class ListItemHistoryRowInclude extends _i1.IncludeObject {
-  ListItemHistoryRowInclude._();
+  ListItemHistoryRowInclude._({
+    _i2.ListItemRowInclude? item,
+    _i3.AppProfileRowInclude? actorProfile,
+  }) {
+    _item = item;
+    _actorProfile = actorProfile;
+  }
+
+  _i2.ListItemRowInclude? _item;
+
+  _i3.AppProfileRowInclude? _actorProfile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {
+    'item': _item,
+    'actorProfile': _actorProfile,
+  };
 
   @override
   _i1.Table<int?> get table => ListItemHistoryRow.t;
@@ -262,6 +361,8 @@ class ListItemHistoryRowIncludeList extends _i1.IncludeList {
 
 class ListItemHistoryRowRepository {
   const ListItemHistoryRowRepository._();
+
+  final attachRow = const ListItemHistoryRowAttachRowRepository._();
 
   /// Returns a list of [ListItemHistoryRow]s matching the given query parameters.
   ///
@@ -294,6 +395,7 @@ class ListItemHistoryRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<ListItemHistoryRowTable>? orderByList,
     _i1.Transaction? transaction,
+    ListItemHistoryRowInclude? include,
   }) async {
     return session.db.find<ListItemHistoryRow>(
       where: where?.call(ListItemHistoryRow.t),
@@ -303,6 +405,7 @@ class ListItemHistoryRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -331,6 +434,7 @@ class ListItemHistoryRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<ListItemHistoryRowTable>? orderByList,
     _i1.Transaction? transaction,
+    ListItemHistoryRowInclude? include,
   }) async {
     return session.db.findFirstRow<ListItemHistoryRow>(
       where: where?.call(ListItemHistoryRow.t),
@@ -339,6 +443,7 @@ class ListItemHistoryRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -347,10 +452,12 @@ class ListItemHistoryRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    ListItemHistoryRowInclude? include,
   }) async {
     return session.db.findById<ListItemHistoryRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -510,6 +617,58 @@ class ListItemHistoryRowRepository {
     return session.db.count<ListItemHistoryRow>(
       where: where?.call(ListItemHistoryRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class ListItemHistoryRowAttachRowRepository {
+  const ListItemHistoryRowAttachRowRepository._();
+
+  /// Creates a relation between the given [ListItemHistoryRow] and [ListItemRow]
+  /// by setting the [ListItemHistoryRow]'s foreign key `itemId` to refer to the [ListItemRow].
+  Future<void> item(
+    _i1.Session session,
+    ListItemHistoryRow listItemHistoryRow,
+    _i2.ListItemRow item, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (listItemHistoryRow.id == null) {
+      throw ArgumentError.notNull('listItemHistoryRow.id');
+    }
+    if (item.id == null) {
+      throw ArgumentError.notNull('item.id');
+    }
+
+    var $listItemHistoryRow = listItemHistoryRow.copyWith(itemId: item.id);
+    await session.db.updateRow<ListItemHistoryRow>(
+      $listItemHistoryRow,
+      columns: [ListItemHistoryRow.t.itemId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [ListItemHistoryRow] and [AppProfileRow]
+  /// by setting the [ListItemHistoryRow]'s foreign key `actorProfileId` to refer to the [AppProfileRow].
+  Future<void> actorProfile(
+    _i1.Session session,
+    ListItemHistoryRow listItemHistoryRow,
+    _i3.AppProfileRow actorProfile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (listItemHistoryRow.id == null) {
+      throw ArgumentError.notNull('listItemHistoryRow.id');
+    }
+    if (actorProfile.id == null) {
+      throw ArgumentError.notNull('actorProfile.id');
+    }
+
+    var $listItemHistoryRow = listItemHistoryRow.copyWith(
+      actorProfileId: actorProfile.id,
+    );
+    await session.db.updateRow<ListItemHistoryRow>(
+      $listItemHistoryRow,
+      columns: [ListItemHistoryRow.t.actorProfileId],
       transaction: transaction,
     );
   }

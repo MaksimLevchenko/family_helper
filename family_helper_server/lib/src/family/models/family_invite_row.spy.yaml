@@ -1,7 +1,7 @@
 class: FamilyInviteRow
 table: family_invite
 fields:
-  familyId: int
+  family: FamilyRow?, relation
   inviteType: String
   email: String?
   inviteCode: String

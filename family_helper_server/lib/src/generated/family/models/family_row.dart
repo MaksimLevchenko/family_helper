@@ -8,9 +8,12 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
+import '../../core/models/app_profile_row.dart' as _i2;
+import 'package:family_helper_server/src/generated/protocol.dart' as _i3;
 
 abstract class FamilyRow
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
@@ -18,6 +21,7 @@ abstract class FamilyRow
     this.id,
     required this.title,
     required this.ownerProfileId,
+    this.ownerProfile,
     required this.memberLimit,
     required this.createdAt,
     required this.updatedAt,
@@ -29,6 +33,7 @@ abstract class FamilyRow
     int? id,
     required String title,
     required int ownerProfileId,
+    _i2.AppProfileRow? ownerProfile,
     required int memberLimit,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -41,6 +46,11 @@ abstract class FamilyRow
       id: jsonSerialization['id'] as int?,
       title: jsonSerialization['title'] as String,
       ownerProfileId: jsonSerialization['ownerProfileId'] as int,
+      ownerProfile: jsonSerialization['ownerProfile'] == null
+          ? null
+          : _i3.Protocol().deserialize<_i2.AppProfileRow>(
+              jsonSerialization['ownerProfile'],
+            ),
       memberLimit: jsonSerialization['memberLimit'] as int,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
@@ -66,6 +76,8 @@ abstract class FamilyRow
 
   int ownerProfileId;
 
+  _i2.AppProfileRow? ownerProfile;
+
   int memberLimit;
 
   DateTime createdAt;
@@ -86,6 +98,7 @@ abstract class FamilyRow
     int? id,
     String? title,
     int? ownerProfileId,
+    _i2.AppProfileRow? ownerProfile,
     int? memberLimit,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -99,6 +112,7 @@ abstract class FamilyRow
       if (id != null) 'id': id,
       'title': title,
       'ownerProfileId': ownerProfileId,
+      if (ownerProfile != null) 'ownerProfile': ownerProfile?.toJson(),
       'memberLimit': memberLimit,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -114,6 +128,8 @@ abstract class FamilyRow
       if (id != null) 'id': id,
       'title': title,
       'ownerProfileId': ownerProfileId,
+      if (ownerProfile != null)
+        'ownerProfile': ownerProfile?.toJsonForProtocol(),
       'memberLimit': memberLimit,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -122,8 +138,8 @@ abstract class FamilyRow
     };
   }
 
-  static FamilyRowInclude include() {
-    return FamilyRowInclude._();
+  static FamilyRowInclude include({_i2.AppProfileRowInclude? ownerProfile}) {
+    return FamilyRowInclude._(ownerProfile: ownerProfile);
   }
 
   static FamilyRowIncludeList includeList({
@@ -159,6 +175,7 @@ class _FamilyRowImpl extends FamilyRow {
     int? id,
     required String title,
     required int ownerProfileId,
+    _i2.AppProfileRow? ownerProfile,
     required int memberLimit,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -168,6 +185,7 @@ class _FamilyRowImpl extends FamilyRow {
          id: id,
          title: title,
          ownerProfileId: ownerProfileId,
+         ownerProfile: ownerProfile,
          memberLimit: memberLimit,
          createdAt: createdAt,
          updatedAt: updatedAt,
@@ -183,6 +201,7 @@ class _FamilyRowImpl extends FamilyRow {
     Object? id = _Undefined,
     String? title,
     int? ownerProfileId,
+    Object? ownerProfile = _Undefined,
     int? memberLimit,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -193,6 +212,9 @@ class _FamilyRowImpl extends FamilyRow {
       id: id is int? ? id : this.id,
       title: title ?? this.title,
       ownerProfileId: ownerProfileId ?? this.ownerProfileId,
+      ownerProfile: ownerProfile is _i2.AppProfileRow?
+          ? ownerProfile
+          : this.ownerProfile?.copyWith(),
       memberLimit: memberLimit ?? this.memberLimit,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -283,6 +305,8 @@ class FamilyRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt ownerProfileId;
 
+  _i2.AppProfileRowTable? _ownerProfile;
+
   late final _i1.ColumnInt memberLimit;
 
   late final _i1.ColumnDateTime createdAt;
@@ -292,6 +316,19 @@ class FamilyRowTable extends _i1.Table<int?> {
   late final _i1.ColumnDateTime deletedAt;
 
   late final _i1.ColumnInt version;
+
+  _i2.AppProfileRowTable get ownerProfile {
+    if (_ownerProfile != null) return _ownerProfile!;
+    _ownerProfile = _i1.createRelationTable(
+      relationFieldName: 'ownerProfile',
+      field: FamilyRow.t.ownerProfileId,
+      foreignField: _i2.AppProfileRow.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i2.AppProfileRowTable(tableRelation: foreignTableRelation),
+    );
+    return _ownerProfile!;
+  }
 
   @override
   List<_i1.Column> get columns => [
@@ -304,13 +341,25 @@ class FamilyRowTable extends _i1.Table<int?> {
     deletedAt,
     version,
   ];
+
+  @override
+  _i1.Table? getRelationTable(String relationField) {
+    if (relationField == 'ownerProfile') {
+      return ownerProfile;
+    }
+    return null;
+  }
 }
 
 class FamilyRowInclude extends _i1.IncludeObject {
-  FamilyRowInclude._();
+  FamilyRowInclude._({_i2.AppProfileRowInclude? ownerProfile}) {
+    _ownerProfile = ownerProfile;
+  }
+
+  _i2.AppProfileRowInclude? _ownerProfile;
 
   @override
-  Map<String, _i1.Include?> get includes => {};
+  Map<String, _i1.Include?> get includes => {'ownerProfile': _ownerProfile};
 
   @override
   _i1.Table<int?> get table => FamilyRow.t;
@@ -338,6 +387,8 @@ class FamilyRowIncludeList extends _i1.IncludeList {
 
 class FamilyRowRepository {
   const FamilyRowRepository._();
+
+  final attachRow = const FamilyRowAttachRowRepository._();
 
   /// Returns a list of [FamilyRow]s matching the given query parameters.
   ///
@@ -370,6 +421,7 @@ class FamilyRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<FamilyRowTable>? orderByList,
     _i1.Transaction? transaction,
+    FamilyRowInclude? include,
   }) async {
     return session.db.find<FamilyRow>(
       where: where?.call(FamilyRow.t),
@@ -379,6 +431,7 @@ class FamilyRowRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -407,6 +460,7 @@ class FamilyRowRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<FamilyRowTable>? orderByList,
     _i1.Transaction? transaction,
+    FamilyRowInclude? include,
   }) async {
     return session.db.findFirstRow<FamilyRow>(
       where: where?.call(FamilyRow.t),
@@ -415,6 +469,7 @@ class FamilyRowRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -423,10 +478,12 @@ class FamilyRowRepository {
     _i1.Session session,
     int id, {
     _i1.Transaction? transaction,
+    FamilyRowInclude? include,
   }) async {
     return session.db.findById<FamilyRow>(
       id,
       transaction: transaction,
+      include: include,
     );
   }
 
@@ -584,6 +641,33 @@ class FamilyRowRepository {
     return session.db.count<FamilyRow>(
       where: where?.call(FamilyRow.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+}
+
+class FamilyRowAttachRowRepository {
+  const FamilyRowAttachRowRepository._();
+
+  /// Creates a relation between the given [FamilyRow] and [AppProfileRow]
+  /// by setting the [FamilyRow]'s foreign key `ownerProfileId` to refer to the [AppProfileRow].
+  Future<void> ownerProfile(
+    _i1.Session session,
+    FamilyRow familyRow,
+    _i2.AppProfileRow ownerProfile, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (familyRow.id == null) {
+      throw ArgumentError.notNull('familyRow.id');
+    }
+    if (ownerProfile.id == null) {
+      throw ArgumentError.notNull('ownerProfile.id');
+    }
+
+    var $familyRow = familyRow.copyWith(ownerProfileId: ownerProfile.id);
+    await session.db.updateRow<FamilyRow>(
+      $familyRow,
+      columns: [FamilyRow.t.ownerProfileId],
       transaction: transaction,
     );
   }

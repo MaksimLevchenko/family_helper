@@ -1,10 +1,10 @@
 class: MediaAttachmentRow
 table: media_attachment
 fields:
-  mediaId: int
+  media: MediaObjectRow?, relation
   entityType: String
   entityId: int
-  createdByProfileId: int
+  createdByProfile: AppProfileRow?, relation
   createdAt: DateTime
   deletedAt: DateTime?
   version: int
