@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/ui_error_localizer.dart';
 import '../../../core/network/server_availability_cubit.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../providers/media_provider.dart';
@@ -14,7 +16,10 @@ class MediaScreen extends StatelessWidget {
         context.watch<ServerAvailabilityCubit?>()?.state.isUnavailable ?? false;
 
     return Scaffold(
-      appBar: serverStatusAppBar(context, title: const Text('Media & Avatars')),
+      appBar: serverStatusAppBar(
+        context,
+        title: Text(context.l10n.mediaTitle),
+      ),
       body: BlocBuilder<MediaCubit, MediaState>(
         builder: (context, state) {
           if (state.isLoading &&
@@ -27,7 +32,7 @@ class MediaScreen extends StatelessWidget {
               state.items.isEmpty &&
               state.lastSignedUrl == null) {
             return ErrorState(
-              message: state.error!,
+              message: localizeUiError(context, state.error),
               onRetry: () => context.read<MediaCubit>().reload(),
             );
           }
@@ -40,11 +45,14 @@ class MediaScreen extends StatelessWidget {
                 lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
               ),
               if (state.error != null) ...[
-                AppBanner(text: state.error!, isError: true),
+                AppBanner(
+                  text: localizeUiError(context, state.error),
+                  isError: true,
+                ),
                 const SizedBox(height: 12),
               ],
               AppButton(
-                label: 'Reload media',
+                label: context.l10n.mediaReload,
                 variant: AppButtonVariant.secondary,
                 onPressed: () async {
                   await context.read<MediaCubit>().reload();
@@ -52,7 +60,7 @@ class MediaScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               AppButton(
-                label: 'Pick, crop and upload image',
+                label: context.l10n.mediaUploadImage,
                 isLoading: state.isLoading,
                 onPressed: isOffline
                     ? null
@@ -65,19 +73,19 @@ class MediaScreen extends StatelessWidget {
                 const SizedBox.shrink()
               else
                 AppTile(
-                  title: 'Last media id: ${state.lastMediaId}',
+                  title: context.l10n.mediaLastMediaId('${state.lastMediaId}'),
                   subtitle: state.lastSignedUrl,
                 ),
               const SizedBox(height: 12),
               if (state.items.isEmpty)
-                const EmptyState(
-                  title: 'No media objects',
-                  message: 'Upload an image to populate media history.',
+                EmptyState(
+                  title: context.l10n.mediaEmptyTitle,
+                  message: context.l10n.mediaEmptyMessage,
                 )
               else
                 ...state.items.map(
                   (item) => AppTile(
-                    title: 'Media #${item.id}',
+                    title: context.l10n.mediaItemTitle(item.id),
                     subtitle:
                         'status=${item.status}, mime=${item.mimeType}, size=${item.sizeBytes}, key=${item.objectKey}',
                     trailing: IconButton(

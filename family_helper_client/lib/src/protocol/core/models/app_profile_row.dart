@@ -18,19 +18,21 @@ abstract class AppProfileRow implements _i1.SerializableModel {
     required this.authUserId,
     required this.displayName,
     required this.timezone,
+    String? locale,
     this.avatarMediaId,
     required this.analyticsOptIn,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
     required this.version,
-  });
+  }) : locale = locale ?? 'en';
 
   factory AppProfileRow({
     int? id,
     required String authUserId,
     required String displayName,
     required String timezone,
+    String? locale,
     int? avatarMediaId,
     required bool analyticsOptIn,
     required DateTime createdAt,
@@ -45,6 +47,7 @@ abstract class AppProfileRow implements _i1.SerializableModel {
       authUserId: jsonSerialization['authUserId'] as String,
       displayName: jsonSerialization['displayName'] as String,
       timezone: jsonSerialization['timezone'] as String,
+      locale: jsonSerialization['locale'] as String?,
       avatarMediaId: jsonSerialization['avatarMediaId'] as int?,
       analyticsOptIn: jsonSerialization['analyticsOptIn'] as bool,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
@@ -71,6 +74,8 @@ abstract class AppProfileRow implements _i1.SerializableModel {
 
   String timezone;
 
+  String locale;
+
   int? avatarMediaId;
 
   bool analyticsOptIn;
@@ -91,6 +96,7 @@ abstract class AppProfileRow implements _i1.SerializableModel {
     String? authUserId,
     String? displayName,
     String? timezone,
+    String? locale,
     int? avatarMediaId,
     bool? analyticsOptIn,
     DateTime? createdAt,
@@ -106,6 +112,7 @@ abstract class AppProfileRow implements _i1.SerializableModel {
       'authUserId': authUserId,
       'displayName': displayName,
       'timezone': timezone,
+      'locale': locale,
       if (avatarMediaId != null) 'avatarMediaId': avatarMediaId,
       'analyticsOptIn': analyticsOptIn,
       'createdAt': createdAt.toJson(),
@@ -129,6 +136,7 @@ class _AppProfileRowImpl extends AppProfileRow {
     required String authUserId,
     required String displayName,
     required String timezone,
+    String? locale,
     int? avatarMediaId,
     required bool analyticsOptIn,
     required DateTime createdAt,
@@ -140,6 +148,7 @@ class _AppProfileRowImpl extends AppProfileRow {
          authUserId: authUserId,
          displayName: displayName,
          timezone: timezone,
+         locale: locale,
          avatarMediaId: avatarMediaId,
          analyticsOptIn: analyticsOptIn,
          createdAt: createdAt,
@@ -157,6 +166,7 @@ class _AppProfileRowImpl extends AppProfileRow {
     String? authUserId,
     String? displayName,
     String? timezone,
+    String? locale,
     Object? avatarMediaId = _Undefined,
     bool? analyticsOptIn,
     DateTime? createdAt,
@@ -169,6 +179,7 @@ class _AppProfileRowImpl extends AppProfileRow {
       authUserId: authUserId ?? this.authUserId,
       displayName: displayName ?? this.displayName,
       timezone: timezone ?? this.timezone,
+      locale: locale ?? this.locale,
       avatarMediaId: avatarMediaId is int? ? avatarMediaId : this.avatarMediaId,
       analyticsOptIn: analyticsOptIn ?? this.analyticsOptIn,
       createdAt: createdAt ?? this.createdAt,

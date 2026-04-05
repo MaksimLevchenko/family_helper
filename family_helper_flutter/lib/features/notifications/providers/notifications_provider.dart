@@ -5,12 +5,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/locale_controller.dart';
 import '../../../core/logging/app_error_logger.dart';
 import '../../../core/offline/offline_error_classifier.dart';
 import '../../../core/offline/offline_operation.dart';
 import '../../../core/offline/offline_queue_manager.dart';
 import '../../../core/offline/offline_snapshot_store.dart';
 import '../../../core/utils/operation_id.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../data/local_notification_service.dart';
 import '../data/notifications_repository.dart';
@@ -94,12 +97,14 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   NotificationsCubit({
     required NotificationsRepository repository,
     required FamilySelectionCubit familySelectionCubit,
+    required LocaleCubit localeCubit,
     required LocalNotificationService localNotificationService,
     required PushNotificationService pushNotificationService,
     required OfflineQueueManager offlineQueueManager,
     OfflineSnapshotStore? snapshotStore,
   }) : _repository = repository,
        _familySelectionCubit = familySelectionCubit,
+       _localeCubit = localeCubit,
        _localNotificationService = localNotificationService,
        _pushNotificationService = pushNotificationService,
        _offlineQueueManager = offlineQueueManager,
@@ -123,6 +128,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
   final NotificationsRepository _repository;
   final FamilySelectionCubit _familySelectionCubit;
+  final LocaleCubit _localeCubit;
   final LocalNotificationService _localNotificationService;
   final PushNotificationService _pushNotificationService;
   final OfflineQueueManager _offlineQueueManager;
@@ -141,6 +147,37 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         state.reminders.isNotEmpty ||
         state.inbox.isNotEmpty ||
         state.unreadCount > 0;
+  }
+
+  AppLocalizations get _l10n =>
+      l10nForLocale(_localeCubit.state.effectiveLocale);
+
+  String _reminderPermissionMessage(
+    NotificationPermissionStatus permissionStatus,
+  ) {
+    return switch (permissionStatus) {
+      NotificationPermissionStatus.notDetermined =>
+        _l10n.notificationAllowReminderPermission,
+      NotificationPermissionStatus.denied =>
+        _l10n.notificationBlockedReminderPermission,
+      NotificationPermissionStatus.permanentlyDenied =>
+        _l10n.notificationDisabledReminderPermission,
+      NotificationPermissionStatus.granted => '',
+    };
+  }
+
+  String _testPushPermissionMessage(
+    NotificationPermissionStatus permissionStatus,
+  ) {
+    return switch (permissionStatus) {
+      NotificationPermissionStatus.notDetermined =>
+        _l10n.notificationAllowTestPush,
+      NotificationPermissionStatus.denied =>
+        _l10n.notificationBlockedTestPush,
+      NotificationPermissionStatus.permanentlyDenied =>
+        _l10n.notificationDisabledTestPush,
+      NotificationPermissionStatus.granted => '',
+    };
   }
 
   Future<void> _handleFamilyChanged(int? familyId) async {
@@ -502,7 +539,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
             isLoading: false,
             preferences: nextPreferences,
             isUsingCachedData: true,
-            error: 'Network unavailable. Preference change queued.',
+            error: _l10n.notificationPreferenceQueued,
           ),
         );
         await _writeSnapshot(
@@ -531,8 +568,8 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }) async {
     final familyId = _familySelectionCubit.state;
     if (familyId == null) {
-      emit(state.copyWith(error: 'Family is not selected'));
-      return ReminderActionResult.failure('Family is not selected.');
+      emit(state.copyWith(error: _l10n.notificationFamilyNotSelected));
+      return ReminderActionResult.failure(_l10n.notificationFamilyNotSelected);
     }
 
     emit(state.copyWith(isLoading: true, clearError: true));
@@ -592,16 +629,16 @@ class NotificationsCubit extends Cubit<NotificationsState> {
           state.copyWith(
             isLoading: false,
             isUsingCachedData: _hasLocalState,
-            error: 'Network unavailable. Reminder queued.',
+            error: _l10n.notificationReminderQueued,
           ),
         );
-        return const ReminderActionResult(
+        return ReminderActionResult(
           success: true,
-          message: 'Reminder will sync when your connection returns.',
+          message: _l10n.notificationReminderQueued,
         );
       }
       emit(state.copyWith(isLoading: false, error: '$error'));
-      return ReminderActionResult.failure('Unable to save the reminder.');
+      return ReminderActionResult.failure(_l10n.notificationSaveReminderFailed);
     }
   }
 
@@ -616,23 +653,16 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }) async {
     final familyId = _familySelectionCubit.state;
     if (familyId == null) {
-      emit(state.copyWith(error: 'Family is not selected'));
-      return ReminderActionResult.failure('Family is not selected.');
+      emit(state.copyWith(error: _l10n.notificationFamilyNotSelected));
+      return ReminderActionResult.failure(_l10n.notificationFamilyNotSelected);
     }
 
     if (remindAt != null) {
       final permissionStatus = await requestSystemPermissionIfNeeded();
       if (!permissionStatus.isGranted) {
-        final message = switch (permissionStatus) {
-          NotificationPermissionStatus.notDetermined =>
-            'Allow notifications to receive reminders on this device.',
-          NotificationPermissionStatus.denied =>
-            'Notifications are blocked. Open system settings to enable reminders.',
-          NotificationPermissionStatus.permanentlyDenied =>
-            'Notifications are disabled in system settings. Re-enable them there to get reminders.',
-          NotificationPermissionStatus.granted => null,
-        };
-        return ReminderActionResult.failure(message!);
+        return ReminderActionResult.failure(
+          _reminderPermissionMessage(permissionStatus),
+        );
       }
 
       if (!isPreferenceEnabled(notificationType)) {
@@ -642,7 +672,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         );
         if (!enabled) {
           return ReminderActionResult.failure(
-            'Unable to enable reminders right now. Please try again.',
+            _l10n.notificationEnableReminderFailed,
           );
         }
       }
@@ -680,7 +710,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       await reloadReminders();
       return ReminderActionResult(
         success: true,
-        message: reminder == null ? 'Reminder removed.' : null,
+        message: reminder == null ? _l10n.notificationReminderRemoved : null,
       );
     } catch (error, stackTrace) {
       AppErrorLogger.logHandled(
@@ -695,7 +725,9 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         },
       );
       emit(state.copyWith(isLoading: false, error: '$error'));
-      return ReminderActionResult.failure('Unable to update the reminder.');
+      return ReminderActionResult.failure(
+        _l10n.notificationUpdateReminderFailed,
+      );
     }
   }
 
@@ -710,16 +742,9 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }) async {
     final permissionStatus = await requestSystemPermissionIfNeeded();
     if (!permissionStatus.isGranted) {
-      final message = switch (permissionStatus) {
-        NotificationPermissionStatus.notDetermined =>
-          'Allow notifications to receive reminders on this device.',
-        NotificationPermissionStatus.denied =>
-          'Notifications are blocked. Open system settings to enable reminders.',
-        NotificationPermissionStatus.permanentlyDenied =>
-          'Notifications are disabled in system settings. Re-enable them there to get reminders.',
-        NotificationPermissionStatus.granted => null,
-      };
-      return ReminderActionResult.failure(message!);
+      return ReminderActionResult.failure(
+        _reminderPermissionMessage(permissionStatus),
+      );
     }
 
     if (!isPreferenceEnabled(notificationType)) {
@@ -729,7 +754,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       );
       if (!enabled) {
         return ReminderActionResult.failure(
-          'Unable to enable reminders right now. Please try again.',
+          _l10n.notificationEnableReminderFailed,
         );
       }
     }
@@ -747,28 +772,21 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   Future<ReminderActionResult> scheduleDebugNotification() async {
     if (!kDebugMode) {
       return ReminderActionResult.failure(
-        'Test pushes are only available in debug builds.',
+        _l10n.notificationDebugOnly,
       );
     }
 
     final permissionStatus = await requestSystemPermissionIfNeeded();
     if (!permissionStatus.isGranted) {
-      final message = switch (permissionStatus) {
-        NotificationPermissionStatus.notDetermined =>
-          'Allow notifications to receive the test push.',
-        NotificationPermissionStatus.denied =>
-          'Notifications are blocked. Open system settings to run the push test.',
-        NotificationPermissionStatus.permanentlyDenied =>
-          'Notifications are disabled in system settings. Re-enable them there to run the push test.',
-        NotificationPermissionStatus.granted => null,
-      };
-      return ReminderActionResult.failure(message!);
+      return ReminderActionResult.failure(
+        _testPushPermissionMessage(permissionStatus),
+      );
     }
 
     final familyId = _familySelectionCubit.state;
     if (familyId == null) {
       return ReminderActionResult.failure(
-        'Select a family before sending a test push.',
+        _l10n.notificationSelectFamilyForTestPush,
       );
     }
 
@@ -785,12 +803,10 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       return ReminderActionResult(
         success: true,
         message: switch (notification.pushStatus) {
-          'sent' => 'Test push sent. It should arrive shortly.',
-          'skipped' =>
-            'Test push was created, but nothing was sent. Check token registration and Firebase server config.',
-          'failed' =>
-            'Test push dispatch failed. Check server logs and Firebase configuration.',
-          _ => 'Test push requested.',
+          'sent' => _l10n.notificationTestPushSent,
+          'skipped' => _l10n.notificationTestPushSkipped,
+          'failed' => _l10n.notificationTestPushFailed,
+          _ => _l10n.notificationTestPushRequested,
         },
       );
     } catch (error, stackTrace) {
@@ -801,7 +817,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       );
       emit(state.copyWith(isLoading: false, error: '$error'));
       return ReminderActionResult.failure(
-        'Unable to send the test push.',
+        _l10n.notificationSendTestPushFailed,
       );
     }
   }
@@ -993,7 +1009,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
             isLoading: false,
             lastRegisteredPushToken: token,
             isUsingCachedData: _hasLocalState,
-            error: 'Network unavailable. Push token registration queued.',
+            error: _l10n.notificationPushTokenQueued,
           ),
         );
         return;

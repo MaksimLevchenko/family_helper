@@ -1,6 +1,7 @@
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'money_goal_formatters.dart';
 import 'money_goal_forms.dart';
@@ -147,10 +148,10 @@ class _GoalHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final archived = isArchivedGoal(goal);
     final statusLabel = archived
-        ? 'Archived'
+        ? context.l10n.moneyGoalsStatusArchived
         : goal.reachedAt != null
-        ? 'Reached'
-        : 'Active';
+        ? context.l10n.moneyGoalsStatusReached
+        : context.l10n.moneyGoalsStatusActive;
     final statusColor = archived
         ? context.colors.border
         : goal.reachedAt != null
@@ -173,7 +174,7 @@ class _GoalHeader extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    formatGoalProgressLabel(goal),
+                    formatGoalProgressLabel(context, goal),
                     style: TextStyle(color: context.colors.textSecondary),
                   ),
                 ],
@@ -268,9 +269,9 @@ class _TabButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: Text(
             switch (tab) {
-              _GoalDetailTab.overview => 'Overview',
-              _GoalDetailTab.history => 'History',
-              _GoalDetailTab.settings => 'Settings',
+              _GoalDetailTab.overview => context.l10n.commonOverview,
+              _GoalDetailTab.history => context.l10n.commonHistory,
+              _GoalDetailTab.settings => context.l10n.commonSettings,
             },
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -318,45 +319,47 @@ class _OverviewTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final metaCards = <Widget>[
       _CompactMetric(
-        label: 'Remaining',
+        label: context.l10n.moneyGoalsRemainingLabel,
         value: formatRemainingAmount(goal),
       ),
       _CompactMetric(
-        label: goal.reachedAt != null ? 'Reached' : 'Updated',
+        label: goal.reachedAt != null
+            ? context.l10n.moneyGoalsStatusReached
+            : context.l10n.listsMetricUpdated,
         value: goal.reachedAt != null
-            ? formatShortDate(goal.reachedAt!)
-            : formatShortDateTime(goal.updatedAt),
+            ? formatShortDate(context, goal.reachedAt!)
+            : formatShortDateTime(context, goal.updatedAt),
       ),
       if (goal.deadlineAt != null)
         _CompactMetric(
-          label: 'Deadline',
-          value: formatShortDate(goal.deadlineAt!),
+          label: context.l10n.moneyGoalsDeadlineLabel,
+          value: formatShortDate(context, goal.deadlineAt!),
         ),
     ];
 
     final actionButtons = <Widget>[
       if (!archived)
         _CompactActionButton(
-          label: 'Add contribution',
+          label: context.l10n.moneyGoalsAddContributionAction,
           isLoading: isAddingContribution,
           onPressed: onAddContribution,
         ),
       if (!archived)
         _CompactActionButton(
-          label: 'Withdraw money',
+          label: context.l10n.moneyGoalsWithdrawAction,
           variant: _CompactActionVariant.secondary,
           isLoading: isWithdrawingFunds,
           onPressed: onWithdrawFunds,
         ),
       if (!archived)
         _CompactActionButton(
-          label: 'Complete and archive',
+          label: context.l10n.moneyGoalsCompleteAndArchive,
           variant: _CompactActionVariant.secondary,
           isLoading: isArchivingGoal,
           onPressed: onArchiveGoal,
         ),
       _CompactActionButton(
-        label: 'New goal',
+        label: context.l10n.moneyGoalsNewGoal,
         variant: _CompactActionVariant.secondary,
         isLoading: isCreatingGoal,
         onPressed: onCreateGoal,
@@ -391,7 +394,7 @@ class _OverviewTab extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Progress',
+                context.l10n.moneyGoalsProgressTitle,
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 8),
@@ -466,7 +469,7 @@ class _HistoryTabState extends State<_HistoryTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Recent activity',
+            context.l10n.moneyGoalsRecentActivityTitle,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 10),
@@ -479,7 +482,7 @@ class _HistoryTabState extends State<_HistoryTab> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(
-                'No contributions or withdrawals yet.',
+                context.l10n.moneyGoalsNoHistoryYet,
                 style: TextStyle(color: context.colors.textSecondary),
               ),
             )
@@ -502,7 +505,11 @@ class _HistoryTabState extends State<_HistoryTab> {
                           _isExpanded = !_isExpanded;
                         });
                       },
-                      child: Text(_isExpanded ? 'Show less' : 'Show more'),
+                      child: Text(
+                        _isExpanded
+                            ? context.l10n.commonShowLess
+                            : context.l10n.commonShowMore,
+                      ),
                     ),
                   ),
                 ],
@@ -549,7 +556,7 @@ class _SettingsTab extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Goal settings',
+          context.l10n.moneyGoalsGoalSettingsTitle,
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 10),
@@ -562,7 +569,7 @@ class _SettingsTab extends StatelessWidget {
         const SizedBox(height: 12),
         if (!archived) ...[
           _CompactActionButton(
-            label: 'Archive goal',
+            label: context.l10n.moneyGoalsArchiveGoalAction,
             variant: _CompactActionVariant.secondary,
             isLoading: isArchivingGoal,
             onPressed: onArchiveGoal,
@@ -570,7 +577,7 @@ class _SettingsTab extends StatelessWidget {
           const SizedBox(height: 8),
         ],
         _CompactActionButton(
-          label: 'Delete goal',
+          label: context.l10n.moneyGoalsDeleteGoalAction,
           variant: _CompactActionVariant.danger,
           isLoading: isDeletingGoal,
           onPressed: onDeleteGoal,
@@ -657,12 +664,12 @@ class _GoalHistoryItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  formatHistoryHeadline(entry),
+                  formatHistoryHeadline(context, entry),
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  formatShortDateTime(entry.createdAt),
+                  formatShortDateTime(context, entry.createdAt),
                   style: TextStyle(color: context.colors.textSecondary),
                 ),
                 if (entry.note != null && entry.note!.trim().isNotEmpty) ...[

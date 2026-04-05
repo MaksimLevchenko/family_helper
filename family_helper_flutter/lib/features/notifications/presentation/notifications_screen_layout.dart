@@ -27,7 +27,10 @@ Widget _buildNotificationsNarrowLayout(
         ),
         if (state.error != null) ...[
           const SizedBox(height: 12),
-          AppBanner(text: state.error!, isError: true),
+          AppBanner(
+            text: localizeUiError(context, state.error),
+            isError: true,
+          ),
         ],
         const SizedBox(height: 12),
         _InboxHero(
@@ -102,7 +105,10 @@ Widget _buildNotificationsWideLayout(
                 ),
                 if (state.error != null) ...[
                   const SizedBox(height: 12),
-                  AppBanner(text: state.error!, isError: true),
+                  AppBanner(
+                    text: localizeUiError(context, state.error),
+                    isError: true,
+                  ),
                 ],
                 const SizedBox(height: 12),
                 _InboxHero(
@@ -167,10 +173,10 @@ List<Widget> _buildNotificationsInboxListContent(
   final showUnreadOnly = filter == _InboxFilter.unread;
 
   if (state.isLoading && state.inbox.isEmpty) {
-    return const [
+    return [
       Padding(
-        padding: EdgeInsets.only(top: 32),
-        child: LoadingState(label: 'Loading notifications...'),
+        padding: const EdgeInsets.only(top: 32),
+        child: LoadingState(label: context.l10n.notificationsLoading),
       ),
     ];
   }
@@ -182,12 +188,12 @@ List<Widget> _buildNotificationsInboxListContent(
             ? Icons.mark_email_read_rounded
             : Icons.notifications_none_rounded,
         title: showUnreadOnly
-            ? 'No unread notifications'
-            : 'No notifications yet',
+            ? context.l10n.notificationsNoUnreadTitle
+            : context.l10n.notificationsNoItemsTitle,
         message: showUnreadOnly
-            ? 'Everything in your family inbox has already been opened.'
-            : 'New reminders and family activity will show up here as soon as they arrive.',
-        actionLabel: showUnreadOnly ? 'Show all notifications' : null,
+            ? context.l10n.notificationsNoUnreadMessage
+            : context.l10n.notificationsNoItemsMessage,
+        actionLabel: showUnreadOnly ? context.l10n.notificationsShowAll : null,
         onAction: showUnreadOnly
             ? () {
                 onFilterChanged(_InboxFilter.all);
@@ -221,7 +227,7 @@ List<Widget> _buildNotificationsInboxListContent(
         child: TextButton.icon(
           onPressed: state.isLoading ? null : () => reload(append: true),
           icon: const Icon(Icons.expand_more_rounded),
-          label: const Text('Load more'),
+          label: Text(context.l10n.notificationsLoadMore),
         ),
       ),
   ];

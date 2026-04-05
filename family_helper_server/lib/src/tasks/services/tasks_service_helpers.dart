@@ -109,13 +109,15 @@ Future<void> _notifyTaskAssignmentIfNeeded(
     return;
   }
 
-  await service.appNotifications.createForProfiles(
+  await service.appNotifications.createLocalizedForProfiles(
     session,
     profileIds: [assigneeProfileId],
     familyId: task.familyId,
     category: 'task_assigned',
-    title: 'Task assigned',
-    body: task.title,
+    buildMessage: (localeCode, _) => buildTaskAssignedNotificationMessage(
+      localeCode: localeCode,
+      taskTitle: task.title,
+    ),
     entityType: 'task',
     entityId: task.id,
     route: '/home/tasks',
@@ -135,12 +137,15 @@ Future<void> _notifyTaskCompleted(
   required TaskDto task,
   Transaction? transaction,
 }) async {
-  await service.appNotifications.createForFamilyMembers(
+  await service.appNotifications.createLocalizedForFamilyMembers(
     session,
     familyId: task.familyId,
+    excludeProfileIds: {actorProfileId},
     category: 'task_completed',
-    title: 'Task completed',
-    body: task.title,
+    buildMessage: (localeCode, _) => buildTaskCompletedNotificationMessage(
+      localeCode: localeCode,
+      taskTitle: task.title,
+    ),
     entityType: 'task',
     entityId: task.id,
     route: '/home/tasks',

@@ -153,15 +153,16 @@ Future<FamilyInviteDto> _createInviteImpl(
             ? {actorProfileId}
             : const <int>{};
 
-        await service.appNotifications.createForFamilyMembers(
+        await service.appNotifications.createLocalizedForFamilyMembers(
           session,
           familyId: familyId,
           excludeProfileIds: excludeProfileIds,
           category: 'family_invite_created',
-          title: 'Family invite created',
-          body: normalizedEmail != null
-              ? 'Invite ready for $normalizedEmail'
-              : 'A new family invite is ready to share.',
+          buildMessage: (localeCode, _) =>
+              buildFamilyInviteCreatedNotificationMessage(
+                localeCode: localeCode,
+                email: normalizedEmail,
+              ),
           entityType: 'invite',
           entityId: invite.id,
           route: '/home/settings/family',
@@ -360,12 +361,16 @@ Future<FamilyMemberDto> _acceptInviteImpl(
       ),
     );
 
-    await service.appNotifications.createForFamilyMembers(
+    await service.appNotifications.createLocalizedForFamilyMembers(
       session,
       familyId: inviteDto.familyId,
+      excludeProfileIds: {profileId},
       category: 'family_invite_accepted',
-      title: 'Family member joined',
-      body: '${profile?.displayName ?? 'Someone'} joined the family.',
+      buildMessage: (localeCode, _) =>
+          buildFamilyInviteAcceptedNotificationMessage(
+            localeCode: localeCode,
+            displayName: profile?.displayName ?? 'Someone',
+          ),
       entityType: 'invite',
       entityId: inviteDto.id,
       route: '/home/settings/family',

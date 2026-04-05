@@ -12,14 +12,13 @@ Widget _buildMoneyGoalsSections(BuildContext context, MoneyGoalsState state) {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _SectionHeader(
-        title: 'Active goals',
-        subtitle:
-            '${activeGoals.length} goal${activeGoals.length == 1 ? '' : 's'}',
+        title: context.l10n.moneyGoalsSummaryActiveGoals,
+        subtitle: context.l10n.moneyGoalsGoalCount(activeGoals.length),
       ),
       const SizedBox(height: 12),
       if (activeGoals.isEmpty)
-        const _InlineEmptySection(
-          message: 'No active goals. Archived goals stay below.',
+        _InlineEmptySection(
+          message: context.l10n.moneyGoalsNoActiveGoalsMessage,
         )
       else
         _ExpandableGoalList(
@@ -32,9 +31,8 @@ Widget _buildMoneyGoalsSections(BuildContext context, MoneyGoalsState state) {
       if (archivedGoals.isNotEmpty) ...[
         const SizedBox(height: 16),
         _SectionHeader(
-          title: 'Archive',
-          subtitle:
-              '${archivedGoals.length} goal${archivedGoals.length == 1 ? '' : 's'}',
+          title: context.l10n.moneyGoalsArchivedSection,
+          subtitle: context.l10n.moneyGoalsGoalCount(archivedGoals.length),
         ),
         const SizedBox(height: 8),
         _ExpandableGoalList(
@@ -155,10 +153,11 @@ Future<void> _showArchiveGoalOverlay(
     child: BlocBuilder<MoneyGoalsCubit, MoneyGoalsState>(
       builder: (context, state) {
         return MoneyGoalConfirmAction(
-          title: 'Complete and archive goal',
-          description:
-              'This will move "${goal.title}" to the archive and keep it in history.',
-          confirmLabel: 'Archive goal',
+          title: context.l10n.moneyGoalsArchiveGoalConfirmTitle,
+          description: context.l10n.moneyGoalsArchiveGoalConfirmDescription(
+            goal.title,
+          ),
+          confirmLabel: context.l10n.moneyGoalsArchiveGoalAction,
           isLoading: state.isArchivingGoal,
           onConfirm: () => context.read<MoneyGoalsCubit>().archiveCurrentGoal(),
         );
@@ -183,10 +182,11 @@ Future<void> _showDeleteGoalOverlay(
     child: BlocBuilder<MoneyGoalsCubit, MoneyGoalsState>(
       builder: (context, state) {
         return MoneyGoalConfirmAction(
-          title: 'Delete goal',
-          description:
-              'Delete "${goal.title}" permanently from active goals and archive.',
-          confirmLabel: 'Delete goal',
+          title: context.l10n.moneyGoalsDeleteGoalConfirmTitle,
+          description: context.l10n.moneyGoalsDeleteGoalConfirmDescription(
+            goal.title,
+          ),
+          confirmLabel: context.l10n.moneyGoalsDeleteGoalAction,
           confirmVariant: AppButtonVariant.danger,
           isLoading: state.isDeletingGoal,
           onConfirm: () => context.read<MoneyGoalsCubit>().deleteCurrentGoal(),
@@ -241,10 +241,8 @@ Future<void> _showAdaptiveOverlay(
 
 void _showOfflineMessage(BuildContext context) {
   ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text(
-        'Server unavailable. This action will work again when connection is restored.',
-      ),
+    SnackBar(
+      content: Text(context.l10n.calendarOfflineMessage),
     ),
   );
 }

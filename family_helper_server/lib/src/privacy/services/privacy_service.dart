@@ -413,6 +413,7 @@ class PrivacyService {
             profile.copyWith(
               displayName: 'Deleted user #$profileId',
               timezone: 'UTC',
+              locale: 'en',
               avatarMediaId: null,
               analyticsOptIn: false,
               deletedAt: now,
@@ -499,6 +500,7 @@ class PrivacyService {
               'auth_user_id': profile.authUserId,
               'display_name': profile.displayName,
               'timezone': profile.timezone,
+              'locale': profile.locale,
               'avatar_media_id': profile.avatarMediaId,
               'analytics_opt_in': profile.analyticsOptIn,
               'created_at': profile.createdAt,

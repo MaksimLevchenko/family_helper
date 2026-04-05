@@ -19,19 +19,21 @@ abstract class AppProfileRow
     required this.authUserId,
     required this.displayName,
     required this.timezone,
+    String? locale,
     this.avatarMediaId,
     required this.analyticsOptIn,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
     required this.version,
-  });
+  }) : locale = locale ?? 'en';
 
   factory AppProfileRow({
     int? id,
     required String authUserId,
     required String displayName,
     required String timezone,
+    String? locale,
     int? avatarMediaId,
     required bool analyticsOptIn,
     required DateTime createdAt,
@@ -46,6 +48,7 @@ abstract class AppProfileRow
       authUserId: jsonSerialization['authUserId'] as String,
       displayName: jsonSerialization['displayName'] as String,
       timezone: jsonSerialization['timezone'] as String,
+      locale: jsonSerialization['locale'] as String?,
       avatarMediaId: jsonSerialization['avatarMediaId'] as int?,
       analyticsOptIn: jsonSerialization['analyticsOptIn'] as bool,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
@@ -74,6 +77,8 @@ abstract class AppProfileRow
 
   String timezone;
 
+  String locale;
+
   int? avatarMediaId;
 
   bool analyticsOptIn;
@@ -97,6 +102,7 @@ abstract class AppProfileRow
     String? authUserId,
     String? displayName,
     String? timezone,
+    String? locale,
     int? avatarMediaId,
     bool? analyticsOptIn,
     DateTime? createdAt,
@@ -112,6 +118,7 @@ abstract class AppProfileRow
       'authUserId': authUserId,
       'displayName': displayName,
       'timezone': timezone,
+      'locale': locale,
       if (avatarMediaId != null) 'avatarMediaId': avatarMediaId,
       'analyticsOptIn': analyticsOptIn,
       'createdAt': createdAt.toJson(),
@@ -129,6 +136,7 @@ abstract class AppProfileRow
       'authUserId': authUserId,
       'displayName': displayName,
       'timezone': timezone,
+      'locale': locale,
       if (avatarMediaId != null) 'avatarMediaId': avatarMediaId,
       'analyticsOptIn': analyticsOptIn,
       'createdAt': createdAt.toJson(),
@@ -176,6 +184,7 @@ class _AppProfileRowImpl extends AppProfileRow {
     required String authUserId,
     required String displayName,
     required String timezone,
+    String? locale,
     int? avatarMediaId,
     required bool analyticsOptIn,
     required DateTime createdAt,
@@ -187,6 +196,7 @@ class _AppProfileRowImpl extends AppProfileRow {
          authUserId: authUserId,
          displayName: displayName,
          timezone: timezone,
+         locale: locale,
          avatarMediaId: avatarMediaId,
          analyticsOptIn: analyticsOptIn,
          createdAt: createdAt,
@@ -204,6 +214,7 @@ class _AppProfileRowImpl extends AppProfileRow {
     String? authUserId,
     String? displayName,
     String? timezone,
+    String? locale,
     Object? avatarMediaId = _Undefined,
     bool? analyticsOptIn,
     DateTime? createdAt,
@@ -216,6 +227,7 @@ class _AppProfileRowImpl extends AppProfileRow {
       authUserId: authUserId ?? this.authUserId,
       displayName: displayName ?? this.displayName,
       timezone: timezone ?? this.timezone,
+      locale: locale ?? this.locale,
       avatarMediaId: avatarMediaId is int? ? avatarMediaId : this.avatarMediaId,
       analyticsOptIn: analyticsOptIn ?? this.analyticsOptIn,
       createdAt: createdAt ?? this.createdAt,
@@ -241,6 +253,11 @@ class AppProfileRowUpdateTable extends _i1.UpdateTable<AppProfileRowTable> {
 
   _i1.ColumnValue<String, String> timezone(String value) => _i1.ColumnValue(
     table.timezone,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> locale(String value) => _i1.ColumnValue(
+    table.locale,
     value,
   );
 
@@ -293,6 +310,11 @@ class AppProfileRowTable extends _i1.Table<int?> {
       'timezone',
       this,
     );
+    locale = _i1.ColumnString(
+      'locale',
+      this,
+      hasDefault: true,
+    );
     avatarMediaId = _i1.ColumnInt(
       'avatarMediaId',
       this,
@@ -327,6 +349,8 @@ class AppProfileRowTable extends _i1.Table<int?> {
 
   late final _i1.ColumnString timezone;
 
+  late final _i1.ColumnString locale;
+
   late final _i1.ColumnInt avatarMediaId;
 
   late final _i1.ColumnBool analyticsOptIn;
@@ -345,6 +369,7 @@ class AppProfileRowTable extends _i1.Table<int?> {
     authUserId,
     displayName,
     timezone,
+    locale,
     avatarMediaId,
     analyticsOptIn,
     createdAt,

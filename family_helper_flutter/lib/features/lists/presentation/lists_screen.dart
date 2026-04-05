@@ -2,6 +2,8 @@ import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/ui_error_localizer.dart';
 import '../../../core/network/server_availability_cubit.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../ui_kit/ui_kit.dart';
@@ -29,7 +31,10 @@ class ListsScreen extends StatelessWidget {
 
         return Scaffold(
           backgroundColor: colors.background,
-          appBar: serverStatusAppBar(context, title: const Text('Lists')),
+          appBar: serverStatusAppBar(
+            context,
+            title: Text(context.l10n.homeLists),
+          ),
           floatingActionButton: selectedList == null
               ? null
               : FloatingActionButton.extended(
@@ -39,7 +44,7 @@ class ListsScreen extends StatelessWidget {
                           _showAddItemSheet(context, selectedList);
                         },
                   icon: const Icon(Icons.add_rounded),
-                  label: const Text('Add item'),
+                  label: Text(context.l10n.listsAddItemTitle),
                 ),
           body: SafeArea(
             child: LayoutBuilder(
@@ -102,11 +107,15 @@ class ListsScreen extends StatelessWidget {
             lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
           ),
           if (state.error != null) ...[
-            AppBanner(text: state.error!, isError: true),
+            AppBanner(
+              text: localizeUiError(context, state.error),
+              isError: true,
+            ),
             const SizedBox(height: 12),
           ],
           _HeroCard(
-            familyTitle: familyState?.family?.title ?? 'Family collaboration',
+            familyTitle:
+                familyState?.family?.title ?? context.l10n.listsFamilyFallback,
             listCount: state.lists.length,
             isOffline: isOffline,
             onCreateList: () {
@@ -115,8 +124,8 @@ class ListsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           _HeaderRow(
-            title: 'Your lists',
-            subtitle: 'Pick a list and keep every check-off visible.',
+            title: context.l10n.listsYourListsTitle,
+            subtitle: context.l10n.listsYourListsSubtitle,
             trailing: state.isLoadingLists && state.lists.isNotEmpty
                 ? const SizedBox(
                     width: 18,
@@ -132,14 +141,13 @@ class ListsScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    const EmptyState(
-                      title: 'No lists yet',
-                      message:
-                          'Start with a shopping list or wishlist for your family.',
+                    EmptyState(
+                      title: context.l10n.listsEmptyTitle,
+                      message: context.l10n.listsEmptyMessage,
                     ),
                     const SizedBox(height: 16),
                     AppButton(
-                      label: 'Create your first list',
+                      label: context.l10n.listsCreateFirstList,
                       onPressed: isOffline
                           ? null
                           : () {
@@ -214,12 +222,16 @@ class ListsScreen extends StatelessWidget {
                 ),
                 if (state.error != null) ...[
                   const SizedBox(height: 12),
-                  AppBanner(text: state.error!, isError: true),
+                  AppBanner(
+                    text: localizeUiError(context, state.error),
+                    isError: true,
+                  ),
                 ],
                 const SizedBox(height: 12),
                 _HeroCard(
                   familyTitle:
-                      familyState?.family?.title ?? 'Family collaboration',
+                      familyState?.family?.title ??
+                      context.l10n.listsFamilyFallback,
                   listCount: state.lists.length,
                   isOffline: isOffline,
                   onCreateList: () {
@@ -228,8 +240,8 @@ class ListsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 _HeaderRow(
-                  title: 'Your lists',
-                  subtitle: 'Pick a list and keep every check-off visible.',
+                  title: context.l10n.listsYourListsTitle,
+                  subtitle: context.l10n.listsYourListsSubtitle,
                   trailing: state.isLoadingLists && state.lists.isNotEmpty
                       ? const SizedBox(
                           width: 18,
@@ -247,14 +259,13 @@ class ListsScreen extends StatelessWidget {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const EmptyState(
-                                  title: 'No lists yet',
-                                  message:
-                                      'Start with a shopping list or wishlist for your family.',
+                                EmptyState(
+                                  title: context.l10n.listsEmptyTitle,
+                                  message: context.l10n.listsEmptyMessage,
                                 ),
                                 const SizedBox(height: 16),
                                 AppButton(
-                                  label: 'Create your first list',
+                                  label: context.l10n.listsCreateFirstList,
                                   onPressed: isOffline
                                       ? null
                                       : () {
@@ -321,10 +332,10 @@ class ListsScreen extends StatelessWidget {
     required bool isOffline,
   }) {
     return _HeaderRow(
-      title: selectedList?.title ?? 'List details',
+      title: selectedList?.title ?? context.l10n.listsDetailsTitle,
       subtitle: selectedList == null
-          ? 'Choose or create a list to start adding items.'
-          : _selectedListSubtitle(selectedList),
+          ? context.l10n.listsDetailsSubtitle
+          : _selectedListSubtitle(context, selectedList),
       trailing: selectedList == null
           ? null
           : Row(
@@ -334,7 +345,7 @@ class ListsScreen extends StatelessWidget {
                 if (!isOffline) ...[
                   const SizedBox(width: 8),
                   PopupMenuButton<_SelectedListAction>(
-                    tooltip: 'List actions',
+                    tooltip: context.l10n.listsListActionsTooltip,
                     onSelected: (action) {
                       _handleSelectedListAction(
                         context,
@@ -342,14 +353,14 @@ class ListsScreen extends StatelessWidget {
                         action,
                       );
                     },
-                    itemBuilder: (context) => const [
+                    itemBuilder: (context) => [
                       PopupMenuItem(
                         value: _SelectedListAction.edit,
-                        child: Text('Edit list'),
+                        child: Text(context.l10n.listsEditListAction),
                       ),
                       PopupMenuItem(
                         value: _SelectedListAction.delete,
-                        child: Text('Delete list'),
+                        child: Text(context.l10n.listsDeleteListAction),
                       ),
                     ],
                   ),
@@ -366,9 +377,9 @@ class ListsScreen extends StatelessWidget {
     required bool isOffline,
   }) {
     if (selectedList == null) {
-      return const EmptyState(
-        title: 'No list selected',
-        message: 'Create your first list to start planning together.',
+      return EmptyState(
+        title: context.l10n.listsNoSelectionTitle,
+        message: context.l10n.listsNoSelectionMessage,
       );
     }
 
@@ -407,8 +418,12 @@ class ListsScreen extends StatelessWidget {
       builder: (context, useModalShell) => _CreateListSheet(
         initialTitle: initialList?.title,
         initialType: initialList?.listType ?? 'shopping',
-        sheetTitle: initialList == null ? 'Create a new list' : 'Edit list',
-        submitLabel: initialList == null ? 'Create list' : 'Save changes',
+        sheetTitle: initialList == null
+            ? context.l10n.listsCreateSheetTitle
+            : context.l10n.listsEditSheetTitle,
+        submitLabel: initialList == null
+            ? context.l10n.listsCreateListAction
+            : context.l10n.commonSaveChanges,
         useModalShell: useModalShell,
         onSubmit: (title, type) async {
           if (initialList == null) {
@@ -435,8 +450,12 @@ class ListsScreen extends StatelessWidget {
       builder: (context, useModalShell) => _AddItemSheet(
         listTitle: selectedList.title,
         initialItem: initialItem,
-        sheetTitle: initialItem == null ? 'Add item' : 'Edit item',
-        submitLabel: initialItem == null ? 'Add to list' : 'Save changes',
+        sheetTitle: initialItem == null
+            ? context.l10n.listsAddItemTitle
+            : context.l10n.listsEditItemTitle,
+        submitLabel: initialItem == null
+            ? context.l10n.listsAddToListAction
+            : context.l10n.commonSaveChanges,
         useModalShell: useModalShell,
         onSubmit:
             ({
@@ -522,16 +541,16 @@ class ListsScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete list?'),
-        content: Text('This will remove ${list.title} and all of its items.'),
+        title: Text(context.l10n.listsDeleteListTitle),
+        content: Text(context.l10n.listsDeleteListMessage(list.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.commonDelete),
           ),
         ],
       ),
@@ -548,16 +567,16 @@ class ListsScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete item?'),
-        content: Text('Remove ${item.title} from this list?'),
+        title: Text(context.l10n.listsDeleteItemTitle),
+        content: Text(context.l10n.listsDeleteItemMessage(item.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.commonDelete),
           ),
         ],
       ),
@@ -587,6 +606,7 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final colors = context.colors;
     final theme = Theme.of(context);
 
@@ -623,7 +643,7 @@ class _HeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Shared lists that feel alive.',
+            l10n.listsHeroTitle,
             style: theme.textTheme.headlineSmall?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w800,
@@ -633,8 +653,8 @@ class _HeroCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             listCount == 0
-                ? 'Create your first shopping or wishlist board and keep every check-off visible.'
-                : '$listCount active list${listCount == 1 ? '' : 's'} with clear ownership.',
+                ? l10n.listsHeroEmptyMessage
+                : l10n.listsHeroCountMessage(listCount),
             style: theme.textTheme.bodyLarge?.copyWith(
               color: Colors.white.withValues(alpha: 0.92),
               height: 1.35,
@@ -648,7 +668,7 @@ class _HeroCard extends StatelessWidget {
               foregroundColor: colors.primary,
             ),
             icon: const Icon(Icons.add_rounded),
-            label: const Text('New list'),
+            label: Text(l10n.listsNewList),
           ),
         ],
       ),
@@ -718,9 +738,15 @@ class _ListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final spec = _ListSpec.fromType(list.listType, colors, isDark: isDark);
+    final spec = _ListSpec.fromType(
+      context,
+      list.listType,
+      colors,
+      isDark: isDark,
+    );
     final iconBackgroundColor = isDark
         ? Colors.white.withValues(alpha: isSelected ? 0.16 : 0.10)
         : Colors.white.withValues(alpha: isSelected ? 0.2 : 0.62);
@@ -792,14 +818,14 @@ class _ListCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _MetricBlock(
-                      label: 'Open',
+                      label: l10n.listsMetricOpen,
                       value: '${list.pendingItemsCount ?? 0}',
                       textColor: spec.textColor,
                     ),
                   ),
                   Expanded(
                     child: _MetricBlock(
-                      label: 'Updated',
+                      label: l10n.listsMetricUpdated,
                       value: _formatCompactDate(context, list.updatedAt),
                       textColor: spec.textColor,
                     ),
@@ -874,9 +900,15 @@ class _ListDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final spec = _ListSpec.fromType(list.listType, colors, isDark: isDark);
+    final spec = _ListSpec.fromType(
+      context,
+      list.listType,
+      colors,
+      isDark: isDark,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -893,8 +925,10 @@ class _ListDetails extends StatelessWidget {
               Expanded(
                 child: Text(
                   items.isEmpty
-                      ? 'Start with your first item'
-                      : '${items.where((item) => !item.isBought).length} items still open',
+                      ? l10n.listsStartFirstItem
+                      : l10n.listsItemsStillOpen(
+                          items.where((item) => !item.isBought).length,
+                        ),
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: colors.textSecondary,
                   ),
@@ -918,13 +952,12 @@ class _ListDetails extends StatelessWidget {
             Column(
               children: [
                 EmptyState(
-                  title: 'This list is ready',
-                  message:
-                      'Add the first item to ${list.title} and make it visible to everyone.',
+                  title: l10n.listsReadyTitle,
+                  message: l10n.listsReadyMessage(list.title),
                 ),
                 const SizedBox(height: 16),
                 AppButton(
-                  label: 'Add first item',
+                  label: l10n.listsAddFirstItem,
                   onPressed: isOffline ? null : onAddItem,
                 ),
               ],
@@ -1029,7 +1062,10 @@ class _ItemCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Text(
-                          'Marked by ${item.boughtByDisplayName} - ${_formatDateTime(context, item.boughtAt)}',
+                          context.l10n.listsMarkedBy(
+                            item.boughtByDisplayName!,
+                            _formatDateTime(context, item.boughtAt),
+                          ),
                           style: Theme.of(context).textTheme.labelLarge
                               ?.copyWith(
                                 color: colors.textPrimary,
@@ -1045,7 +1081,7 @@ class _ItemCard extends StatelessWidget {
                 children: [
                   if (!isOffline)
                     PopupMenuButton<_ItemAction>(
-                      tooltip: 'Item actions',
+                      tooltip: context.l10n.listsItemActionsTooltip,
                       onSelected: (action) {
                         switch (action) {
                           case _ItemAction.edit:
@@ -1054,14 +1090,14 @@ class _ItemCard extends StatelessWidget {
                             onDelete();
                         }
                       },
-                      itemBuilder: (context) => const [
+                      itemBuilder: (context) => [
                         PopupMenuItem(
                           value: _ItemAction.edit,
-                          child: Text('Edit item'),
+                          child: Text(context.l10n.listsEditItemAction),
                         ),
                         PopupMenuItem(
                           value: _ItemAction.delete,
-                          child: Text('Delete item'),
+                          child: Text(context.l10n.listsDeleteItemAction),
                         ),
                       ],
                     )
@@ -1099,7 +1135,7 @@ class _TypeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final spec = _ListSpec.fromType(type, colors, isDark: isDark);
+    final spec = _ListSpec.fromType(context, type, colors, isDark: isDark);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -1159,17 +1195,17 @@ class _CreateListSheetState extends State<_CreateListSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return _SheetScaffold(
       useModalShell: widget.useModalShell,
       title: widget.sheetTitle,
-      subtitle:
-          'Choose a template and make it easy for the whole family to follow.',
+      subtitle: l10n.listsCreateSheetSubtitle,
       child: Column(
         children: [
           AppTextField(
             controller: _titleController,
-            label: 'List title',
-            hint: 'Saturday groceries',
+            label: l10n.listsListTitleLabel,
+            hint: l10n.listsListTitleHint,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _submit(),
           ),
@@ -1181,7 +1217,7 @@ class _CreateListSheetState extends State<_CreateListSheet> {
               for (final type in const ['shopping', 'wishlist'])
                 ChoiceChip(
                   selected: _selectedType == type,
-                  label: Text(_ListSpec.labelFor(type)),
+                  label: Text(_ListSpec.labelFor(context, type)),
                   avatar: Icon(_ListSpec.iconFor(type), size: 18),
                   onSelected: (_) => setState(() {
                     _selectedType = type;
@@ -1287,16 +1323,17 @@ class _AddItemSheetState extends State<_AddItemSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return _SheetScaffold(
       useModalShell: widget.useModalShell,
       title: widget.sheetTitle,
-      subtitle: 'Everything added here will show up in ${widget.listTitle}.',
+      subtitle: l10n.listsAddItemSubtitle(widget.listTitle),
       child: Column(
         children: [
           AppTextField(
             controller: _titleController,
-            label: 'Item title',
-            hint: 'Milk',
+            label: l10n.listsItemTitleLabel,
+            hint: l10n.listsItemTitleHint,
           ),
           const SizedBox(height: 12),
           Row(
@@ -1304,7 +1341,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
               Expanded(
                 child: AppTextField(
                   controller: _qtyController,
-                  label: 'Qty',
+                  label: l10n.listsQtyLabel,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
@@ -1314,8 +1351,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
               Expanded(
                 child: AppTextField(
                   controller: _unitController,
-                  label: 'Unit',
-                  hint: 'pcs / kg',
+                  label: l10n.listsUnitLabel,
+                  hint: l10n.listsUnitHint,
                 ),
               ),
             ],
@@ -1323,14 +1360,14 @@ class _AddItemSheetState extends State<_AddItemSheet> {
           const SizedBox(height: 12),
           AppTextField(
             controller: _noteController,
-            label: 'Note',
-            hint: 'Semi-skimmed if available',
+            label: l10n.commonNote,
+            hint: l10n.listsNoteHint,
             maxLines: 2,
           ),
           const SizedBox(height: 12),
           AppTextField(
             controller: _priceController,
-            label: 'Price',
+            label: l10n.listsPriceLabel,
             hint: '249.90',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             textInputAction: TextInputAction.done,
@@ -1482,6 +1519,7 @@ class _ListSpec {
   final List<Color> idleGradient;
 
   static _ListSpec fromType(
+    BuildContext context,
     String type,
     AppColors colors, {
     required bool isDark,
@@ -1489,7 +1527,7 @@ class _ListSpec {
     switch (type) {
       case 'wishlist':
         return _ListSpec(
-          label: 'Wishlist',
+          label: context.l10n.listsTypeWishlist,
           icon: Icons.auto_awesome_rounded,
           accent: Colors.deepOrange,
           iconColor: isDark
@@ -1528,7 +1566,7 @@ class _ListSpec {
       case 'shopping':
       default:
         return _ListSpec(
-          label: 'Shopping',
+          label: context.l10n.listTypeShopping,
           icon: Icons.local_grocery_store_rounded,
           accent: Colors.teal,
           iconColor: isDark ? Colors.teal.shade100 : Colors.teal.shade700,
@@ -1567,9 +1605,9 @@ class _ListSpec {
     return Color.alphaBlend(tint.withValues(alpha: opacity), base);
   }
 
-  static String labelFor(String type) => switch (type) {
-    'wishlist' => 'Wishlist',
-    _ => 'Shopping',
+  static String labelFor(BuildContext context, String type) => switch (type) {
+    'wishlist' => context.l10n.listsTypeWishlist,
+    _ => context.l10n.listTypeShopping,
   };
 
   static IconData iconFor(String type) => switch (type) {
@@ -1578,13 +1616,12 @@ class _ListSpec {
   };
 }
 
-String _selectedListSubtitle(FamilyListDto list) {
+String _selectedListSubtitle(BuildContext context, FamilyListDto list) {
   final count = list.pendingItemsCount ?? 0;
-  final itemWord = count == 1 ? 'item' : 'items';
   final local = list.updatedAt.toLocal();
   final time =
       '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
-  return '$count open $itemWord - updated $time';
+  return context.l10n.listsSelectedSubtitle(count, time);
 }
 
 String? _itemMetaLine(ListItemDto item) {
@@ -1607,7 +1644,7 @@ String _formatCompactDate(BuildContext context, DateTime value) {
 
 String _formatDateTime(BuildContext context, DateTime? value) {
   if (value == null) {
-    return 'just now';
+    return context.l10n.commonJustNow;
   }
   final local = value.toLocal();
   final localizations = MaterialLocalizations.of(context);

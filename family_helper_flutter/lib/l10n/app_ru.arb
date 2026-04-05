@@ -1,0 +1,974 @@
+{
+  "@@locale": "ru",
+  "appName": "Family Helper",
+  "bootstrapUnableToStart": "Не удалось запустить приложение.",
+  "bootstrapPreparingSpace": "Подготавливаем ваше пространство...",
+  "notificationActionTooltip": "Уведомления",
+  "serverUnavailableBanner": "Сервер недоступен. Некоторые действия могут не работать, пока соединение не восстановится.",
+  "settingsTitle": "Настройки",
+  "settingsAccountSection": "Аккаунт",
+  "settingsAppearanceSection": "Оформление",
+  "settingsLanguageSection": "Язык",
+  "settingsProfileTitle": "Профиль",
+  "settingsFamilyTitle": "Семья",
+  "settingsNotificationsTitle": "Уведомления",
+  "settingsPrivacyTitle": "Приватность",
+  "settingsLanguageTitle": "Язык приложения",
+  "settingsLanguageSubtitle": "Выберите, как Family Helper определяет язык на этом устройстве и для ваших уведомлений.",
+  "settingsLanguageSystem": "Системный",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageRussian": "Русский",
+  "settingsThemeTitle": "Тема",
+  "settingsCurrentMode": "Текущий режим: {mode}",
+  "@settingsCurrentMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "themeModeSystem": "Системная",
+  "themeModeLight": "Светлая",
+  "themeModeDark": "Тёмная",
+  "settingsSignOut": "Выйти",
+  "settingsProfileSummaryLoading": "Загружаем профиль...",
+  "settingsProfileSummaryEmpty": "Обновите имя, часовой пояс и фото",
+  "settingsPhotoMissing": "Фото нет",
+  "settingsPhotoAdded": "Фото добавлено",
+  "settingsFamilySummaryNotConnected": "Не подключено",
+  "settingsFamilySummaryLoading": "Загружаем семью...",
+  "settingsFamilySummaryConnected": "Семья подключена",
+  "settingsMemberCount": "{count, plural, one{{count} участник} few{{count} участника} many{{count} участников} other{{count} участника}}",
+  "@settingsMemberCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsSwitchOn": "Вкл",
+  "settingsSwitchOff": "Выкл",
+  "settingsNotificationsSummary": "{permission} • Задачи {tasks} • Календарь {calendar}",
+  "@settingsNotificationsSummary": {
+    "placeholders": {
+      "permission": {
+        "type": "String"
+      },
+      "tasks": {
+        "type": "String"
+      },
+      "calendar": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAnalyticsOn": "Аналитика включена",
+  "settingsAnalyticsOff": "Аналитика выключена",
+  "settingsDeletionScheduled": "Удаление запланировано",
+  "settingsExportReady": "Экспорт готов",
+  "settingsExportExpired": "Экспорт истёк",
+  "settingsExportFailed": "Экспорт не удался",
+  "settingsPreparingExport": "Готовим экспорт",
+  "settingsNoActiveRequests": "Нет активных запросов",
+  "profileTitle": "Профиль",
+  "profileNotFoundTitle": "Профиль не найден",
+  "profileNotFoundMessage": "Войдите и обновите профиль.",
+  "profileDisplayNameLabel": "Отображаемое имя",
+  "profileTimezoneLabel": "Часовой пояс",
+  "profileSave": "Сохранить профиль",
+  "profileNoPhotoYet": "Фото профиля пока нет",
+  "profilePhoto": "Фото профиля",
+  "profilePhotoHint": "Используйте понятное фото, чтобы члены семьи легко вас узнавали.",
+  "profileAddPhoto": "Добавить фото",
+  "profileChangePhoto": "Изменить фото",
+  "profileRemovePhoto": "Удалить фото",
+  "homeTitle": "Главная",
+  "homeNoFamilyTitle": "Соберите красивую семейную панель",
+  "homeNoFamilyMessage": "Создайте или присоединитесь к семье, чтобы собрать общие планы, задачи, списки покупок и финансовые цели в одном тёплом пространстве.",
+  "homeFeatureSharedCalendar": "Общий календарь",
+  "homeFeatureFamilyTasks": "Семейные задачи",
+  "homeFeatureListsSync": "Списки с синхронизацией",
+  "homeFeatureSavingsGoals": "Совместные накопления",
+  "homeAddFamily": "Добавить семью",
+  "homeHeroFamilyFallback": "Ваша семья",
+  "homeHeroSharedDashboard": "Общая панель",
+  "homeHeroTitle": "Всё, что нужно вашей семье, с первого взгляда.",
+  "homeHeroSubtitle": "Начните здесь, чтобы увидеть ближайшие события, задачи, которым нужно внимание, и цели, к которым вы движетесь вместе.",
+  "homeTasks": "Задачи",
+  "homeCalendar": "Календарь",
+  "homeLists": "Списки",
+  "homeGoals": "Цели",
+  "homeTasksDescription": "Открытые задачи, готовые к фокусу",
+  "homeCalendarDescription": "Запланированные события на семейной линии времени",
+  "homeListsDescription": "Пункты, которые ещё ждут отметки",
+  "homeGoalsDescription": "Активные цели накоплений",
+  "homeComingUp": "Скоро",
+  "homeComingUpSubtitle": "Ближайшие события, к которым движется вся семья.",
+  "homeNeedsAttention": "Требует внимания",
+  "homeNeedsAttentionSubtitle": "Быстрый обзор задач, которые сейчас важнее всего.",
+  "homeNoUpcomingEventsTitle": "Ближайших событий нет",
+  "homeNoUpcomingEventsMessage": "Следующие семейные планы появятся здесь, как только что-то попадёт в календарь.",
+  "homeNoUrgentTasksTitle": "Срочных задач сейчас нет",
+  "homeNoUrgentTasksMessage": "Когда появятся задачи, требующие внимания, они покажутся здесь в порядке приоритета.",
+  "homeNotificationEnableTitle": "Не пропускайте семейные напоминания",
+  "homeNotificationBlockedTitle": "Уведомления заблокированы",
+  "homeQuickNavigation": "Быстрая навигация",
+  "homeQuickNavigationSubtitle": "Переходите сразу к той части семейного процесса, которую хотите продолжить.",
+  "homeSavingsSpotlight": "Фокус на накоплениях",
+  "homeNoGoalsTitle": "Активных целей пока нет",
+  "homeNoGoalsMessage": "Создайте финансовую цель, чтобы следующий семейный рубеж был всегда на виду.",
+  "homeGoalLeft": "Осталось {amount}",
+  "@homeGoalLeft": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "homeDeadline": "Срок: {date}",
+  "@homeDeadline": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "homeOpenGoals": "Открыть цели",
+  "homeListsSpotlight": "Фокус на списках",
+  "homeNoListsTitle": "Активных списков нет",
+  "homeNoListsMessage": "Создайте список покупок или дел, и он станет частью ритма панели здесь.",
+  "homeListItemsOpen": "{count, plural, one{Открыт {count} пункт} few{Открыто {count} пункта} many{Открыто {count} пунктов} other{Открыто {count} пункта}}",
+  "@homeListItemsOpen": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeListEverythingDone": "Здесь всё уже завершено.",
+  "homeListMomentum": "Быстрое место, чтобы продолжить список, в котором сейчас больше всего движения.",
+  "homeOpenLists": "Открыть списки",
+  "homeTaskUrgencyNoDate": "Без срока",
+  "homeTaskUrgencyOverdue": "Просрочено",
+  "homeTaskUrgencyToday": "На сегодня",
+  "homeTaskUrgencyUpcoming": "Скоро",
+  "homeTaskDueHint": "Добавьте срок, чтобы расставить приоритеты",
+  "listTypeShopping": "Покупки",
+  "listTypeTodo": "Дела",
+  "notificationsSettingsTitle": "Настройки уведомлений",
+  "notificationsTuneTitle": "Настройте, как Family Helper с вами связывается",
+  "notificationsTuneSubtitle": "Выберите, какие напоминания активны на этом устройстве, и поддерживайте разрешения в рабочем состоянии.",
+  "notificationsSystemTitle": "Системные уведомления",
+  "notificationsEnabled": "Уведомления включены",
+  "notificationsDebugTitle": "Инструменты отладки",
+  "notificationsDebugSubtitle": "Отправляет реальный Firebase push через сервер на текущее устройство.",
+  "notificationsSendTestPush": "Отправить тестовый push",
+  "notificationsTaskReminders": "Напоминания о задачах",
+  "notificationsTaskRemindersOn": "Вы будете получать напоминания о предстоящих задачах.",
+  "notificationsTaskRemindersOff": "Напоминания о задачах сейчас выключены.",
+  "notificationsTaskRemindersNeedsPermission": "Включите системные уведомления, чтобы получать напоминания о задачах.",
+  "notificationsCalendarReminders": "Напоминания календаря",
+  "notificationsCalendarRemindersOn": "Вы будете получать напоминания о предстоящих событиях.",
+  "notificationsCalendarRemindersOff": "Напоминания календаря сейчас выключены.",
+  "notificationsCalendarRemindersNeedsPermission": "Включите системные уведомления, чтобы получать напоминания календаря.",
+  "notificationsCenterTitle": "Уведомления",
+  "notificationsBackToHome": "Назад на главную",
+  "notificationChannelReminders": "Напоминания",
+  "notificationChannelFamily": "Семейные уведомления",
+  "notificationChannelDescription": "Подробные напоминания и семейные обновления от Family Helper",
+  "notificationsSettingsTooltip": "Настройки уведомлений",
+  "notificationsLoading": "Загружаем уведомления...",
+  "notificationsConnectFamilyTitle": "Подключите семью, чтобы получать обновления",
+  "notificationsConnectFamilyMessage": "Ваш центр уведомлений оживёт напоминаниями, приглашениями и активностью, как только вы присоединитесь к семье.",
+  "notificationsOpenFamilySettings": "Открыть настройки семьи",
+  "notificationsFilterAll": "Все",
+  "notificationsFilterUnread": "Непрочитанные",
+  "notificationsHeroTitle": "Семейный inbox",
+  "notificationsHeroUnread": "{count} непрочитанных",
+  "@notificationsHeroUnread": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationsHeroAllRead": "Всё прочитано",
+  "notificationsHeroReady": "Готово к новым обновлениям",
+  "notificationsHeroSubtitle": "Отдельное место для напоминаний, обновлений и семейной активности, которым стоит уделить внимание.",
+  "notificationsMarkAllRead": "Отметить всё прочитанным",
+  "notificationsNoUnreadTitle": "Непрочитанных уведомлений нет",
+  "notificationsNoUnreadMessage": "Всё в семейном inbox уже было открыто.",
+  "notificationsNoItemsTitle": "Уведомлений пока нет",
+  "notificationsNoItemsMessage": "Новые напоминания и семейная активность появятся здесь, как только они поступят.",
+  "notificationsShowAll": "Показать все уведомления",
+  "notificationsLoadMore": "Загрузить ещё",
+  "notificationsDetailSelect": "Выберите уведомление",
+  "notificationsDetailSelectMessage": "Выберите любое обновление из inbox, чтобы увидеть полный текст и связанное действие.",
+  "notificationsDetailPlaceholderTitle": "Здесь появятся детали уведомления",
+  "notificationsDetailPlaceholderMessage": "Когда придут новые напоминания или семейная активность, вы сможете посмотреть здесь полный контекст.",
+  "notificationsRead": "Прочитано",
+  "notificationsUnread": "Не прочитано",
+  "notificationsDetailNoTarget": "У этого обновления нет связанной точки перехода, но полный текст сохранён здесь для справки.",
+  "notificationCategoryReminder": "Напоминание",
+  "notificationCategoryTaskAssigned": "Назначенная задача",
+  "notificationCategoryTaskCompleted": "Завершённая задача",
+  "notificationCategoryCalendarUpdate": "Обновление календаря",
+  "notificationCategoryCalendarCancelled": "Календарь: отмена",
+  "notificationCategoryFamilyInvite": "Приглашение в семью",
+  "notificationCategoryFamilyUpdate": "Обновление семьи",
+  "notificationCategoryTestPush": "Тестовый push",
+  "notificationCategoryGeneric": "Уведомление",
+  "notificationOpenTask": "Открыть задачу",
+  "notificationOpenCalendar": "Открыть календарь",
+  "notificationOpenList": "Открыть список",
+  "notificationOpenGoal": "Открыть цель",
+  "notificationOpenNotification": "Открыть уведомление",
+  "notificationPermissionNotSetUp": "Не настроено",
+  "notificationPermissionAllowed": "Разрешено",
+  "notificationPermissionBlocked": "Заблокировано",
+  "notificationPermissionBlockedInSettings": "Заблокировано в настройках",
+  "notificationPermissionAllowAction": "Разрешить уведомления",
+  "notificationPermissionEnabledAction": "Уведомления включены",
+  "notificationPermissionOpenSettingsAction": "Открыть системные настройки",
+  "notificationPermissionNotSetUpDescription": "Включите уведомления, чтобы Family Helper мог напоминать вам о задачах и событиях.",
+  "notificationPermissionAllowedDescription": "Уведомления включены для этого устройства.",
+  "notificationPermissionBlockedDescription": "Уведомления были отклонены. Откройте системные настройки, чтобы разрешить их.",
+  "notificationPermissionBlockedInSettingsDescription": "Уведомления выключены в системных настройках. Включите их там снова, чтобы получать напоминания.",
+  "notificationPresetNone": "Без напоминания",
+  "notificationPresetAtTime": "В момент события",
+  "notificationPresetTenMinutesBefore": "За 10 минут",
+  "notificationPresetOneHourBefore": "За 1 час",
+  "notificationPresetOneDayBefore": "За 1 день",
+  "notificationFamilyNotSelected": "Семья не выбрана.",
+  "notificationReminderQueued": "Напоминание синхронизируется, когда соединение восстановится.",
+  "notificationSaveReminderFailed": "Не удалось сохранить напоминание.",
+  "notificationAllowReminderPermission": "Разрешите уведомления, чтобы получать напоминания на этом устройстве.",
+  "notificationBlockedReminderPermission": "Уведомления заблокированы. Откройте системные настройки, чтобы включить напоминания.",
+  "notificationDisabledReminderPermission": "Уведомления выключены в системных настройках. Включите их там снова, чтобы получать напоминания.",
+  "notificationEnableReminderFailed": "Сейчас не удалось включить напоминания. Попробуйте ещё раз.",
+  "notificationReminderRemoved": "Напоминание удалено.",
+  "notificationUpdateReminderFailed": "Не удалось обновить напоминание.",
+  "notificationDebugOnly": "Тестовые push доступны только в debug-сборках.",
+  "notificationAllowTestPush": "Разрешите уведомления, чтобы получить тестовый push.",
+  "notificationBlockedTestPush": "Уведомления заблокированы. Откройте системные настройки, чтобы запустить тест push.",
+  "notificationDisabledTestPush": "Уведомления выключены в системных настройках. Включите их там снова, чтобы запустить тест push.",
+  "notificationSelectFamilyForTestPush": "Выберите семью перед отправкой тестового push.",
+  "notificationTestPushSent": "Тестовый push отправлен. Он должен прийти в ближайшее время.",
+  "notificationTestPushSkipped": "Тестовый push был создан, но не отправлен. Проверьте регистрацию токена и конфигурацию Firebase на сервере.",
+  "notificationTestPushFailed": "Не удалось доставить тестовый push. Проверьте логи сервера и конфигурацию Firebase.",
+  "notificationTestPushRequested": "Тестовый push запрошен.",
+  "notificationSendTestPushFailed": "Не удалось отправить тестовый push.",
+  "notificationPreferenceQueued": "Сеть недоступна. Изменение настроек будет синхронизировано позже.",
+  "notificationPushTokenQueued": "Сеть недоступна. Регистрация push-токена будет синхронизирована позже.",
+  "notificationSubtitleReminder": "Напоминание",
+  "notificationSubtitleTaskReminder": "Напоминание о задаче",
+  "notificationSubtitleCalendarReminder": "Напоминание о событии",
+  "notificationSubtitleGoalReminder": "Напоминание о цели",
+  "notificationSubtitleListReminder": "Напоминание о списке",
+  "notificationSubtitleTaskUpdate": "Обновление задачи",
+  "notificationSubtitleCalendarUpdate": "Обновление календаря",
+  "notificationSubtitleGoalUpdate": "Обновление цели",
+  "notificationSubtitleListUpdate": "Обновление списка",
+  "notificationSubtitleFamilyUpdate": "Обновление семьи",
+  "notificationSubtitleFamilyNotification": "Семейное уведомление",
+  "commonEventReminderTitle": "Напоминание о событии",
+  "commonEventReminderBody": "Семейное событие",
+  "commonTaskReminderTitle": "Напоминание о задаче",
+  "taskPriorityLow": "Низкий",
+  "taskPriorityNormal": "Обычный",
+  "taskPriorityHigh": "Высокий",
+  "taskRepeatNone": "Без повтора",
+  "taskRepeatDaily": "Ежедневно",
+  "taskRepeatWeekly": "Еженедельно",
+  "taskRepeatMonthly": "Ежемесячно",
+  "taskDeadlineModeNone": "Без срока",
+  "taskDeadlineModeSpecificDate": "Конкретная дата",
+  "taskDeadlineModeIn": "Через...",
+  "taskOffsetUnitMinutes": "Минуты",
+  "taskOffsetUnitHours": "Часы",
+  "taskOffsetUnitDays": "Дни",
+  "taskEditorCreateTitle": "Создать задачу",
+  "taskEditorEditTitle": "Редактировать задачу",
+  "taskEditorCreateSubtitle": "Создайте семейную задачу с необязательным сроком, повторением и напоминаниями.",
+  "taskEditorEditSubtitle": "Обновите назначение, срок, повторение и параметры напоминаний.",
+  "taskEditorTitleLabel": "Название задачи",
+  "taskEditorTitleHint": "Подготовить список покупок на неделю",
+  "taskEditorTitleValidation": "Введите название задачи.",
+  "taskEditorDescriptionLabel": "Описание",
+  "taskEditorDescriptionHint": "Необязательная заметка для семьи",
+  "taskEditorPersonalTaskLabel": "Личная задача",
+  "taskEditorPersonalTaskOn": "Эту задачу будете видеть только вы.",
+  "taskEditorPersonalTaskOff": "Общие задачи видны всей семье.",
+  "taskEditorPriorityLabel": "Приоритет",
+  "taskEditorUnassigned": "Без исполнителя",
+  "taskEditorDeadlineLabel": "Срок",
+  "taskEditorNoDeadlineDescription": "У этой задачи не будет срока.",
+  "taskEditorDueAtLabel": "Срок до",
+  "taskEditorAmountLabel": "Количество",
+  "taskEditorAmountHint": "1",
+  "taskEditorPositiveNumberValidation": "Введите положительное число.",
+  "taskEditorUnitLabel": "Единица",
+  "taskEditorDeadlinePreviewInvalid": "Введите корректное значение, чтобы рассчитать срок.",
+  "taskEditorDeadlinePreview": "Срок наступит {date}",
+  "@taskEditorDeadlinePreview": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "taskEditorReminderLabel": "Напоминание",
+  "taskEditorRepeatLabel": "Повтор",
+  "taskEditorIntervalLabel": "Интервал",
+  "taskEditorSaveChanges": "Сохранить изменения",
+  "taskEditorCreateAction": "Создать задачу",
+  "taskEditorDeadlineMissingMessage": "Выберите дату и время срока или переключитесь на режим без срока.",
+  "taskEditorDeadlineRequiredMessage": "Сначала задайте срок, а потом добавляйте напоминания или повторение.",
+  "taskEditorRelativePresetThirtyMinutes": "30 мин",
+  "taskEditorRelativePresetOneHour": "1 час",
+  "taskEditorRelativePresetThreeHours": "3 часа",
+  "taskEditorRelativePresetOneDay": "1 день",
+  "taskEditorRelativePresetThreeDays": "3 дня",
+  "commonSaveChanges": "Сохранить изменения",
+  "commonCancel": "Отмена",
+  "commonDelete": "Удалить",
+  "commonClose": "Закрыть",
+  "commonNote": "Заметка",
+  "commonJustNow": "только что",
+  "commonShowMore": "Показать ещё",
+  "commonShowLess": "Скрыть",
+  "commonOverview": "Обзор",
+  "commonHistory": "История",
+  "commonSettings": "Настройки",
+  "listsFamilyFallback": "Семейное пространство",
+  "listsYourListsTitle": "Ваши списки",
+  "listsYourListsSubtitle": "Выберите список и держите все отметки на виду.",
+  "listsEmptyTitle": "Списков пока нет",
+  "listsEmptyMessage": "Начните со списка покупок или wishlist для семьи.",
+  "listsCreateFirstList": "Создать первый список",
+  "listsDetailsTitle": "Детали списка",
+  "listsDetailsSubtitle": "Выберите или создайте список, чтобы начать добавлять пункты.",
+  "listsListActionsTooltip": "Действия со списком",
+  "listsEditListAction": "Изменить список",
+  "listsDeleteListAction": "Удалить список",
+  "listsNoSelectionTitle": "Список не выбран",
+  "listsNoSelectionMessage": "Создайте первый список, чтобы начать планировать вместе.",
+  "listsCreateSheetTitle": "Создать новый список",
+  "listsEditSheetTitle": "Изменить список",
+  "listsCreateListAction": "Создать список",
+  "listsAddItemTitle": "Добавить пункт",
+  "listsEditItemTitle": "Изменить пункт",
+  "listsAddToListAction": "Добавить в список",
+  "listsDeleteListTitle": "Удалить список?",
+  "listsDeleteListMessage": "Это удалит {title} и все его пункты.",
+  "@listsDeleteListMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "listsDeleteItemTitle": "Удалить пункт?",
+  "listsDeleteItemMessage": "Убрать {title} из этого списка?",
+  "@listsDeleteItemMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "listsHeroTitle": "Общие списки, в которых чувствуется жизнь.",
+  "listsHeroEmptyMessage": "Создайте первую доску покупок или wishlist и держите все отметки на виду.",
+  "listsHeroCountMessage": "{count, plural, one{{count} активный список с понятной ответственностью.} few{{count} активных списка с понятной ответственностью.} many{{count} активных списков с понятной ответственностью.} other{{count} активных списка с понятной ответственностью.}}",
+  "@listsHeroCountMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "listsNewList": "Новый список",
+  "listsMetricOpen": "Открыто",
+  "listsMetricUpdated": "Обновлено",
+  "listsStartFirstItem": "Начните с первого пункта",
+  "listsItemsStillOpen": "{count, plural, one{{count} пункт ещё открыт} few{{count} пункта ещё открыты} many{{count} пунктов ещё открыто} other{{count} пункта ещё открыты}}",
+  "@listsItemsStillOpen": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "listsReadyTitle": "Список готов",
+  "listsReadyMessage": "Добавьте первый пункт в {title} и сделайте его видимым для всех.",
+  "@listsReadyMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "listsAddFirstItem": "Добавить первый пункт",
+  "listsMarkedBy": "Отметил {name} • {time}",
+  "@listsMarkedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "listsItemActionsTooltip": "Действия с пунктом",
+  "listsEditItemAction": "Изменить пункт",
+  "listsDeleteItemAction": "Удалить пункт",
+  "listsCreateSheetSubtitle": "Выберите шаблон и сделайте список удобным для всей семьи.",
+  "listsListTitleLabel": "Название списка",
+  "listsListTitleHint": "Покупки на субботу",
+  "listsAddItemSubtitle": "Всё, что вы добавите здесь, появится в {title}.",
+  "@listsAddItemSubtitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "listsItemTitleLabel": "Название пункта",
+  "listsItemTitleHint": "Молоко",
+  "listsQtyLabel": "Кол-во",
+  "listsUnitLabel": "Единица",
+  "listsUnitHint": "шт / кг",
+  "listsNoteHint": "Например, если будет в наличии",
+  "listsPriceLabel": "Цена",
+  "listsTypeWishlist": "Wishlist",
+  "listsSelectedSubtitle": "{count, plural, one{{count} открытый пункт} few{{count} открытых пункта} many{{count} открытых пунктов} other{{count} открытых пункта}} • обновлено {time}",
+  "@listsSelectedSubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "familyNameUpdated": "Название семьи обновлено",
+  "familyInviteCodeCopied": "Код приглашения скопирован",
+  "familyLeaveAction": "Покинуть семью",
+  "familyTransferBeforeLeave": "Перед выходом из семьи передайте владение другому участнику.",
+  "familyEmptyTitle": "Семья не подключена",
+  "familyEmptyMessage": "Создайте семью или присоединитесь к ней по коду приглашения.",
+  "familyCreateTitle": "Создать семью",
+  "familyNameLabel": "Название семьи",
+  "familyCreateAction": "Создать семью",
+  "familyJoinTitle": "Войти по приглашению",
+  "familyInviteCodeLabel": "Код приглашения",
+  "familyJoinAction": "Присоединиться",
+  "familyMembersInFamily": "{count, plural, one{{count} участник в семье} few{{count} участника в семье} many{{count} участников в семье} other{{count} участника в семье}}",
+  "@familyMembersInFamily": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "familySaveNameAction": "Сохранить название семьи",
+  "familyInviteMembersTitle": "Пригласить членов семьи",
+  "familyInviteByEmailLabel": "Пригласить по email",
+  "familySendEmailInvite": "Отправить приглашение по email",
+  "familyCreateInviteCode": "Создать код приглашения",
+  "familyShareInviteCode": "Поделитесь этим кодом приглашения: {code}",
+  "@familyShareInviteCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "familyCopyInviteCode": "Скопировать код приглашения",
+  "familyMembersTitle": "Члены семьи",
+  "familyNoMembersYet": "Участников пока нет",
+  "familyMemberYou": "{name} (Вы)",
+  "@familyMemberYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "familyRoleOwner": "Владелец",
+  "familyRoleMember": "Участник",
+  "familyStatusActive": "Активен",
+  "familyStatusLeft": "Вышел",
+  "familyTransferNeedAnotherMember": "Добавьте ещё одного активного участника, прежде чем передавать владение.",
+  "familyTransferOwnershipTitle": "Передать владение",
+  "familyNewOwnerLabel": "Новый владелец",
+  "familyTransferOwnershipAction": "Передать владение",
+  "privacyAnalyticsTitle": "Делиться анонимной аналитикой",
+  "privacyAnalyticsSubtitle": "Помогите улучшать приложение с помощью агрегированной информации об использовании.",
+  "privacyDeletionCancelled": "Запрос на удаление отменён",
+  "privacyDeletionCompleted": "Удаление завершено.",
+  "privacyDataExportTitle": "Экспорт данных",
+  "privacyDownloadExport": "Скачать экспорт",
+  "privacyAccountDeletionTitle": "Удаление аккаунта",
+  "privacyNoRequestsTitle": "Активных privacy-запросов нет",
+  "privacyNoRequestsMessage": "Запросите экспорт или удаление аккаунта, когда это понадобится.",
+  "privacyAvailableUntil": "Доступно до {date}.",
+  "@privacyAvailableUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyExportExpiredMessage": "Срок действия экспорта истёк. Запросите новый экспорт, чтобы получить свежую ссылку.",
+  "privacyExportFailedMessage": "Не удалось подготовить экспорт. Запросите новый экспорт и попробуйте снова.",
+  "privacyPreparingExportMessage": "Подготавливаем экспорт. Мы покажем его, когда он будет готов.",
+  "privacyPreparingExportRequestedOn": "Подготавливаем экспорт. Запрошено {date}.",
+  "@privacyPreparingExportRequestedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyDeletionScheduledFor": "Удаление запланировано на {date}.",
+  "@privacyDeletionScheduledFor": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyDownloadDialogMessage": "Используйте эту защищённую ссылку в браузере, чтобы скачать архив экспорта.",
+  "privacyDownloadLinkCopied": "Ссылка на скачивание скопирована",
+  "privacyCopyLink": "Скопировать ссылку",
+  "privacyYourDataTitle": "Ваши данные",
+  "privacyRequestExport": "Запросить экспорт данных",
+  "privacyRequestDeletion": "Запросить удаление аккаунта",
+  "privacyCancelDeletionRequest": "Отменить запрос на удаление",
+  "mediaTitle": "Медиа и аватары",
+  "mediaReload": "Обновить медиа",
+  "mediaUploadImage": "Выбрать, обрезать и загрузить изображение",
+  "mediaLastMediaId": "Последний media id: {id}",
+  "@mediaLastMediaId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaEmptyTitle": "Медиа-объектов нет",
+  "mediaEmptyMessage": "Загрузите изображение, чтобы заполнить историю медиа.",
+  "mediaItemTitle": "Медиа #{id}",
+  "@mediaItemTitle": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "moneyGoalsSectionTitle": "Цели",
+  "moneyGoalsSidebarSummary": "{activeCount} активных, {archivedCount} в архиве",
+  "@moneyGoalsSidebarSummary": {
+    "placeholders": {
+      "activeCount": {
+        "type": "int"
+      },
+      "archivedCount": {
+        "type": "int"
+      }
+    }
+  },
+  "moneyGoalsActiveSection": "Активные",
+  "moneyGoalsArchivedSection": "Архив",
+  "moneyGoalsNoFamilyTitle": "Сначала выберите семью",
+  "moneyGoalsNoFamilyMessage": "Цели привязаны к выбранной семье. Откройте настройки семьи, чтобы создать её или присоединиться.",
+  "moneyGoalsOpenFamilySettings": "Открыть настройки семьи",
+  "moneyGoalsEmptyTitle": "Целей пока нет",
+  "moneyGoalsEmptyMessage": "Создайте первую цель из панели деталей.",
+  "moneyGoalsCreateFirstGoal": "Создать первую цель",
+  "moneyGoalsStatusArchived": "Архив",
+  "moneyGoalsStatusReached": "Достигнута",
+  "moneyGoalsStatusActive": "Активна",
+  "moneyGoalsRemainingChip": "Осталось {amount}",
+  "@moneyGoalsRemainingChip": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsDeadlineChip": "Срок {date}",
+  "@moneyGoalsDeadlineChip": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsCreateSheetTitle": "Создать новую цель",
+  "moneyGoalsCreateSheetSubtitle": "Введите название и целевую сумму в обычном денежном формате.",
+  "moneyGoalsTargetAmountLabel": "Целевая сумма",
+  "moneyGoalsCreateGoalAction": "Создать цель",
+  "moneyGoalsArchivedReadonlyMessage": "Архивные цели остаются видимыми, но их настройки больше нельзя редактировать.",
+  "moneyGoalsAddContributionTitle": "Пополнить цель",
+  "moneyGoalsAddContributionDescription": "Разово пополните «{title}».",
+  "@moneyGoalsAddContributionDescription": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsContributionAmountLabel": "Сумма пополнения",
+  "moneyGoalsAddContributionAction": "Пополнить",
+  "moneyGoalsWithdrawTitle": "Снять деньги",
+  "moneyGoalsWithdrawDescription": "Заберите часть средств из «{title}».",
+  "@moneyGoalsWithdrawDescription": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsWithdrawAmountLabel": "Сумма снятия",
+  "moneyGoalsWithdrawAction": "Снять деньги",
+  "moneyGoalsGoalTitleLabel": "Название цели",
+  "moneyGoalsGoalTitleHint": "Финансовая подушка",
+  "moneyGoalsDeadlineLabel": "Срок",
+  "moneyGoalsDescriptionLabel": "Описание",
+  "moneyGoalsDescriptionHint": "Необязательная заметка для семьи",
+  "moneyGoalsRemainingLabel": "Осталось",
+  "moneyGoalsCompleteAndArchive": "Завершить и архивировать",
+  "moneyGoalsNewGoal": "Новая цель",
+  "moneyGoalsProgressTitle": "Прогресс",
+  "moneyGoalsRecentActivityTitle": "Недавняя активность",
+  "moneyGoalsNoHistoryYet": "Пополнений или снятий пока не было.",
+  "moneyGoalsGoalSettingsTitle": "Настройки цели",
+  "moneyGoalsArchiveGoalAction": "Архивировать цель",
+  "moneyGoalsDeleteGoalAction": "Удалить цель",
+  "tasksLoading": "Загружаем задачи...",
+  "calendarAddEvent": "Добавить событие",
+  "calendarLoading": "Загружаем ваш календарь...",
+  "calendarCreateEventTitle": "Создать событие",
+  "calendarSaveEvent": "Сохранить событие",
+  "uiErrorFamilyNotSelected": "Семья не выбрана.",
+  "uiErrorFamilyTaskNotSelected": "Семья или задача не выбрана.",
+  "uiErrorFamilyGoalNotSelected": "Семья или цель не выбрана.",
+  "uiErrorArchivedGoalCannotBeEdited": "Архивные цели нельзя редактировать.",
+  "uiErrorFamilyNameEmpty": "Название семьи не может быть пустым.",
+  "uiErrorFamilyRenameQueued": "Сеть недоступна. Переименование семьи будет синхронизировано позже.",
+  "uiErrorFamilyTransferQueued": "Сеть недоступна. Передача владения будет синхронизирована позже.",
+  "uiErrorFamilyLeaveQueued": "Сеть недоступна. Выход из семьи будет синхронизирован позже.",
+  "uiErrorPrivacyExportQueued": "Сеть недоступна. Запрос на экспорт будет синхронизирован позже.",
+  "uiErrorPrivacyDeletionQueued": "Сеть недоступна. Запрос на удаление будет синхронизирован позже.",
+  "uiErrorMediaDeleteQueued": "Сеть недоступна. Удаление будет синхронизировано позже.",
+  "uiErrorExportProcessing": "Экспорт ещё готовится. Загляните чуть позже.",
+  "commonClear": "Очистить",
+  "moneyGoalsLoading": "Загружаем цели...",
+  "moneyGoalsEmptyDetailMessage": "Создайте первую цель накоплений и начните отслеживать прогресс.",
+  "moneyGoalsPickGoalTitle": "Выберите цель",
+  "moneyGoalsPickGoalMessage": "Выберите цель из активного списка или архива, чтобы посмотреть прогресс и действия.",
+  "moneyGoalsCreateAnotherGoal": "Создать ещё одну цель",
+  "moneyGoalsNoDeadlineSet": "Срок не задан",
+  "moneyGoalsPickDate": "Выбрать дату",
+  "moneyGoalsGoalTitleValidation": "Введите название цели",
+  "moneyGoalsAmountValidation": "Введите корректную сумму",
+  "taskEditorAssigneeLabel": "Исполнитель",
+  "tasksSummaryOpen": "Открытые",
+  "tasksSummaryDueToday": "На сегодня",
+  "tasksSummaryOverdue": "Просроченные",
+  "tasksSummaryArchive": "Архив",
+  "tasksEmptyArchiveTitle": "Архив пуст",
+  "tasksEmptyArchiveMessage": "Завершённые задачи появятся здесь, как только что-то будет закрыто.",
+  "tasksEmptyFilteredTitle": "Для этого фильтра задач нет",
+  "tasksEmptyFilteredMessage": "Попробуйте другой фильтр или создайте новую задачу.",
+  "tasksTaskCount": "{count, plural, one{{count} задача} few{{count} задачи} many{{count} задач} other{{count} задачи}}",
+  "@tasksTaskCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tasksPickTaskTitle": "Выберите задачу",
+  "tasksPickTaskMessage": "Выберите задачу в рабочей области, чтобы посмотреть детали, напоминания и историю.",
+  "tasksDetailCompletedItem": "Завершённая задача",
+  "tasksDetailOpenFamilyTask": "Открытая семейная задача",
+  "tasksMetaPersonal": "Личная",
+  "tasksMetaShared": "Общая",
+  "tasksActionComplete": "Завершить",
+  "tasksActionEdit": "Изменить",
+  "tasksActionDelete": "Удалить",
+  "tasksHistoryTitle": "История",
+  "tasksNoHistoryTitle": "Истории пока нет",
+  "tasksNoHistoryMessage": "Здесь появятся изменения и отметки о выполнении.",
+  "tasksStatusCompleted": "Завершена",
+  "tasksStatusOpen": "Открыта",
+  "tasksNoFamilyTitle": "Сначала выберите семью",
+  "tasksNoFamilyMessage": "Задачи привязаны к выбранной семье. Откройте настройки семьи, чтобы создать её или присоединиться.",
+  "tasksOpenFamilySettings": "Открыть настройки семьи",
+  "tasksSectionOverdue": "Просроченные",
+  "tasksSectionToday": "Сегодня",
+  "tasksSectionUpcoming": "Скоро",
+  "tasksSectionNoDueDate": "Без срока",
+  "tasksFilterAllOpen": "Все открытые",
+  "tasksFilterMine": "Мои",
+  "tasksFilterUnassigned": "Без исполнителя",
+  "tasksFilterDueSoon": "Скоро срок",
+  "tasksFilterCompletedArchive": "Архив завершённых",
+  "tasksHistoryCreated": "Создана",
+  "tasksHistoryUpdated": "Обновлена",
+  "tasksHistoryCompleted": "Завершена",
+  "tasksAssigneeMemberYou": "{name} (вы)",
+  "@tasksAssigneeMemberYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tasksAssigneeYou": "Вы",
+  "tasksAssigneeUser": "Пользователь {profileId}",
+  "@tasksAssigneeUser": {
+    "placeholders": {
+      "profileId": {
+        "type": "int"
+      }
+    }
+  },
+  "tasksNoDueDate": "Без срока",
+  "tasksDueChip": "Срок: {date}",
+  "@tasksDueChip": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "tasksOfflineUnavailable": "Задачи недоступны в офлайне.",
+  "tasksDeleteTaskTitle": "Удалить задачу",
+  "tasksDeleteTaskDescription": "Удалить «{title}» навсегда из активных задач и архива.",
+  "@tasksDeleteTaskDescription": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "tasksDeleteTaskConfirm": "Удалить задачу",
+  "moneyGoalsSummaryTitle": "Сводка по целям",
+  "moneyGoalsSummaryActiveGoals": "Активные цели",
+  "moneyGoalsSummaryArchived": "Архив",
+  "moneyGoalsSummaryCompleted": "Достигнуты",
+  "moneyGoalsSummarySavedTotal": "Накоплено всего",
+  "moneyGoalsGoalCount": "{count, plural, one{{count} цель} few{{count} цели} many{{count} целей} other{{count} цели}}",
+  "@moneyGoalsGoalCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moneyGoalsNoActiveGoalsMessage": "Активных целей сейчас нет. Архивные цели остаются ниже для справки.",
+  "moneyGoalsArchiveGoalConfirmTitle": "Архивировать цель",
+  "moneyGoalsArchiveGoalConfirmDescription": "Архивировать «{title}»? Цель останется видимой, но редактирование будет заблокировано.",
+  "@moneyGoalsArchiveGoalConfirmDescription": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsDeleteGoalConfirmTitle": "Удалить цель",
+  "moneyGoalsDeleteGoalConfirmDescription": "Удалить «{title}» навсегда из активных и архивных целей.",
+  "@moneyGoalsDeleteGoalConfirmDescription": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsProgressOf": "{current} из {target}",
+  "@moneyGoalsProgressOf": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsStatusArchivedOn": "В архиве с {date}",
+  "@moneyGoalsStatusArchivedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsStatusReachedOn": "Достигнута {date}",
+  "@moneyGoalsStatusReachedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsStatusUpdatedAt": "Обновлено {date}",
+  "@moneyGoalsStatusUpdatedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsHistoryWithdrew": "{name} вывел(а) {amount}",
+  "@moneyGoalsHistoryWithdrew": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsHistoryAdded": "{name} добавил(а) {amount}",
+  "@moneyGoalsHistoryAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "calendarEditOccurrenceTitle": "Изменить вхождение",
+  "calendarEditFollowingTitle": "Изменить это и следующие",
+  "calendarEditWholeSeriesTitle": "Изменить всю серию",
+  "calendarDeleteOccurrenceTitle": "Удалить вхождение",
+  "calendarDeleteOccurrenceMessage": "Удалить только это вхождение из серии?",
+  "calendarDeleteSeriesFutureMessage": "Удалить это и все следующие вхождения?",
+  "calendarDeleteSeriesAllMessage": "Удалить всю повторяющуюся серию?",
+  "calendarDeleteEventTitle": "Удалить событие",
+  "calendarOfflineMessage": "Это действие синхронизируется, когда соединение восстановится.",
+  "calendarYourScheduleTitle": "Ваше расписание",
+  "calendarUpdatingStatus": "Обновляем",
+  "calendarRefreshingStatus": "Загружаем",
+  "calendarSavingStatus": "Сохраняем",
+  "calendarFormatMonth": "Месяц",
+  "calendarPlansForDay": "{count, plural, one{{count} план на этот день} few{{count} плана на этот день} many{{count} планов на этот день} other{{count} плана на этот день}}",
+  "@calendarPlansForDay": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarOpenDayTitle": "Свободный день",
+  "calendarNextEventSummary": "Дальше: {timeRange} • {title}",
+  "@calendarNextEventSummary": {
+    "placeholders": {
+      "timeRange": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "calendarOpenDayEmptyMessage": "Пока ничего не запланировано. Добавьте событие, чтобы держать день в порядке.",
+  "calendarAgendaTitle": "План на день",
+  "calendarEventsCount": "{count, plural, one{{count} событие} few{{count} события} many{{count} событий} other{{count} события}}",
+  "@calendarEventsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarEmptyDayTitle": "Пока ничего не запланировано",
+  "calendarEmptyDayMessage": "Создайте событие на этот день, и оно появится здесь с нужным повтором и напоминанием.",
+  "calendarRepeatsChip": "Повтор",
+  "calendarEditedChip": "Изменено",
+  "calendarReminderAtTime": "В момент события",
+  "calendarReminderTenMinutesBefore": "За 10 мин",
+  "calendarReminderOneHourBefore": "За 1 ч",
+  "calendarReminderOneDayBefore": "За 1 день",
+  "calendarReminderGeneric": "Напоминание",
+  "calendarActionEditSection": "Изменить",
+  "calendarActionDeleteSection": "Удалить",
+  "calendarActionEditOccurrence": "Изменить это вхождение",
+  "calendarActionEditFollowing": "Изменить это и следующие",
+  "calendarActionEditWholeSeries": "Изменить всю серию",
+  "calendarActionEditEvent": "Изменить событие",
+  "calendarActionDeleteOccurrence": "Удалить это вхождение",
+  "calendarActionDeleteFollowing": "Удалить это и следующие",
+  "calendarActionDeleteWholeSeries": "Удалить всю серию",
+  "calendarActionDeleteEvent": "Удалить событие",
+  "calendarEditorRecurringSubtitle": "Настройте время, напоминания и правила повтора в одном месте.",
+  "calendarEditorSingleSubtitle": "Обновите только это вхождение, не меняя всю серию.",
+  "calendarEditorBasicsTitle": "Основное",
+  "calendarEditorBasicsSubtitle": "Понятное название помогает всей семье быстрее ориентироваться в дне.",
+  "calendarEditorTitleLabel": "Название события",
+  "calendarEditorNotesLabel": "Заметки",
+  "calendarEditorOptionalHint": "Необязательно",
+  "calendarEditorScheduleTitle": "Расписание",
+  "calendarEditorScheduleSubtitle": "Выберите аккуратное время начала и окончания события.",
+  "calendarEditorStartsLabel": "Начало",
+  "calendarEditorEndsLabel": "Окончание",
+  "calendarEditorReminderTitle": "Напоминание",
+  "calendarEditorReminderSubtitle": "Уведомления должны приходить только тогда, когда они действительно полезны.",
+  "calendarEditorRepeatTitle": "Повтор",
+  "calendarEditorRepeatSubtitle": "Держите правила повтора на виду и показывайте только нужные элементы управления.",
+  "calendarEditorDaysOfWeekLabel": "Дни недели",
+  "calendarEditorRepeatEveryDaysLabel": "Повторять каждые N дней",
+  "calendarEditorTitleValidation": "Добавьте название события.",
+  "calendarEditorEndAfterStartValidation": "Время окончания должно быть позже начала.",
+  "calendarEditorIntervalValidation": "Интервал повтора должен быть не меньше 1 дня.",
+  "calendarRecurrenceNoneTitle": "Без повтора",
+  "calendarRecurrenceYearlyTitle": "Каждый год в этот день",
+  "calendarRecurrenceMonthlyTitle": "Каждый месяц в это число",
+  "calendarRecurrenceWeeklyTitle": "Выбранные дни недели",
+  "calendarRecurrenceEveryNDaysTitle": "Каждые N дней",
+  "calendarRecurrenceNoneSubtitle": "Разовое событие.",
+  "calendarRecurrenceYearlySubtitle": "Подходит для дней рождения и годовщин.",
+  "calendarRecurrenceMonthlySubtitle": "Повторяется в то же число каждого месяца.",
+  "calendarRecurrenceWeeklySubtitle": "Выберите один или несколько дней недели.",
+  "calendarRecurrenceEveryNDaysSubtitle": "Подходит для рутин с фиксированным интервалом.",
+  "calendarDurationHours": "{hours} ч",
+  "@calendarDurationHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarDurationHoursMinutes": "{hours} ч {minutes} мин",
+  "@calendarDurationHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarDurationMinutes": "{minutes} мин",
+  "@calendarDurationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarMutationScopeOne": "Это вхождение",
+  "calendarMutationScopeFuture": "Это и следующие",
+  "calendarMutationScopeAll": "Вся серия"
+}

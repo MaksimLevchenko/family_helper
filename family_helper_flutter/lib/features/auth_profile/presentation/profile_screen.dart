@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:family_helper_client/family_helper_client.dart';
 
+import '../../../core/l10n/l10n.dart';
 import '../../../core/network/server_availability_cubit.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../../media/providers/media_provider.dart';
@@ -61,7 +62,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         context.watch<ServerAvailabilityCubit?>()?.state.isUnavailable ?? false;
 
     return Scaffold(
-      appBar: serverStatusAppBar(context, title: const Text('Profile')),
+      appBar: serverStatusAppBar(context, title: Text(context.l10n.profileTitle)),
       body: BlocConsumer<ProfileBloc, ProfileState>(
         listenWhen: (previous, current) => previous.profile != current.profile,
         listener: (context, state) {
@@ -86,9 +87,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           final profile = state.profile;
           if (profile == null) {
-            return const EmptyState(
-              title: 'Profile not found',
-              message: 'Sign in and refresh profile.',
+            return EmptyState(
+              title: context.l10n.profileNotFoundTitle,
+              message: context.l10n.profileNotFoundMessage,
             );
           }
 
@@ -233,15 +234,16 @@ class _ProfileDetailsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppTextField(controller: nameController, label: 'Display name'),
+        AppTextField(controller: nameController, label: l10n.profileDisplayNameLabel),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
           key: ValueKey(selectedTimezone),
           initialValue: selectedTimezone,
-          decoration: const InputDecoration(labelText: 'Timezone'),
+          decoration: InputDecoration(labelText: l10n.profileTimezoneLabel),
           items: timezones
               .map(
                 (timezone) => DropdownMenuItem<String>(
@@ -254,7 +256,7 @@ class _ProfileDetailsSection extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         AppButton(
-          label: 'Save profile',
+          label: l10n.profileSave,
           isLoading: isLoading,
           onPressed: isOffline ? null : onSave,
         ),
@@ -280,6 +282,7 @@ class _AvatarCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -302,18 +305,20 @@ class _AvatarCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              avatarMediaId == null ? 'No profile photo yet' : 'Profile photo',
+              avatarMediaId == null ? l10n.profileNoPhotoYet : l10n.profilePhoto,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
             Text(
-              'Use a clear photo so family members can recognize you easily.',
+              l10n.profilePhotoHint,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             AppButton(
-              label: avatarMediaId == null ? 'Add photo' : 'Change photo',
+              label: avatarMediaId == null
+                  ? l10n.profileAddPhoto
+                  : l10n.profileChangePhoto,
               isLoading: isLoading,
               onPressed: onChangePhoto == null
                   ? null
@@ -324,7 +329,7 @@ class _AvatarCard extends StatelessWidget {
             if (onRemovePhoto != null) ...[
               const SizedBox(height: 12),
               AppButton(
-                label: 'Remove photo',
+                label: l10n.profileRemovePhoto,
                 variant: AppButtonVariant.secondary,
                 isLoading: isLoading,
                 onPressed: onRemovePhoto,

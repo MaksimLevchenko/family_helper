@@ -441,6 +441,13 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'String',
         ),
         _i2.ColumnDefinition(
+          name: 'locale',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'en\'::text',
+        ),
+        _i2.ColumnDefinition(
           name: 'avatarMediaId',
           columnType: _i2.ColumnType.bigint,
           isNullable: true,

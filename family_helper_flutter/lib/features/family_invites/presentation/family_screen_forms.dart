@@ -30,9 +30,9 @@ class _EmptyFamilySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const EmptyState(
-          title: 'No family connected',
-          message: 'Create a family or join one with an invite code.',
+        EmptyState(
+          title: context.l10n.familyEmptyTitle,
+          message: context.l10n.familyEmptyMessage,
         ),
         const SizedBox(height: 16),
         if (isWide)
@@ -74,17 +74,17 @@ class _CreateFamilyCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Create a family',
+              context.l10n.familyCreateTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
             AppTextField(
               controller: familyTitleController,
-              label: 'Family name',
+              label: context.l10n.familyNameLabel,
             ),
             const SizedBox(height: 12),
             AppButton(
-              label: 'Create family',
+              label: context.l10n.familyCreateAction,
               isLoading: isLoading,
               onPressed: isOffline
                   ? null
@@ -123,17 +123,17 @@ class _JoinFamilyCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Join with an invite',
+              context.l10n.familyJoinTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
             AppTextField(
               controller: inviteCodeController,
-              label: 'Invite code',
+              label: context.l10n.familyInviteCodeLabel,
             ),
             const SizedBox(height: 12),
             AppButton(
-              label: 'Join family',
+              label: context.l10n.familyJoinAction,
               onPressed: isOffline
                   ? null
                   : () async {
@@ -172,7 +172,6 @@ class _FamilySummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final memberLabel = memberCount == 1 ? 'member' : 'members';
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -182,18 +181,18 @@ class _FamilySummaryCard extends StatelessWidget {
             Text(title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 6),
             Text(
-              '$memberCount $memberLabel in your family',
+              context.l10n.familyMembersInFamily(memberCount),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             if (canRename) ...[
               const SizedBox(height: 16),
               AppTextField(
                 controller: renameController,
-                label: 'Family name',
+                label: context.l10n.familyNameLabel,
               ),
               const SizedBox(height: 12),
               AppButton(
-                label: 'Save family name',
+                label: context.l10n.familySaveNameAction,
                 variant: AppButtonVariant.secondary,
                 isLoading: isLoading,
                 onPressed: () async {

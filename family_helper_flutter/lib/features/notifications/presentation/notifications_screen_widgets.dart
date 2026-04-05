@@ -13,12 +13,13 @@ class _InboxFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return SegmentedButton<_InboxFilter>(
       segments: [
-        const ButtonSegment<_InboxFilter>(
+        ButtonSegment<_InboxFilter>(
           value: _InboxFilter.all,
           icon: Icon(Icons.inbox_rounded),
-          label: Text('All'),
+          label: Text(l10n.notificationsFilterAll),
         ),
         ButtonSegment<_InboxFilter>(
           value: _InboxFilter.unread,
@@ -28,7 +29,7 @@ class _InboxFilterBar extends StatelessWidget {
                   child: const Icon(Icons.mark_email_unread_rounded),
                 )
               : const Icon(Icons.mark_email_unread_outlined),
-          label: const Text('Unread'),
+          label: Text(l10n.notificationsFilterUnread),
         ),
       ],
       selected: {filter},
@@ -52,11 +53,14 @@ class _InboxHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final status = unreadCount > 0
-        ? '$unreadCount unread'
-        : (hasItems ? 'Everything is read' : 'Ready for new updates');
+        ? l10n.notificationsHeroUnread(unreadCount)
+        : (hasItems
+              ? l10n.notificationsHeroAllRead
+              : l10n.notificationsHeroReady);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -95,7 +99,7 @@ class _InboxHero extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Family inbox',
+                      l10n.notificationsHeroTitle,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -114,7 +118,7 @@ class _InboxHero extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'A dedicated place for reminders, updates, and family activity that deserves attention.',
+            l10n.notificationsHeroSubtitle,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: scheme.onSurfaceVariant,
               height: 1.4,
@@ -124,7 +128,7 @@ class _InboxHero extends StatelessWidget {
           FilledButton.tonalIcon(
             onPressed: onMarkAllRead,
             icon: const Icon(Icons.done_all_rounded),
-            label: const Text('Mark all read'),
+            label: Text(l10n.notificationsMarkAllRead),
           ),
         ],
       ),
@@ -246,7 +250,7 @@ class _NotificationTile extends StatelessWidget {
                         runSpacing: 8,
                         children: [
                           _MetaChip(
-                            label: _categoryLabel(notification.category),
+                            label: _categoryLabel(context, notification.category),
                             color: tone.$4,
                             background: tone.$4.withValues(alpha: 0.12),
                           ),
@@ -287,11 +291,11 @@ class _NotificationDetailPane extends StatelessWidget {
     if (notification == null) {
       return _NotificationDetailPlaceholder(
         title: hasNotifications
-            ? 'Select a notification'
-            : 'Your notification details will appear here',
+            ? context.l10n.notificationsDetailSelect
+            : context.l10n.notificationsDetailPlaceholderTitle,
         message: hasNotifications
-            ? 'Choose any update from the inbox to see the full message and related action.'
-            : 'Once new reminders or family activity arrive, you will be able to review the full context here.',
+            ? context.l10n.notificationsDetailSelectMessage
+            : context.l10n.notificationsDetailPlaceholderMessage,
         icon: hasNotifications
             ? Icons.touch_app_rounded
             : Icons.notifications_none_rounded,
@@ -329,12 +333,14 @@ class _NotificationDetailPane extends StatelessWidget {
               runSpacing: 8,
               children: [
                 _MetaChip(
-                  label: _categoryLabel(notification!.category),
+                  label: _categoryLabel(context, notification!.category),
                   color: tone.$4,
                   background: tone.$4.withValues(alpha: 0.12),
                 ),
                 _MetaChip(
-                  label: notification!.isRead ? 'Read' : 'Unread',
+                  label: notification!.isRead
+                      ? context.l10n.notificationsRead
+                      : context.l10n.notificationsUnread,
                   color: notification!.isRead
                       ? scheme.onSurfaceVariant
                       : scheme.primary,
@@ -374,11 +380,11 @@ class _NotificationDetailPane extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.open_in_new_rounded),
-                label: Text(_detailActionLabel(target)),
+                label: Text(_detailActionLabel(context, target)),
               )
             else
               Text(
-                'This update does not include a linked destination, but the full message is preserved here for reference.',
+                context.l10n.notificationsDetailNoTarget,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                   height: 1.45,

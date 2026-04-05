@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/ui_error_localizer.dart';
 import '../../../core/network/server_availability_cubit.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../ui_kit/ui_kit.dart';
@@ -32,14 +34,14 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
         context.watch<ServerAvailabilityCubit?>()?.state.isUnavailable ?? false;
 
     return Scaffold(
-      appBar: serverStatusAppBar(context, title: const Text('Money Goals')),
+      appBar: serverStatusAppBar(context, title: Text(context.l10n.homeGoals)),
       body: BlocBuilder<MoneyGoalsCubit, MoneyGoalsState>(
         builder: (context, state) {
           if (state.hasSelectedFamily &&
               state.isInitialLoading &&
               state.goals.isEmpty) {
-            return const SafeArea(
-              child: LoadingState(label: 'Loading goals...'),
+            return SafeArea(
+              child: LoadingState(label: context.l10n.moneyGoalsLoading),
             );
           }
 
@@ -48,7 +50,7 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
               state.goals.isEmpty) {
             return SafeArea(
               child: ErrorState(
-                message: state.error!,
+                message: localizeUiError(context, state.error),
                 onRetry: () => context.read<MoneyGoalsCubit>().reload(),
               ),
             );
@@ -99,7 +101,10 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
           lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
         ),
         if (state.error != null) ...[
-          AppBanner(text: state.error!, isError: true),
+          AppBanner(
+            text: localizeUiError(context, state.error),
+            isError: true,
+          ),
           const SizedBox(height: 10),
         ],
         MoneyGoalsSummaryCard(goals: state.goals),
@@ -130,7 +135,10 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
           lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
         ),
         if (state.error != null) ...[
-          AppBanner(text: state.error!, isError: true),
+          AppBanner(
+            text: localizeUiError(context, state.error),
+            isError: true,
+          ),
           const SizedBox(height: 10),
         ],
         Expanded(
@@ -261,9 +269,9 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
 
     if (state.goals.isEmpty) {
       return _EmptyDetailCard(
-        title: 'No goals yet',
-        message: 'Create your first savings goal and start tracking progress.',
-        buttonLabel: 'Create first goal',
+        title: context.l10n.moneyGoalsEmptyTitle,
+        message: context.l10n.moneyGoalsEmptyDetailMessage,
+        buttonLabel: context.l10n.moneyGoalsCreateFirstGoal,
         isLoading: state.isCreatingGoal,
         onPressed: () => _showCreateGoalOverlay(
           context,
@@ -274,10 +282,9 @@ class _MoneyGoalsScreenState extends State<MoneyGoalsScreen> {
     }
 
     return _EmptyDetailCard(
-      title: 'Pick a goal',
-      message:
-          'Select a goal from the active list or archive to inspect progress and actions.',
-      buttonLabel: 'Create another goal',
+      title: context.l10n.moneyGoalsPickGoalTitle,
+      message: context.l10n.moneyGoalsPickGoalMessage,
+      buttonLabel: context.l10n.moneyGoalsCreateAnotherGoal,
       isLoading: state.isCreatingGoal,
       onPressed: () => _showCreateGoalOverlay(
         context,

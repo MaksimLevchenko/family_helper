@@ -27,6 +27,7 @@ class ProfileService {
     required String clientOperationId,
     String? displayName,
     String? timezone,
+    String? locale,
     int? avatarMediaId,
     bool clearAvatarMedia = false,
     bool? analyticsOptIn,
@@ -70,6 +71,7 @@ class ProfileService {
         row.copyWith(
           displayName: displayName ?? row.displayName,
           timezone: timezone ?? row.timezone,
+          locale: locale ?? row.locale,
           avatarMediaId: clearAvatarMedia
               ? null
               : (avatarMediaId ?? row.avatarMediaId),
@@ -103,6 +105,7 @@ class ProfileService {
       authUserId: row.authUserId,
       displayName: row.displayName,
       timezone: row.timezone,
+      locale: row.locale,
       avatarMediaId: row.avatarMediaId,
       analyticsOptIn: row.analyticsOptIn,
       createdAt: row.createdAt,

@@ -56,6 +56,7 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,
       authCubit: getIt<AuthCubit>(),
+      localeCubit: getIt(),
       notificationsRepository: getIt(),
       localNotificationService: getIt(),
       snapshotStore: snapshotStore,
@@ -78,6 +79,7 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
     _notificationsCubit = NotificationsCubit(
       repository: getIt(),
       familySelectionCubit: _familySelectionCubit,
+      localeCubit: getIt(),
       localNotificationService: getIt(),
       pushNotificationService: getIt(),
       offlineQueueManager: getIt(),

@@ -9,6 +9,7 @@ import '../../core/realtime/realtime_publisher.dart';
 import '../../core/sync/change_feed_service.dart';
 import '../../generated/protocol.dart';
 import '../../notifications/services/app_notification_service.dart';
+import '../../notifications/services/notification_message_builder.dart';
 
 part 'tasks_service_crud.dart';
 part 'tasks_service_helpers.dart';

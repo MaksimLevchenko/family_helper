@@ -79,6 +79,7 @@ Windows `D:\PubCache` without regenerating the Windows package config.
 ## Docs
 - Server setup: `family_helper_server/README.server.md`
 - Client setup: `family_helper_flutter/README.client.md`
+- Detailed project description: `analysis_reports/project_description_ru.md`
 - Push notifications next steps: `PUSH_NOTIFICATIONS_NEXT_STEPS.md`
 
 ## Migration Policy

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/config/app_defaults.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/ui_error_localizer.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../domain/notification_models.dart';
 import '../providers/notifications_provider.dart';
@@ -35,7 +37,7 @@ class _NotificationSettingsScreenState
     return Scaffold(
       appBar: serverStatusAppBar(
         context,
-        title: const Text('Notification settings'),
+        title: Text(context.l10n.notificationsSettingsTitle),
         showNotificationAction: false,
       ),
       body: BlocBuilder<NotificationsCubit, NotificationsState>(
@@ -58,12 +60,12 @@ class _NotificationSettingsScreenState
                   enabled: value,
                 );
               },
-              title: 'Task reminders',
+              title: context.l10n.notificationsTaskReminders,
               subtitle: state.permissionStatus.isGranted
                   ? (taskRemindersEnabled
-                        ? 'You will receive reminders for upcoming tasks.'
-                        : 'Task reminders are currently turned off.')
-                  : 'Turn on device notifications to receive task reminders.',
+                        ? context.l10n.notificationsTaskRemindersOn
+                        : context.l10n.notificationsTaskRemindersOff)
+                  : context.l10n.notificationsTaskRemindersNeedsPermission,
             ),
             const SizedBox(height: 12),
             _PreferenceCard(
@@ -74,12 +76,12 @@ class _NotificationSettingsScreenState
                   enabled: value,
                 );
               },
-              title: 'Calendar reminders',
+              title: context.l10n.notificationsCalendarReminders,
               subtitle: state.permissionStatus.isGranted
                   ? (calendarRemindersEnabled
-                        ? 'You will receive reminders for upcoming events.'
-                        : 'Calendar reminders are currently turned off.')
-                  : 'Turn on device notifications to receive calendar reminders.',
+                        ? context.l10n.notificationsCalendarRemindersOn
+                        : context.l10n.notificationsCalendarRemindersOff)
+                  : context.l10n.notificationsCalendarRemindersNeedsPermission,
             ),
             if (kDebugMode) ...[
               const SizedBox(height: 16),
@@ -94,12 +96,15 @@ class _NotificationSettingsScreenState
                 children: [
                   CachedDataStatus(
                     isUsingCachedData: state.isUsingCachedData,
-                    lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+                  lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+                ),
+                if (state.error != null) ...[
+                  const SizedBox(height: 12),
+                  AppBanner(
+                    text: localizeUiError(context, state.error),
+                    isError: true,
                   ),
-                  if (state.error != null) ...[
-                    const SizedBox(height: 12),
-                    AppBanner(text: state.error!, isError: true),
-                  ],
+                ],
                   const SizedBox(height: 12),
                   if (isWide)
                     Row(

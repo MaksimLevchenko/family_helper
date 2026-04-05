@@ -28,7 +28,7 @@ Future<void> _showDeleteTaskOverlay(
 }) async {
   if (isOffline) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tasks are unavailable while offline.')),
+      SnackBar(content: Text(context.l10n.tasksOfflineUnavailable)),
     );
     return;
   }
@@ -39,10 +39,9 @@ Future<void> _showDeleteTaskOverlay(
     child: BlocBuilder<TasksCubit, TasksState>(
       builder: (context, state) {
         return _TaskConfirmAction(
-          title: 'Delete task',
-          description:
-              'Delete "${task.title}" permanently from active tasks and archive.',
-          confirmLabel: 'Delete task',
+          title: context.l10n.tasksDeleteTaskTitle,
+          description: context.l10n.tasksDeleteTaskDescription(task.title),
+          confirmLabel: context.l10n.tasksDeleteTaskConfirm,
           isLoading: state.isDeletingTask,
           confirmVariant: AppButtonVariant.danger,
           onConfirm: () => context.read<TasksCubit>().deleteCurrentTask(),

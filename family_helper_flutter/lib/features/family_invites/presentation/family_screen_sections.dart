@@ -26,19 +26,19 @@ class _InviteSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Invite family members',
+              context.l10n.familyInviteMembersTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
             AppTextField(
               controller: inviteEmailController,
-              label: 'Invite by email',
+              label: context.l10n.familyInviteByEmailLabel,
               hint: 'partner@example.com',
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 12),
             AppButton(
-              label: 'Send email invite',
+              label: context.l10n.familySendEmailInvite,
               onPressed: isOffline
                   ? null
                   : () async {
@@ -47,7 +47,7 @@ class _InviteSection extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             AppButton(
-              label: 'Create invite code',
+              label: context.l10n.familyCreateInviteCode,
               variant: AppButtonVariant.secondary,
               onPressed: isOffline
                   ? null
@@ -57,10 +57,12 @@ class _InviteSection extends StatelessWidget {
             ),
             if (lastInviteCode != null) ...[
               const SizedBox(height: 12),
-              AppBanner(text: 'Share this invite code: $lastInviteCode'),
+              AppBanner(
+                text: context.l10n.familyShareInviteCode(lastInviteCode!),
+              ),
               const SizedBox(height: 12),
               AppButton(
-                label: 'Copy invite code',
+                label: context.l10n.familyCopyInviteCode,
                 variant: AppButtonVariant.secondary,
                 onPressed: onCopyCode == null
                     ? null
@@ -94,19 +96,19 @@ class _MembersSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Family members',
+              context.l10n.familyMembersTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
             if (members.isEmpty)
-              const Text('No members yet')
+              Text(context.l10n.familyNoMembersYet)
             else
               ...members.map((member) {
                 final isCurrentUser = member.profileId == currentProfileId;
-                final roleLabel = _roleLabel(member.role);
-                final statusLabel = _statusLabel(member.status);
+                final roleLabel = _roleLabel(context, member.role);
+                final statusLabel = _statusLabel(context, member.status);
                 final title = isCurrentUser
-                    ? '${member.displayName} (You)'
+                    ? context.l10n.familyMemberYou(member.displayName)
                     : member.displayName;
                 return AppTile(
                   title: title,
@@ -123,18 +125,18 @@ class _MembersSection extends StatelessWidget {
     );
   }
 
-  static String _roleLabel(String role) {
+  static String _roleLabel(BuildContext context, String role) {
     return switch (role) {
-      'owner' => 'Owner',
-      'member' => 'Member',
+      'owner' => context.l10n.familyRoleOwner,
+      'member' => context.l10n.familyRoleMember,
       _ => role,
     };
   }
 
-  static String _statusLabel(String status) {
+  static String _statusLabel(BuildContext context, String status) {
     return switch (status) {
-      'active' => 'Active',
-      'left' => 'Left',
+      'active' => context.l10n.familyStatusActive,
+      'left' => context.l10n.familyStatusLeft,
       _ => status,
     };
   }
@@ -167,7 +169,7 @@ class _TransferOwnershipSection extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            'Add another active member before transferring ownership.',
+            context.l10n.familyTransferNeedAnotherMember,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ),
@@ -181,14 +183,16 @@ class _TransferOwnershipSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Transfer ownership',
+              context.l10n.familyTransferOwnershipTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<int>(
               key: ValueKey(selectedProfileId),
               initialValue: selectedProfileId,
-              decoration: const InputDecoration(labelText: 'New owner'),
+              decoration: InputDecoration(
+                labelText: context.l10n.familyNewOwnerLabel,
+              ),
               items: candidates
                   .map(
                     (member) => DropdownMenuItem<int>(
@@ -204,7 +208,7 @@ class _TransferOwnershipSection extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             AppButton(
-              label: 'Transfer ownership',
+              label: context.l10n.familyTransferOwnershipAction,
               variant: AppButtonVariant.secondary,
               isLoading: isLoading,
               onPressed: onTransfer == null
@@ -238,7 +242,7 @@ class _FamilyActionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             AppButton(
-              label: 'Leave family',
+              label: context.l10n.familyLeaveAction,
               variant: AppButtonVariant.danger,
               onPressed: isOwner
                   ? null
@@ -249,7 +253,7 @@ class _FamilyActionCard extends StatelessWidget {
             if (isOwner) ...[
               const SizedBox(height: 8),
               Text(
-                'Transfer ownership before leaving the family.',
+                context.l10n.familyTransferBeforeLeave,
                 style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),

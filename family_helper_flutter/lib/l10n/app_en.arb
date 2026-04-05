@@ -1,0 +1,974 @@
+{
+  "@@locale": "en",
+  "appName": "Family Helper",
+  "bootstrapUnableToStart": "Unable to start the app.",
+  "bootstrapPreparingSpace": "Preparing your space...",
+  "notificationActionTooltip": "Notifications",
+  "serverUnavailableBanner": "Server unavailable. Some actions may not work until connection is restored.",
+  "settingsTitle": "Settings",
+  "settingsAccountSection": "Account",
+  "settingsAppearanceSection": "Appearance",
+  "settingsLanguageSection": "Language",
+  "settingsProfileTitle": "Profile",
+  "settingsFamilyTitle": "Family",
+  "settingsNotificationsTitle": "Notifications",
+  "settingsPrivacyTitle": "Privacy",
+  "settingsLanguageTitle": "App language",
+  "settingsLanguageSubtitle": "Choose how Family Helper picks the language for this device and your notifications.",
+  "settingsLanguageSystem": "System",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageRussian": "Русский",
+  "settingsThemeTitle": "Theme",
+  "settingsCurrentMode": "Current mode: {mode}",
+  "@settingsCurrentMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "themeModeSystem": "System",
+  "themeModeLight": "Light",
+  "themeModeDark": "Dark",
+  "settingsSignOut": "Sign out",
+  "settingsProfileSummaryLoading": "Loading profile...",
+  "settingsProfileSummaryEmpty": "Update your name, timezone, and photo",
+  "settingsPhotoMissing": "No photo",
+  "settingsPhotoAdded": "Photo added",
+  "settingsFamilySummaryNotConnected": "Not connected",
+  "settingsFamilySummaryLoading": "Loading family...",
+  "settingsFamilySummaryConnected": "Family connected",
+  "settingsMemberCount": "{count, plural, one{{count} member} other{{count} members}}",
+  "@settingsMemberCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsSwitchOn": "On",
+  "settingsSwitchOff": "Off",
+  "settingsNotificationsSummary": "{permission} • Task {tasks} • Calendar {calendar}",
+  "@settingsNotificationsSummary": {
+    "placeholders": {
+      "permission": {
+        "type": "String"
+      },
+      "tasks": {
+        "type": "String"
+      },
+      "calendar": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAnalyticsOn": "Analytics on",
+  "settingsAnalyticsOff": "Analytics off",
+  "settingsDeletionScheduled": "Deletion scheduled",
+  "settingsExportReady": "Export ready",
+  "settingsExportExpired": "Export expired",
+  "settingsExportFailed": "Export failed",
+  "settingsPreparingExport": "Preparing export",
+  "settingsNoActiveRequests": "No active requests",
+  "profileTitle": "Profile",
+  "profileNotFoundTitle": "Profile not found",
+  "profileNotFoundMessage": "Sign in and refresh profile.",
+  "profileDisplayNameLabel": "Display name",
+  "profileTimezoneLabel": "Timezone",
+  "profileSave": "Save profile",
+  "profileNoPhotoYet": "No profile photo yet",
+  "profilePhoto": "Profile photo",
+  "profilePhotoHint": "Use a clear photo so family members can recognize you easily.",
+  "profileAddPhoto": "Add photo",
+  "profileChangePhoto": "Change photo",
+  "profileRemovePhoto": "Remove photo",
+  "homeTitle": "Home",
+  "homeNoFamilyTitle": "Build a beautiful family dashboard",
+  "homeNoFamilyMessage": "Add or join a family to bring shared plans, tasks, shopping lists, and savings goals into one warm home base.",
+  "homeFeatureSharedCalendar": "Shared calendar",
+  "homeFeatureFamilyTasks": "Family tasks",
+  "homeFeatureListsSync": "Lists that stay in sync",
+  "homeFeatureSavingsGoals": "Savings goals together",
+  "homeAddFamily": "Add family",
+  "homeHeroFamilyFallback": "Your family",
+  "homeHeroSharedDashboard": "Shared dashboard",
+  "homeHeroTitle": "Everything your family needs, at a glance.",
+  "homeHeroSubtitle": "Start here for the next event, the tasks that need attention, and the goals that are moving forward together.",
+  "homeTasks": "Tasks",
+  "homeCalendar": "Calendar",
+  "homeLists": "Lists",
+  "homeGoals": "Goals",
+  "homeTasksDescription": "Open tasks ready for focus",
+  "homeCalendarDescription": "Planned moments on the family timeline",
+  "homeListsDescription": "Items still waiting to be checked off",
+  "homeGoalsDescription": "Active savings journeys in motion",
+  "homeComingUp": "Coming up",
+  "homeComingUpSubtitle": "The next moments everyone is moving toward.",
+  "homeNeedsAttention": "Needs attention",
+  "homeNeedsAttentionSubtitle": "A quick scan of the tasks most likely to matter next.",
+  "homeNoUpcomingEventsTitle": "No upcoming events",
+  "homeNoUpcomingEventsMessage": "Your next family plans will show up here as soon as something lands on the calendar.",
+  "homeNoUrgentTasksTitle": "Nothing urgent right now",
+  "homeNoUrgentTasksMessage": "When new tasks need attention, they will appear here in priority order.",
+  "homeNotificationEnableTitle": "Stay on top of family reminders",
+  "homeNotificationBlockedTitle": "Notifications are blocked",
+  "homeQuickNavigation": "Quick navigation",
+  "homeQuickNavigationSubtitle": "Jump straight into the part of the household flow you want to move next.",
+  "homeSavingsSpotlight": "Savings spotlight",
+  "homeNoGoalsTitle": "No active goals yet",
+  "homeNoGoalsMessage": "Start a savings goal to keep the family’s next milestone visible every day.",
+  "homeGoalLeft": "{amount} left",
+  "@homeGoalLeft": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "homeDeadline": "Deadline {date}",
+  "@homeDeadline": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "homeOpenGoals": "Open goals",
+  "homeListsSpotlight": "Lists spotlight",
+  "homeNoListsTitle": "No active lists",
+  "homeNoListsMessage": "Create a shopping or chore list and it will become part of the dashboard rhythm here.",
+  "homeListItemsOpen": "{count, plural, one{{count} item open} other{{count} items open}}",
+  "@homeListItemsOpen": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeListEverythingDone": "Everything here is already wrapped up.",
+  "homeListMomentum": "A quick place to continue the list that still has the most momentum.",
+  "homeOpenLists": "Open lists",
+  "homeTaskUrgencyNoDate": "No due date",
+  "homeTaskUrgencyOverdue": "Overdue",
+  "homeTaskUrgencyToday": "Due today",
+  "homeTaskUrgencyUpcoming": "Upcoming",
+  "homeTaskDueHint": "Add a due date to prioritize it",
+  "listTypeShopping": "Shopping",
+  "listTypeTodo": "To-do",
+  "notificationsSettingsTitle": "Notification settings",
+  "notificationsTuneTitle": "Tune how Family Helper reaches you",
+  "notificationsTuneSubtitle": "Choose which reminders stay active on this device and keep permission status in a healthy state.",
+  "notificationsSystemTitle": "System notifications",
+  "notificationsEnabled": "Notifications enabled",
+  "notificationsDebugTitle": "Debug tools",
+  "notificationsDebugSubtitle": "Sends a real Firebase push through the server to this signed-in device.",
+  "notificationsSendTestPush": "Send test push",
+  "notificationsTaskReminders": "Task reminders",
+  "notificationsTaskRemindersOn": "You will receive reminders for upcoming tasks.",
+  "notificationsTaskRemindersOff": "Task reminders are currently turned off.",
+  "notificationsTaskRemindersNeedsPermission": "Turn on device notifications to receive task reminders.",
+  "notificationsCalendarReminders": "Calendar reminders",
+  "notificationsCalendarRemindersOn": "You will receive reminders for upcoming events.",
+  "notificationsCalendarRemindersOff": "Calendar reminders are currently turned off.",
+  "notificationsCalendarRemindersNeedsPermission": "Turn on device notifications to receive calendar reminders.",
+  "notificationsCenterTitle": "Notifications",
+  "notificationsBackToHome": "Back to home",
+  "notificationChannelReminders": "Reminders",
+  "notificationChannelFamily": "Family notifications",
+  "notificationChannelDescription": "Rich reminders and family updates from Family Helper",
+  "notificationsSettingsTooltip": "Notification settings",
+  "notificationsLoading": "Loading notifications...",
+  "notificationsConnectFamilyTitle": "Connect a family to start receiving updates",
+  "notificationsConnectFamilyMessage": "Your dedicated notification center will light up with reminders, invites, and activity once you join a family.",
+  "notificationsOpenFamilySettings": "Open family settings",
+  "notificationsFilterAll": "All",
+  "notificationsFilterUnread": "Unread",
+  "notificationsHeroTitle": "Family inbox",
+  "notificationsHeroUnread": "{count} unread",
+  "@notificationsHeroUnread": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationsHeroAllRead": "Everything is read",
+  "notificationsHeroReady": "Ready for new updates",
+  "notificationsHeroSubtitle": "A dedicated place for reminders, updates, and family activity that deserves attention.",
+  "notificationsMarkAllRead": "Mark all read",
+  "notificationsNoUnreadTitle": "No unread notifications",
+  "notificationsNoUnreadMessage": "Everything in your family inbox has already been opened.",
+  "notificationsNoItemsTitle": "No notifications yet",
+  "notificationsNoItemsMessage": "New reminders and family activity will show up here as soon as they arrive.",
+  "notificationsShowAll": "Show all notifications",
+  "notificationsLoadMore": "Load more",
+  "notificationsDetailSelect": "Select a notification",
+  "notificationsDetailSelectMessage": "Choose any update from the inbox to see the full message and related action.",
+  "notificationsDetailPlaceholderTitle": "Your notification details will appear here",
+  "notificationsDetailPlaceholderMessage": "Once new reminders or family activity arrive, you will be able to review the full context here.",
+  "notificationsRead": "Read",
+  "notificationsUnread": "Unread",
+  "notificationsDetailNoTarget": "This update does not include a linked destination, but the full message is preserved here for reference.",
+  "notificationCategoryReminder": "Reminder",
+  "notificationCategoryTaskAssigned": "Assigned task",
+  "notificationCategoryTaskCompleted": "Completed task",
+  "notificationCategoryCalendarUpdate": "Calendar update",
+  "notificationCategoryCalendarCancelled": "Calendar cancelled",
+  "notificationCategoryFamilyInvite": "Family invite",
+  "notificationCategoryFamilyUpdate": "Family update",
+  "notificationCategoryTestPush": "Test push",
+  "notificationCategoryGeneric": "Notification",
+  "notificationOpenTask": "Open task",
+  "notificationOpenCalendar": "Open calendar",
+  "notificationOpenList": "Open list",
+  "notificationOpenGoal": "Open goal",
+  "notificationOpenNotification": "Open notification",
+  "notificationPermissionNotSetUp": "Not set up",
+  "notificationPermissionAllowed": "Allowed",
+  "notificationPermissionBlocked": "Blocked",
+  "notificationPermissionBlockedInSettings": "Blocked in settings",
+  "notificationPermissionAllowAction": "Allow notifications",
+  "notificationPermissionEnabledAction": "Notifications enabled",
+  "notificationPermissionOpenSettingsAction": "Open system settings",
+  "notificationPermissionNotSetUpDescription": "Turn on notifications so Family Helper can remind you about tasks and events.",
+  "notificationPermissionAllowedDescription": "Notifications are enabled for this device.",
+  "notificationPermissionBlockedDescription": "Notifications were denied. Open system settings to allow them.",
+  "notificationPermissionBlockedInSettingsDescription": "Notifications are disabled in system settings. Re-enable them there to get reminders.",
+  "notificationPresetNone": "No reminder",
+  "notificationPresetAtTime": "At time",
+  "notificationPresetTenMinutesBefore": "10 minutes before",
+  "notificationPresetOneHourBefore": "1 hour before",
+  "notificationPresetOneDayBefore": "1 day before",
+  "notificationFamilyNotSelected": "Family is not selected.",
+  "notificationReminderQueued": "Reminder will sync when your connection returns.",
+  "notificationSaveReminderFailed": "Unable to save the reminder.",
+  "notificationAllowReminderPermission": "Allow notifications to receive reminders on this device.",
+  "notificationBlockedReminderPermission": "Notifications are blocked. Open system settings to enable reminders.",
+  "notificationDisabledReminderPermission": "Notifications are disabled in system settings. Re-enable them there to get reminders.",
+  "notificationEnableReminderFailed": "Unable to enable reminders right now. Please try again.",
+  "notificationReminderRemoved": "Reminder removed.",
+  "notificationUpdateReminderFailed": "Unable to update the reminder.",
+  "notificationDebugOnly": "Test pushes are only available in debug builds.",
+  "notificationAllowTestPush": "Allow notifications to receive the test push.",
+  "notificationBlockedTestPush": "Notifications are blocked. Open system settings to run the push test.",
+  "notificationDisabledTestPush": "Notifications are disabled in system settings. Re-enable them there to run the push test.",
+  "notificationSelectFamilyForTestPush": "Select a family before sending a test push.",
+  "notificationTestPushSent": "Test push sent. It should arrive shortly.",
+  "notificationTestPushSkipped": "Test push was created, but nothing was sent. Check token registration and Firebase server config.",
+  "notificationTestPushFailed": "Test push dispatch failed. Check server logs and Firebase configuration.",
+  "notificationTestPushRequested": "Test push requested.",
+  "notificationSendTestPushFailed": "Unable to send the test push.",
+  "notificationPreferenceQueued": "Network unavailable. Preference change queued.",
+  "notificationPushTokenQueued": "Network unavailable. Push token registration queued.",
+  "notificationSubtitleReminder": "Reminder",
+  "notificationSubtitleTaskReminder": "Task reminder",
+  "notificationSubtitleCalendarReminder": "Calendar reminder",
+  "notificationSubtitleGoalReminder": "Goal reminder",
+  "notificationSubtitleListReminder": "List reminder",
+  "notificationSubtitleTaskUpdate": "Task update",
+  "notificationSubtitleCalendarUpdate": "Calendar update",
+  "notificationSubtitleGoalUpdate": "Goal update",
+  "notificationSubtitleListUpdate": "List update",
+  "notificationSubtitleFamilyUpdate": "Family update",
+  "notificationSubtitleFamilyNotification": "Family notification",
+  "commonEventReminderTitle": "Event reminder",
+  "commonEventReminderBody": "Family event",
+  "commonTaskReminderTitle": "Task reminder",
+  "taskPriorityLow": "Low",
+  "taskPriorityNormal": "Normal",
+  "taskPriorityHigh": "High",
+  "taskRepeatNone": "Does not repeat",
+  "taskRepeatDaily": "Daily",
+  "taskRepeatWeekly": "Weekly",
+  "taskRepeatMonthly": "Monthly",
+  "taskDeadlineModeNone": "No deadline",
+  "taskDeadlineModeSpecificDate": "Specific date",
+  "taskDeadlineModeIn": "In...",
+  "taskOffsetUnitMinutes": "Minutes",
+  "taskOffsetUnitHours": "Hours",
+  "taskOffsetUnitDays": "Days",
+  "taskEditorCreateTitle": "Create task",
+  "taskEditorEditTitle": "Edit task",
+  "taskEditorCreateSubtitle": "Create a family task with an optional deadline, recurrence, and reminders.",
+  "taskEditorEditSubtitle": "Update assignment, deadline, recurrence, and reminder settings.",
+  "taskEditorTitleLabel": "Task title",
+  "taskEditorTitleHint": "Prepare the weekly grocery list",
+  "taskEditorTitleValidation": "Enter a task title.",
+  "taskEditorDescriptionLabel": "Description",
+  "taskEditorDescriptionHint": "Optional note for the family",
+  "taskEditorPersonalTaskLabel": "Personal task",
+  "taskEditorPersonalTaskOn": "Only you will see this task.",
+  "taskEditorPersonalTaskOff": "Shared tasks stay visible to the whole family.",
+  "taskEditorPriorityLabel": "Priority",
+  "taskEditorUnassigned": "Unassigned",
+  "taskEditorDeadlineLabel": "Deadline",
+  "taskEditorNoDeadlineDescription": "This task will not have a deadline.",
+  "taskEditorDueAtLabel": "Due at",
+  "taskEditorAmountLabel": "Amount",
+  "taskEditorAmountHint": "1",
+  "taskEditorPositiveNumberValidation": "Enter a positive number.",
+  "taskEditorUnitLabel": "Unit",
+  "taskEditorDeadlinePreviewInvalid": "Enter a valid offset to calculate the deadline.",
+  "taskEditorDeadlinePreview": "Will be due {date}",
+  "@taskEditorDeadlinePreview": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "taskEditorReminderLabel": "Reminder",
+  "taskEditorRepeatLabel": "Repeat",
+  "taskEditorIntervalLabel": "Interval",
+  "taskEditorSaveChanges": "Save changes",
+  "taskEditorCreateAction": "Create task",
+  "taskEditorDeadlineMissingMessage": "Pick a deadline date and time or switch to no deadline.",
+  "taskEditorDeadlineRequiredMessage": "Set a due date before adding reminders or recurrence.",
+  "taskEditorRelativePresetThirtyMinutes": "30 min",
+  "taskEditorRelativePresetOneHour": "1 hour",
+  "taskEditorRelativePresetThreeHours": "3 hours",
+  "taskEditorRelativePresetOneDay": "1 day",
+  "taskEditorRelativePresetThreeDays": "3 days",
+  "commonSaveChanges": "Save changes",
+  "commonCancel": "Cancel",
+  "commonDelete": "Delete",
+  "commonClose": "Close",
+  "commonNote": "Note",
+  "commonJustNow": "just now",
+  "commonShowMore": "Show more",
+  "commonShowLess": "Show less",
+  "commonOverview": "Overview",
+  "commonHistory": "History",
+  "commonSettings": "Settings",
+  "listsFamilyFallback": "Family collaboration",
+  "listsYourListsTitle": "Your lists",
+  "listsYourListsSubtitle": "Pick a list and keep every check-off visible.",
+  "listsEmptyTitle": "No lists yet",
+  "listsEmptyMessage": "Start with a shopping list or wishlist for your family.",
+  "listsCreateFirstList": "Create your first list",
+  "listsDetailsTitle": "List details",
+  "listsDetailsSubtitle": "Choose or create a list to start adding items.",
+  "listsListActionsTooltip": "List actions",
+  "listsEditListAction": "Edit list",
+  "listsDeleteListAction": "Delete list",
+  "listsNoSelectionTitle": "No list selected",
+  "listsNoSelectionMessage": "Create your first list to start planning together.",
+  "listsCreateSheetTitle": "Create a new list",
+  "listsEditSheetTitle": "Edit list",
+  "listsCreateListAction": "Create list",
+  "listsAddItemTitle": "Add item",
+  "listsEditItemTitle": "Edit item",
+  "listsAddToListAction": "Add to list",
+  "listsDeleteListTitle": "Delete list?",
+  "listsDeleteListMessage": "This will remove {title} and all of its items.",
+  "@listsDeleteListMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "listsDeleteItemTitle": "Delete item?",
+  "listsDeleteItemMessage": "Remove {title} from this list?",
+  "@listsDeleteItemMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "listsHeroTitle": "Shared lists that feel alive.",
+  "listsHeroEmptyMessage": "Create your first shopping or wishlist board and keep every check-off visible.",
+  "listsHeroCountMessage": "{count, plural, one{{count} active list with clear ownership.} other{{count} active lists with clear ownership.}}",
+  "@listsHeroCountMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "listsNewList": "New list",
+  "listsMetricOpen": "Open",
+  "listsMetricUpdated": "Updated",
+  "listsStartFirstItem": "Start with your first item",
+  "listsItemsStillOpen": "{count, plural, one{{count} item still open} other{{count} items still open}}",
+  "@listsItemsStillOpen": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "listsReadyTitle": "This list is ready",
+  "listsReadyMessage": "Add the first item to {title} and make it visible to everyone.",
+  "@listsReadyMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "listsAddFirstItem": "Add first item",
+  "listsMarkedBy": "Marked by {name} - {time}",
+  "@listsMarkedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "listsItemActionsTooltip": "Item actions",
+  "listsEditItemAction": "Edit item",
+  "listsDeleteItemAction": "Delete item",
+  "listsCreateSheetSubtitle": "Choose a template and make it easy for the whole family to follow.",
+  "listsListTitleLabel": "List title",
+  "listsListTitleHint": "Saturday groceries",
+  "listsAddItemSubtitle": "Everything added here will show up in {title}.",
+  "@listsAddItemSubtitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "listsItemTitleLabel": "Item title",
+  "listsItemTitleHint": "Milk",
+  "listsQtyLabel": "Qty",
+  "listsUnitLabel": "Unit",
+  "listsUnitHint": "pcs / kg",
+  "listsNoteHint": "Semi-skimmed if available",
+  "listsPriceLabel": "Price",
+  "listsTypeWishlist": "Wishlist",
+  "listsSelectedSubtitle": "{count, plural, one{{count} open item} other{{count} open items}} - updated {time}",
+  "@listsSelectedSubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "familyNameUpdated": "Family name updated",
+  "familyInviteCodeCopied": "Invite code copied",
+  "familyLeaveAction": "Leave family",
+  "familyTransferBeforeLeave": "Transfer ownership before leaving the family.",
+  "familyEmptyTitle": "No family connected",
+  "familyEmptyMessage": "Create a family or join one with an invite code.",
+  "familyCreateTitle": "Create a family",
+  "familyNameLabel": "Family name",
+  "familyCreateAction": "Create family",
+  "familyJoinTitle": "Join with an invite",
+  "familyInviteCodeLabel": "Invite code",
+  "familyJoinAction": "Join family",
+  "familyMembersInFamily": "{count, plural, one{{count} member in your family} other{{count} members in your family}}",
+  "@familyMembersInFamily": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "familySaveNameAction": "Save family name",
+  "familyInviteMembersTitle": "Invite family members",
+  "familyInviteByEmailLabel": "Invite by email",
+  "familySendEmailInvite": "Send email invite",
+  "familyCreateInviteCode": "Create invite code",
+  "familyShareInviteCode": "Share this invite code: {code}",
+  "@familyShareInviteCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "familyCopyInviteCode": "Copy invite code",
+  "familyMembersTitle": "Family members",
+  "familyNoMembersYet": "No members yet",
+  "familyMemberYou": "{name} (You)",
+  "@familyMemberYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "familyRoleOwner": "Owner",
+  "familyRoleMember": "Member",
+  "familyStatusActive": "Active",
+  "familyStatusLeft": "Left",
+  "familyTransferNeedAnotherMember": "Add another active member before transferring ownership.",
+  "familyTransferOwnershipTitle": "Transfer ownership",
+  "familyNewOwnerLabel": "New owner",
+  "familyTransferOwnershipAction": "Transfer ownership",
+  "privacyAnalyticsTitle": "Share anonymous analytics",
+  "privacyAnalyticsSubtitle": "Help improve the app with aggregated usage information.",
+  "privacyDeletionCancelled": "Deletion request cancelled",
+  "privacyDeletionCompleted": "Deletion completed.",
+  "privacyDataExportTitle": "Data export",
+  "privacyDownloadExport": "Download export",
+  "privacyAccountDeletionTitle": "Account deletion",
+  "privacyNoRequestsTitle": "No active privacy requests",
+  "privacyNoRequestsMessage": "Request an export or account deletion when you need it.",
+  "privacyAvailableUntil": "Available until {date}.",
+  "@privacyAvailableUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyExportExpiredMessage": "Export expired. Request a new data export to generate a fresh link.",
+  "privacyExportFailedMessage": "Export failed. Request a new data export to try again.",
+  "privacyPreparingExportMessage": "Preparing export. We will make it available when it is ready.",
+  "privacyPreparingExportRequestedOn": "Preparing export. Requested on {date}.",
+  "@privacyPreparingExportRequestedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyDeletionScheduledFor": "Deletion scheduled for {date}.",
+  "@privacyDeletionScheduledFor": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyDownloadDialogMessage": "Use this secure link in your browser to download the export archive.",
+  "privacyDownloadLinkCopied": "Download link copied",
+  "privacyCopyLink": "Copy link",
+  "privacyYourDataTitle": "Your data",
+  "privacyRequestExport": "Request data export",
+  "privacyRequestDeletion": "Request account deletion",
+  "privacyCancelDeletionRequest": "Cancel deletion request",
+  "mediaTitle": "Media & Avatars",
+  "mediaReload": "Reload media",
+  "mediaUploadImage": "Pick, crop and upload image",
+  "mediaLastMediaId": "Last media id: {id}",
+  "@mediaLastMediaId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaEmptyTitle": "No media objects",
+  "mediaEmptyMessage": "Upload an image to populate media history.",
+  "mediaItemTitle": "Media #{id}",
+  "@mediaItemTitle": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "moneyGoalsSectionTitle": "Goals",
+  "moneyGoalsSidebarSummary": "{activeCount} active, {archivedCount} archived",
+  "@moneyGoalsSidebarSummary": {
+    "placeholders": {
+      "activeCount": {
+        "type": "int"
+      },
+      "archivedCount": {
+        "type": "int"
+      }
+    }
+  },
+  "moneyGoalsActiveSection": "Active",
+  "moneyGoalsArchivedSection": "Archive",
+  "moneyGoalsNoFamilyTitle": "Choose a family first",
+  "moneyGoalsNoFamilyMessage": "Goals are tied to the selected family. Open family settings to create or join one.",
+  "moneyGoalsOpenFamilySettings": "Open family settings",
+  "moneyGoalsEmptyTitle": "No goals yet",
+  "moneyGoalsEmptyMessage": "Create your first goal from the detail pane.",
+  "moneyGoalsCreateFirstGoal": "Create first goal",
+  "moneyGoalsStatusArchived": "Archived",
+  "moneyGoalsStatusReached": "Reached",
+  "moneyGoalsStatusActive": "Active",
+  "moneyGoalsRemainingChip": "Remaining {amount}",
+  "@moneyGoalsRemainingChip": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsDeadlineChip": "Deadline {date}",
+  "@moneyGoalsDeadlineChip": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsCreateSheetTitle": "Create a new goal",
+  "moneyGoalsCreateSheetSubtitle": "Enter a title and the target amount in standard money format.",
+  "moneyGoalsTargetAmountLabel": "Target amount",
+  "moneyGoalsCreateGoalAction": "Create goal",
+  "moneyGoalsArchivedReadonlyMessage": "Archived goals stay visible, but their settings can no longer be edited.",
+  "moneyGoalsAddContributionTitle": "Add contribution",
+  "moneyGoalsAddContributionDescription": "Top up \"{title}\" with a one-time contribution.",
+  "@moneyGoalsAddContributionDescription": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsContributionAmountLabel": "Contribution amount",
+  "moneyGoalsAddContributionAction": "Add contribution",
+  "moneyGoalsWithdrawTitle": "Withdraw money",
+  "moneyGoalsWithdrawDescription": "Take money back from \"{title}\".",
+  "@moneyGoalsWithdrawDescription": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsWithdrawAmountLabel": "Withdraw amount",
+  "moneyGoalsWithdrawAction": "Withdraw money",
+  "moneyGoalsGoalTitleLabel": "Goal title",
+  "moneyGoalsGoalTitleHint": "Emergency fund",
+  "moneyGoalsDeadlineLabel": "Deadline",
+  "moneyGoalsDescriptionLabel": "Description",
+  "moneyGoalsDescriptionHint": "Optional note for the family",
+  "moneyGoalsRemainingLabel": "Remaining",
+  "moneyGoalsCompleteAndArchive": "Complete and archive",
+  "moneyGoalsNewGoal": "New goal",
+  "moneyGoalsProgressTitle": "Progress",
+  "moneyGoalsRecentActivityTitle": "Recent activity",
+  "moneyGoalsNoHistoryYet": "No contributions or withdrawals yet.",
+  "moneyGoalsGoalSettingsTitle": "Goal settings",
+  "moneyGoalsArchiveGoalAction": "Archive goal",
+  "moneyGoalsDeleteGoalAction": "Delete goal",
+  "tasksLoading": "Loading tasks...",
+  "calendarAddEvent": "Add event",
+  "calendarLoading": "Loading your calendar...",
+  "calendarCreateEventTitle": "Create event",
+  "calendarSaveEvent": "Save event",
+  "uiErrorFamilyNotSelected": "Family is not selected.",
+  "uiErrorFamilyTaskNotSelected": "Family or task is not selected.",
+  "uiErrorFamilyGoalNotSelected": "Family or goal is not selected.",
+  "uiErrorArchivedGoalCannotBeEdited": "Archived goals cannot be edited.",
+  "uiErrorFamilyNameEmpty": "Family name cannot be empty.",
+  "uiErrorFamilyRenameQueued": "Network unavailable. Family rename queued.",
+  "uiErrorFamilyTransferQueued": "Network unavailable. Transfer request queued.",
+  "uiErrorFamilyLeaveQueued": "Network unavailable. Leave request queued.",
+  "uiErrorPrivacyExportQueued": "Network unavailable. Export request queued.",
+  "uiErrorPrivacyDeletionQueued": "Network unavailable. Deletion request queued.",
+  "uiErrorMediaDeleteQueued": "Network unavailable. Delete request queued.",
+  "uiErrorExportProcessing": "Export is still processing. Check back in a moment.",
+  "commonClear": "Clear",
+  "moneyGoalsLoading": "Loading goals...",
+  "moneyGoalsEmptyDetailMessage": "Create your first savings goal and start tracking progress.",
+  "moneyGoalsPickGoalTitle": "Pick a goal",
+  "moneyGoalsPickGoalMessage": "Select a goal from the active list or archive to inspect progress and actions.",
+  "moneyGoalsCreateAnotherGoal": "Create another goal",
+  "moneyGoalsNoDeadlineSet": "No deadline set",
+  "moneyGoalsPickDate": "Pick date",
+  "moneyGoalsGoalTitleValidation": "Enter a goal title",
+  "moneyGoalsAmountValidation": "Enter a valid amount",
+  "taskEditorAssigneeLabel": "Assignee",
+  "tasksSummaryOpen": "Open",
+  "tasksSummaryDueToday": "Due today",
+  "tasksSummaryOverdue": "Overdue",
+  "tasksSummaryArchive": "Archive",
+  "tasksEmptyArchiveTitle": "Archive is empty",
+  "tasksEmptyArchiveMessage": "Completed tasks will appear here once something is checked off.",
+  "tasksEmptyFilteredTitle": "No tasks match this view",
+  "tasksEmptyFilteredMessage": "Try another filter or create a new task to get things moving.",
+  "tasksTaskCount": "{count, plural, one{{count} task} other{{count} tasks}}",
+  "@tasksTaskCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tasksPickTaskTitle": "Pick a task",
+  "tasksPickTaskMessage": "Select any task from the workspace to inspect details, reminders, and history.",
+  "tasksDetailCompletedItem": "Completed item",
+  "tasksDetailOpenFamilyTask": "Open family task",
+  "tasksMetaPersonal": "Personal",
+  "tasksMetaShared": "Shared",
+  "tasksActionComplete": "Complete",
+  "tasksActionEdit": "Edit",
+  "tasksActionDelete": "Delete",
+  "tasksHistoryTitle": "History",
+  "tasksNoHistoryTitle": "No history yet",
+  "tasksNoHistoryMessage": "Changes and completion activity will appear here.",
+  "tasksStatusCompleted": "Completed",
+  "tasksStatusOpen": "Open",
+  "tasksNoFamilyTitle": "Choose a family first",
+  "tasksNoFamilyMessage": "Tasks are tied to the selected family. Open family settings to create or join one.",
+  "tasksOpenFamilySettings": "Open family settings",
+  "tasksSectionOverdue": "Overdue",
+  "tasksSectionToday": "Today",
+  "tasksSectionUpcoming": "Upcoming",
+  "tasksSectionNoDueDate": "No due date",
+  "tasksFilterAllOpen": "All open",
+  "tasksFilterMine": "Mine",
+  "tasksFilterUnassigned": "Unassigned",
+  "tasksFilterDueSoon": "Due soon",
+  "tasksFilterCompletedArchive": "Completed archive",
+  "tasksHistoryCreated": "Created",
+  "tasksHistoryUpdated": "Updated",
+  "tasksHistoryCompleted": "Completed",
+  "tasksAssigneeMemberYou": "{name} (you)",
+  "@tasksAssigneeMemberYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tasksAssigneeYou": "You",
+  "tasksAssigneeUser": "User {profileId}",
+  "@tasksAssigneeUser": {
+    "placeholders": {
+      "profileId": {
+        "type": "int"
+      }
+    }
+  },
+  "tasksNoDueDate": "No due date",
+  "tasksDueChip": "Due {date}",
+  "@tasksDueChip": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "tasksOfflineUnavailable": "Tasks are unavailable while offline.",
+  "tasksDeleteTaskTitle": "Delete task",
+  "tasksDeleteTaskDescription": "Delete \"{title}\" permanently from active tasks and archive.",
+  "@tasksDeleteTaskDescription": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "tasksDeleteTaskConfirm": "Delete task",
+  "moneyGoalsSummaryTitle": "Goals snapshot",
+  "moneyGoalsSummaryActiveGoals": "Active goals",
+  "moneyGoalsSummaryArchived": "Archived",
+  "moneyGoalsSummaryCompleted": "Completed",
+  "moneyGoalsSummarySavedTotal": "Saved total",
+  "moneyGoalsGoalCount": "{count, plural, one{{count} goal} other{{count} goals}}",
+  "@moneyGoalsGoalCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moneyGoalsNoActiveGoalsMessage": "No active goals right now. Archived goals stay below for reference.",
+  "moneyGoalsArchiveGoalConfirmTitle": "Archive goal",
+  "moneyGoalsArchiveGoalConfirmDescription": "Archive \"{title}\"? It will stay visible, but editing will be locked.",
+  "@moneyGoalsArchiveGoalConfirmDescription": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsDeleteGoalConfirmTitle": "Delete goal",
+  "moneyGoalsDeleteGoalConfirmDescription": "Delete \"{title}\" permanently from active and archived goals.",
+  "@moneyGoalsDeleteGoalConfirmDescription": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsProgressOf": "{current} of {target}",
+  "@moneyGoalsProgressOf": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsStatusArchivedOn": "Archived on {date}",
+  "@moneyGoalsStatusArchivedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsStatusReachedOn": "Reached on {date}",
+  "@moneyGoalsStatusReachedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsStatusUpdatedAt": "Updated {date}",
+  "@moneyGoalsStatusUpdatedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsHistoryWithdrew": "{name} withdrew {amount}",
+  "@moneyGoalsHistoryWithdrew": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyGoalsHistoryAdded": "{name} added {amount}",
+  "@moneyGoalsHistoryAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "calendarEditOccurrenceTitle": "Edit occurrence",
+  "calendarEditFollowingTitle": "Edit this and following",
+  "calendarEditWholeSeriesTitle": "Edit whole series",
+  "calendarDeleteOccurrenceTitle": "Delete occurrence",
+  "calendarDeleteOccurrenceMessage": "Remove only this occurrence from the series?",
+  "calendarDeleteSeriesFutureMessage": "Delete this and all following occurrences?",
+  "calendarDeleteSeriesAllMessage": "Delete the entire recurring series?",
+  "calendarDeleteEventTitle": "Delete event",
+  "calendarOfflineMessage": "This action will sync when your connection returns.",
+  "calendarYourScheduleTitle": "Your schedule",
+  "calendarUpdatingStatus": "Updating",
+  "calendarRefreshingStatus": "Refreshing",
+  "calendarSavingStatus": "Saving",
+  "calendarFormatMonth": "Month",
+  "calendarPlansForDay": "{count, plural, one{{count} plan for this day} other{{count} plans for this day}}",
+  "@calendarPlansForDay": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarOpenDayTitle": "Open day",
+  "calendarNextEventSummary": "Next: {timeRange} • {title}",
+  "@calendarNextEventSummary": {
+    "placeholders": {
+      "timeRange": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "calendarOpenDayEmptyMessage": "Nothing is scheduled yet. Add an event to keep the day organized.",
+  "calendarAgendaTitle": "Day agenda",
+  "calendarEventsCount": "{count, plural, one{{count} event} other{{count} events}}",
+  "@calendarEventsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarEmptyDayTitle": "Nothing planned yet",
+  "calendarEmptyDayMessage": "Create an event for this day and it will appear here with the right repeat and reminder settings.",
+  "calendarRepeatsChip": "Repeats",
+  "calendarEditedChip": "Edited",
+  "calendarReminderAtTime": "At time",
+  "calendarReminderTenMinutesBefore": "10m before",
+  "calendarReminderOneHourBefore": "1h before",
+  "calendarReminderOneDayBefore": "1d before",
+  "calendarReminderGeneric": "Reminder",
+  "calendarActionEditSection": "Edit",
+  "calendarActionDeleteSection": "Delete",
+  "calendarActionEditOccurrence": "Edit this occurrence",
+  "calendarActionEditFollowing": "Edit this and following",
+  "calendarActionEditWholeSeries": "Edit whole series",
+  "calendarActionEditEvent": "Edit event",
+  "calendarActionDeleteOccurrence": "Delete this occurrence",
+  "calendarActionDeleteFollowing": "Delete this and following",
+  "calendarActionDeleteWholeSeries": "Delete whole series",
+  "calendarActionDeleteEvent": "Delete event",
+  "calendarEditorRecurringSubtitle": "Set time, reminders, and repeat rules in one place.",
+  "calendarEditorSingleSubtitle": "Update this single occurrence without changing the full series.",
+  "calendarEditorBasicsTitle": "Basics",
+  "calendarEditorBasicsSubtitle": "A clear title helps the whole family scan the day faster.",
+  "calendarEditorTitleLabel": "Event title",
+  "calendarEditorNotesLabel": "Notes",
+  "calendarEditorOptionalHint": "Optional",
+  "calendarEditorScheduleTitle": "Schedule",
+  "calendarEditorScheduleSubtitle": "Choose a polished start and end time for the event.",
+  "calendarEditorStartsLabel": "Starts",
+  "calendarEditorEndsLabel": "Ends",
+  "calendarEditorReminderTitle": "Reminder",
+  "calendarEditorReminderSubtitle": "Notifications should appear only when they are helpful.",
+  "calendarEditorRepeatTitle": "Repeat",
+  "calendarEditorRepeatSubtitle": "Keep repeat rules visible and only reveal the controls that matter.",
+  "calendarEditorDaysOfWeekLabel": "Days of week",
+  "calendarEditorRepeatEveryDaysLabel": "Repeat every N days",
+  "calendarEditorTitleValidation": "Please add an event title.",
+  "calendarEditorEndAfterStartValidation": "End time must be after the start time.",
+  "calendarEditorIntervalValidation": "Repeat interval should be at least 1 day.",
+  "calendarRecurrenceNoneTitle": "Does not repeat",
+  "calendarRecurrenceYearlyTitle": "Every year on this day",
+  "calendarRecurrenceMonthlyTitle": "Every month on this day",
+  "calendarRecurrenceWeeklyTitle": "Selected weekdays",
+  "calendarRecurrenceEveryNDaysTitle": "Every N days",
+  "calendarRecurrenceNoneSubtitle": "One-time event.",
+  "calendarRecurrenceYearlySubtitle": "Useful for birthdays and anniversaries.",
+  "calendarRecurrenceMonthlySubtitle": "Runs on the same day number every month.",
+  "calendarRecurrenceWeeklySubtitle": "Choose one or several weekdays.",
+  "calendarRecurrenceEveryNDaysSubtitle": "Great for routines with a fixed interval.",
+  "calendarDurationHours": "{hours}h",
+  "@calendarDurationHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarDurationHoursMinutes": "{hours}h {minutes}m",
+  "@calendarDurationHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarDurationMinutes": "{minutes}m",
+  "@calendarDurationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarMutationScopeOne": "This occurrence",
+  "calendarMutationScopeFuture": "This and following",
+  "calendarMutationScopeAll": "Whole series"
+}

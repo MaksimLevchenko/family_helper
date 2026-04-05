@@ -6,9 +6,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/auth/auth_session.dart';
 import '../../../core/config/app_defaults.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/locale_controller.dart';
 import '../../../core/logging/app_error_logger.dart';
 import '../../../core/offline/offline_snapshot_store.dart';
 import '../../../core/utils/operation_id.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../family_invites/providers/family_provider.dart';
 import '../../notifications/data/local_notification_service.dart';
 import '../../notifications/data/notifications_repository.dart';
@@ -117,12 +120,14 @@ class CalendarCubit extends Cubit<CalendarState> {
     required CalendarRepository repository,
     required FamilySelectionCubit familySelectionCubit,
     required AuthCubit authCubit,
+    required LocaleCubit localeCubit,
     required NotificationsRepository notificationsRepository,
     required LocalNotificationService localNotificationService,
     OfflineSnapshotStore? snapshotStore,
   }) : _repository = repository,
        _familySelectionCubit = familySelectionCubit,
        _authCubit = authCubit,
+       _localeCubit = localeCubit,
        _notificationsRepository = notificationsRepository,
        _localNotificationService = localNotificationService,
        _snapshotStore = snapshotStore,
@@ -138,10 +143,14 @@ class CalendarCubit extends Cubit<CalendarState> {
   final CalendarRepository _repository;
   final FamilySelectionCubit _familySelectionCubit;
   final AuthCubit _authCubit;
+  final LocaleCubit _localeCubit;
   final NotificationsRepository _notificationsRepository;
   final LocalNotificationService _localNotificationService;
   final OfflineSnapshotStore? _snapshotStore;
   StreamSubscription<int?>? _familySub;
+
+  AppLocalizations get _l10n =>
+      l10nForLocale(_localeCubit.state.effectiveLocale);
 
   List<CalendarInstanceDto> agendaForDay(DateTime day) {
     return state.instances.where((instance) {
@@ -290,7 +299,7 @@ class CalendarCubit extends Cubit<CalendarState> {
   }) async {
     final familyId = _familySelectionCubit.state;
     if (familyId == null) {
-      emit(state.copyWith(error: 'Family is not selected'));
+      emit(state.copyWith(error: _l10n.notificationFamilyNotSelected));
       return null;
     }
 
@@ -345,7 +354,7 @@ class CalendarCubit extends Cubit<CalendarState> {
   }) async {
     final familyId = _familySelectionCubit.state;
     if (familyId == null) {
-      emit(state.copyWith(error: 'Family is not selected'));
+      emit(state.copyWith(error: _l10n.notificationFamilyNotSelected));
       return;
     }
 
@@ -390,7 +399,7 @@ class CalendarCubit extends Cubit<CalendarState> {
   Future<void> deleteOccurrence(CalendarInstanceDto instance) async {
     final familyId = _familySelectionCubit.state;
     if (familyId == null) {
-      emit(state.copyWith(error: 'Family is not selected'));
+      emit(state.copyWith(error: _l10n.notificationFamilyNotSelected));
       return;
     }
 
@@ -439,7 +448,7 @@ class CalendarCubit extends Cubit<CalendarState> {
   }) async {
     final familyId = _familySelectionCubit.state;
     if (familyId == null) {
-      emit(state.copyWith(error: 'Family is not selected'));
+      emit(state.copyWith(error: _l10n.notificationFamilyNotSelected));
       return;
     }
 
@@ -501,7 +510,7 @@ class CalendarCubit extends Cubit<CalendarState> {
   int _requireFamilyId() {
     final familyId = _familySelectionCubit.state;
     if (familyId == null) {
-      throw StateError('Family is not selected.');
+      throw StateError(_l10n.notificationFamilyNotSelected);
     }
     return familyId;
   }
@@ -532,8 +541,8 @@ class CalendarCubit extends Cubit<CalendarState> {
   }
 
   LocalReminderSchedule _mapReminderSchedule(ReminderDto reminder) {
-    String title = 'Event reminder';
-    String body = 'Family event';
+    String title = _l10n.commonEventReminderTitle;
+    String body = _l10n.commonEventReminderBody;
 
     try {
       final payload = jsonDecode(reminder.payloadJson) as Map<String, dynamic>;

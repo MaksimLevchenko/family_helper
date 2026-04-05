@@ -226,6 +226,16 @@ class AuthCubit extends Cubit<AuthSessionState> {
     }
   }
 
+  void setProfile(ProfileDto profile) {
+    emit(
+      AuthSessionState(
+        isInitializing: false,
+        isAuthenticated: true,
+        profile: profile,
+      ),
+    );
+  }
+
   Future<void> _onAuthChanged() async {
     if (!_apiClient.client.auth.isAuthenticated) {
       await _clearOfflineSnapshots();

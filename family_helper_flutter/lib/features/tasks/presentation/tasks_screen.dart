@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/ui_error_localizer.dart';
 import '../../../core/network/server_availability_cubit.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../ui_kit/ui_kit.dart';
@@ -69,7 +71,7 @@ class _TasksScreenState extends State<TasksScreen> {
     );
 
     return Scaffold(
-      appBar: serverStatusAppBar(context, title: const Text('Tasks')),
+      appBar: serverStatusAppBar(context, title: Text(context.l10n.homeTasks)),
       body: tasksState.hasSelectedFamily
           ? _buildSelectedFamilyBody(
               context,

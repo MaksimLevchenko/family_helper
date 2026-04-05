@@ -132,13 +132,22 @@ Future<AppNotificationDto> _sendTestPushImpl(
 
     final debugEntityId = service.clock.nowUtc().millisecondsSinceEpoch &
         0x7fffffff;
+    final localeCode = await service.appNotifications.profileLocaleCode(
+      session,
+      profileId: profileId,
+      transaction: transaction,
+    );
+    final message = buildDebugTestPushNotificationMessage(
+      localeCode: localeCode,
+    );
+
     final notification = await service.appNotifications.createForProfiles(
       session,
       profileIds: [profileId],
       familyId: familyId,
       category: 'debug_test_push',
-      title: 'Test push',
-      body: 'If you see this, Firebase push delivery is working.',
+      title: message.title,
+      body: message.body,
       entityType: 'notification',
       entityId: debugEntityId,
       route: '/home/settings/notifications',

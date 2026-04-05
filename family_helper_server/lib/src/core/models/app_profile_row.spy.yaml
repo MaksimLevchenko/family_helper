@@ -4,6 +4,7 @@ fields:
   authUserId: String
   displayName: String
   timezone: String
+  locale: String, defaultModel='en', defaultPersist='en'
   avatarMediaId: int?
   analyticsOptIn: bool
   createdAt: DateTime

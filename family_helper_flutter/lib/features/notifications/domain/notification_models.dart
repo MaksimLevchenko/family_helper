@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 enum NotificationPermissionStatus {
   notDetermined,
   granted,
@@ -10,35 +12,40 @@ enum NotificationPermissionStatus {
 extension NotificationPermissionStatusX on NotificationPermissionStatus {
   bool get isGranted => this == NotificationPermissionStatus.granted;
 
-  String get summaryLabel {
-    return switch (this) {
-      NotificationPermissionStatus.notDetermined => 'Not set up',
-      NotificationPermissionStatus.granted => 'Allowed',
-      NotificationPermissionStatus.denied => 'Blocked',
-      NotificationPermissionStatus.permanentlyDenied => 'Blocked in settings',
-    };
-  }
-
-  String get actionLabel {
-    return switch (this) {
-      NotificationPermissionStatus.notDetermined => 'Allow notifications',
-      NotificationPermissionStatus.granted => 'Notifications enabled',
-      NotificationPermissionStatus.denied => 'Open system settings',
-      NotificationPermissionStatus.permanentlyDenied =>
-        'Open system settings',
-    };
-  }
-
-  String get description {
+  String summaryLabel(AppLocalizations l10n) {
     return switch (this) {
       NotificationPermissionStatus.notDetermined =>
-        'Turn on notifications so Family Helper can remind you about tasks and events.',
-      NotificationPermissionStatus.granted =>
-        'Notifications are enabled for this device.',
-      NotificationPermissionStatus.denied =>
-        'Notifications were denied. Open system settings to allow them.',
+        l10n.notificationPermissionNotSetUp,
+      NotificationPermissionStatus.granted => l10n.notificationPermissionAllowed,
+      NotificationPermissionStatus.denied => l10n.notificationPermissionBlocked,
       NotificationPermissionStatus.permanentlyDenied =>
-        'Notifications are disabled in system settings. Re-enable them there to get reminders.',
+        l10n.notificationPermissionBlockedInSettings,
+    };
+  }
+
+  String actionLabel(AppLocalizations l10n) {
+    return switch (this) {
+      NotificationPermissionStatus.notDetermined =>
+        l10n.notificationPermissionAllowAction,
+      NotificationPermissionStatus.granted =>
+        l10n.notificationPermissionEnabledAction,
+      NotificationPermissionStatus.denied =>
+        l10n.notificationPermissionOpenSettingsAction,
+      NotificationPermissionStatus.permanentlyDenied =>
+        l10n.notificationPermissionOpenSettingsAction,
+    };
+  }
+
+  String description(AppLocalizations l10n) {
+    return switch (this) {
+      NotificationPermissionStatus.notDetermined =>
+        l10n.notificationPermissionNotSetUpDescription,
+      NotificationPermissionStatus.granted =>
+        l10n.notificationPermissionAllowedDescription,
+      NotificationPermissionStatus.denied =>
+        l10n.notificationPermissionBlockedDescription,
+      NotificationPermissionStatus.permanentlyDenied =>
+        l10n.notificationPermissionBlockedInSettingsDescription,
     };
   }
 }
@@ -52,13 +59,13 @@ enum ReminderPreset {
 }
 
 extension ReminderPresetX on ReminderPreset {
-  String get label {
+  String label(AppLocalizations l10n) {
     return switch (this) {
-      ReminderPreset.none => 'No reminder',
-      ReminderPreset.atTime => 'At time',
-      ReminderPreset.tenMinutesBefore => '10 minutes before',
-      ReminderPreset.oneHourBefore => '1 hour before',
-      ReminderPreset.oneDayBefore => '1 day before',
+      ReminderPreset.none => l10n.notificationPresetNone,
+      ReminderPreset.atTime => l10n.notificationPresetAtTime,
+      ReminderPreset.tenMinutesBefore => l10n.notificationPresetTenMinutesBefore,
+      ReminderPreset.oneHourBefore => l10n.notificationPresetOneHourBefore,
+      ReminderPreset.oneDayBefore => l10n.notificationPresetOneDayBefore,
     };
   }
 
@@ -113,6 +120,7 @@ class ReminderPresetField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return DropdownButtonFormField<ReminderPreset>(
       initialValue: value,
       decoration: InputDecoration(labelText: label),
@@ -120,7 +128,7 @@ class ReminderPresetField extends StatelessWidget {
           .map(
             (preset) => DropdownMenuItem<ReminderPreset>(
               value: preset,
-              child: Text(preset.label),
+              child: Text(preset.label(l10n)),
             ),
           )
           .toList(),

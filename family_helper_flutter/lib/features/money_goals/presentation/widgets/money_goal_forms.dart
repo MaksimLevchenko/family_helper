@@ -1,6 +1,7 @@
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../ui_kit/app_button.dart';
 import 'money_goal_formatters.dart';
@@ -44,12 +45,12 @@ class _MoneyGoalCreateFormState extends State<MoneyGoalCreateForm> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Create a new goal',
+            context.l10n.moneyGoalsCreateSheetTitle,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
           Text(
-            'Enter a title and the target amount in standard money format.',
+            context.l10n.moneyGoalsCreateSheetSubtitle,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
@@ -61,12 +62,12 @@ class _MoneyGoalCreateFormState extends State<MoneyGoalCreateForm> {
           _MoneyGoalAmountField(
             controller: _amountController,
             fieldKey: const Key('create-goal-amount-field'),
-            labelText: 'Target amount',
+            labelText: context.l10n.moneyGoalsTargetAmountLabel,
             hintText: '1500.00',
           ),
           const SizedBox(height: 20),
           AppButton(
-            label: 'Create goal',
+            label: context.l10n.moneyGoalsCreateGoalAction,
             isLoading: widget.isSubmitting,
             onPressed: widget.isSubmitting ? null : _submit,
           ),
@@ -165,7 +166,7 @@ class _MoneyGoalSettingsFormState extends State<MoneyGoalSettingsForm> {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Text(
-                'Archived goals stay visible, but their settings can no longer be edited.',
+                context.l10n.moneyGoalsArchivedReadonlyMessage,
                 style: TextStyle(color: context.colors.textSecondary),
               ),
             ),
@@ -180,7 +181,7 @@ class _MoneyGoalSettingsFormState extends State<MoneyGoalSettingsForm> {
           _MoneyGoalAmountField(
             controller: _amountController,
             fieldKey: const Key('goal-settings-amount-field'),
-            labelText: 'Target amount',
+            labelText: context.l10n.moneyGoalsTargetAmountLabel,
             hintText: '1500.00',
             enabled: !widget.isReadOnly,
           ),
@@ -191,9 +192,9 @@ class _MoneyGoalSettingsFormState extends State<MoneyGoalSettingsForm> {
             enabled: !widget.isReadOnly,
             minLines: 2,
             maxLines: 4,
-            decoration: const InputDecoration(
-              labelText: 'Description',
-              hintText: 'Optional note for the family',
+            decoration: InputDecoration(
+              labelText: context.l10n.moneyGoalsDescriptionLabel,
+              hintText: context.l10n.moneyGoalsDescriptionHint,
             ),
           ),
           const SizedBox(height: 10),
@@ -210,7 +211,7 @@ class _MoneyGoalSettingsFormState extends State<MoneyGoalSettingsForm> {
           if (!widget.isReadOnly) ...[
             const SizedBox(height: 16),
             AppButton(
-              label: 'Save changes',
+              label: context.l10n.commonSaveChanges,
               isLoading: widget.isSubmitting,
               onPressed: widget.isSubmitting ? null : _submit,
             ),
@@ -278,11 +279,11 @@ class MoneyGoalContributionForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _MoneyGoalAmountForm(
-      title: 'Add contribution',
-      description: 'Top up "$goalTitle" with a one-time contribution.',
+      title: context.l10n.moneyGoalsAddContributionTitle,
+      description: context.l10n.moneyGoalsAddContributionDescription(goalTitle),
       fieldKey: const Key('add-contribution-amount-field'),
-      fieldLabel: 'Contribution amount',
-      buttonLabel: 'Add contribution',
+      fieldLabel: context.l10n.moneyGoalsContributionAmountLabel,
+      buttonLabel: context.l10n.moneyGoalsAddContributionAction,
       isSubmitting: isSubmitting,
       onSubmit: onSubmit,
     );
@@ -304,11 +305,11 @@ class MoneyGoalWithdrawForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _MoneyGoalAmountForm(
-      title: 'Withdraw money',
-      description: 'Take money back from "$goalTitle".',
+      title: context.l10n.moneyGoalsWithdrawTitle,
+      description: context.l10n.moneyGoalsWithdrawDescription(goalTitle),
       fieldKey: const Key('withdraw-goal-amount-field'),
-      fieldLabel: 'Withdraw amount',
-      buttonLabel: 'Withdraw money',
+      fieldLabel: context.l10n.moneyGoalsWithdrawAmountLabel,
+      buttonLabel: context.l10n.moneyGoalsWithdrawAction,
       isSubmitting: isSubmitting,
       onSubmit: onSubmit,
     );
@@ -469,11 +470,16 @@ class _MoneyGoalTitleField extends StatelessWidget {
       controller: controller,
       enabled: enabled,
       textInputAction: TextInputAction.next,
-      decoration: const InputDecoration(
-        labelText: 'Goal title',
-        hintText: 'Emergency fund',
+      decoration: InputDecoration(
+        labelText: context.l10n.moneyGoalsGoalTitleLabel,
+        hintText: context.l10n.moneyGoalsGoalTitleHint,
       ),
-      validator: _titleValidator,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return context.l10n.moneyGoalsGoalTitleValidation;
+        }
+        return null;
+      },
     );
   }
 }
@@ -504,7 +510,13 @@ class _MoneyGoalAmountField extends StatelessWidget {
         labelText: labelText,
         hintText: hintText,
       ),
-      validator: _amountValidator,
+      validator: (value) {
+        final amountCents = parseMoneyInputToCents(value ?? '');
+        if (amountCents == null || amountCents <= 0) {
+          return context.l10n.moneyGoalsAmountValidation;
+        }
+        return null;
+      },
     );
   }
 }
@@ -535,14 +547,14 @@ class _DeadlineField extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Deadline',
+            context.l10n.moneyGoalsDeadlineLabel,
             style: Theme.of(context).textTheme.labelLarge,
           ),
           const SizedBox(height: 6),
           Text(
             deadlineAt == null
-                ? 'No deadline set'
-                : formatShortDate(deadlineAt!),
+                ? context.l10n.moneyGoalsNoDeadlineSet
+                : formatShortDate(context, deadlineAt!),
             style: TextStyle(color: context.colors.textSecondary),
           ),
           if (enabled) ...[
@@ -553,13 +565,13 @@ class _DeadlineField extends StatelessWidget {
                 TextButton(
                   key: const Key('goal-settings-pick-deadline-button'),
                   onPressed: onPick,
-                  child: const Text('Pick date'),
+                  child: Text(context.l10n.moneyGoalsPickDate),
                 ),
                 if (deadlineAt != null)
                   TextButton(
                     key: const Key('goal-settings-clear-deadline-button'),
                     onPressed: onClear,
-                    child: const Text('Clear'),
+                    child: Text(context.l10n.commonClear),
                   ),
               ],
             ),
@@ -568,21 +580,6 @@ class _DeadlineField extends StatelessWidget {
       ),
     );
   }
-}
-
-String? _titleValidator(String? value) {
-  if (value == null || value.trim().isEmpty) {
-    return 'Enter a goal title';
-  }
-  return null;
-}
-
-String? _amountValidator(String? value) {
-  final amountCents = parseMoneyInputToCents(value ?? '');
-  if (amountCents == null || amountCents <= 0) {
-    return 'Enter a valid amount';
-  }
-  return null;
 }
 
 String _formatMoneyInput(int amountCents) {

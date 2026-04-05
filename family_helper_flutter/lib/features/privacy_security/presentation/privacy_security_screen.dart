@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/ui_error_localizer.dart';
 import '../../../core/network/server_availability_cubit.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../../auth_profile/providers/profile_provider.dart';
@@ -36,7 +38,10 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
         context.watch<ServerAvailabilityCubit?>()?.state.isUnavailable ?? false;
 
     return Scaffold(
-      appBar: serverStatusAppBar(context, title: const Text('Privacy')),
+      appBar: serverStatusAppBar(
+        context,
+        title: Text(context.l10n.settingsPrivacyTitle),
+      ),
       body: BlocBuilder<PrivacyCubit, PrivacyState>(
         builder: (context, state) {
           if (state.isLoading &&
@@ -49,7 +54,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
               state.lastExportJob == null &&
               state.accountDeletion == null) {
             return ErrorState(
-              message: state.error!,
+              message: localizeUiError(context, state.error),
               onRetry: () => context.read<PrivacyCubit>().reloadStatus(),
             );
           }
@@ -71,10 +76,8 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                             ProfileUpdateRequested(analyticsOptIn: value),
                           );
                         },
-                  title: const Text('Share anonymous analytics'),
-                  subtitle: const Text(
-                    'Help improve the app with aggregated usage information.',
-                  ),
+                  title: Text(context.l10n.privacyAnalyticsTitle),
+                  subtitle: Text(context.l10n.privacyAnalyticsSubtitle),
                 ),
               ),
               const SizedBox(height: 16),
@@ -96,8 +99,8 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                     return;
                   }
                   messenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('Deletion request cancelled'),
+                    SnackBar(
+                      content: Text(context.l10n.privacyDeletionCancelled),
                     ),
                   );
                 },
@@ -108,9 +111,11 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
           final statusCards = <Widget>[
             if (state.lastExportJob != null)
               _StatusCard(
-                title: 'Data export',
-                subtitle: _exportSubtitle(state.lastExportJob!),
-                actionLabel: state.canDownloadExport ? 'Download export' : null,
+                title: context.l10n.privacyDataExportTitle,
+                subtitle: _exportSubtitle(context, state.lastExportJob!),
+                actionLabel: state.canDownloadExport
+                    ? context.l10n.privacyDownloadExport
+                    : null,
                 onAction:
                     !state.canDownloadExport ||
                         state.lastExportJob!.signedUrl == null
@@ -125,15 +130,14 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
             if (state.shouldShowDeletionCard) ...[
               if (state.lastExportJob != null) const SizedBox(height: 16),
               _StatusCard(
-                title: 'Account deletion',
-                subtitle: _deletionSubtitle(state.accountDeletion!),
+                title: context.l10n.privacyAccountDeletionTitle,
+                subtitle: _deletionSubtitle(context, state.accountDeletion!),
               ),
             ],
             if (!state.hasVisiblePrivacyRequest)
-              const EmptyState(
-                title: 'No active privacy requests',
-                message:
-                    'Request an export or account deletion when you need it.',
+              EmptyState(
+                title: context.l10n.privacyNoRequestsTitle,
+                message: context.l10n.privacyNoRequestsMessage,
               ),
           ];
 
@@ -147,7 +151,10 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                     lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
                   ),
                   if (state.error != null) ...[
-                    AppBanner(text: state.error!, isError: true),
+                    AppBanner(
+                      text: localizeUiError(context, state.error),
+                      isError: true,
+                    ),
                     const SizedBox(height: 12),
                   ],
                   if (profileState.error != null) ...[
@@ -183,7 +190,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
     );
   }
 
-  String _exportSubtitle(PrivacyExportJobDto exportJob) {
+  String _exportSubtitle(BuildContext context, PrivacyExportJobDto exportJob) {
     final expiresAt = exportJob.expiresAt?.toLocal();
     final isExpired =
         exportJob.expiresAt != null &&
@@ -191,31 +198,38 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
     if (exportJob.signedUrl != null && !isExpired) {
       final expiryLabel = expiresAt == null
           ? ''
-          : ' Available until $expiresAt.';
-      return 'Export ready.$expiryLabel';
+          : ' ${context.l10n.privacyAvailableUntil(expiresAt.toString())}';
+      return '${context.l10n.settingsExportReady}.$expiryLabel';
     }
     if (isExpired) {
-      return 'Export expired. Request a new data export to generate a fresh link.';
+      return context.l10n.privacyExportExpiredMessage;
     }
     if (exportJob.status == 'failed') {
-      return 'Export failed. Request a new data export to try again.';
+      return context.l10n.privacyExportFailedMessage;
     }
     if (exportJob.status == 'pending' || exportJob.status == 'processing') {
-      return 'Preparing export. We will make it available when it is ready.';
+      return context.l10n.privacyPreparingExportMessage;
     }
-    return 'Preparing export. Requested on ${exportJob.createdAt.toLocal()}.';
+    return context.l10n.privacyPreparingExportRequestedOn(
+      exportJob.createdAt.toLocal().toString(),
+    );
   }
 
-  String _deletionSubtitle(AccountDeletionStatusDto deletion) {
+  String _deletionSubtitle(
+    BuildContext context,
+    AccountDeletionStatusDto deletion,
+  ) {
     final scheduledAt = deletion.scheduledHardDeleteAt.toLocal();
     return switch (deletion.status) {
       'requested' ||
       'pending' ||
       'processing' ||
-      'scheduled' => 'Deletion scheduled for $scheduledAt.',
-      'cancelled' => 'Deletion cancelled.',
-      'completed' || 'hard_deleted' => 'Deletion completed.',
-      _ => 'Deletion scheduled for $scheduledAt.',
+      'scheduled' => context.l10n.privacyDeletionScheduledFor(
+          scheduledAt.toString(),
+        ),
+      'cancelled' => context.l10n.privacyDeletionCancelled,
+      'completed' || 'hard_deleted' => context.l10n.privacyDeletionCompleted,
+      _ => context.l10n.privacyDeletionScheduledFor(scheduledAt.toString()),
     };
   }
 
@@ -224,10 +238,8 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Download export'),
-          content: const Text(
-            'Use this secure link in your browser to download the export archive.',
-          ),
+          title: Text(context.l10n.privacyDownloadExport),
+          content: Text(context.l10n.privacyDownloadDialogMessage),
           actions: [
             TextButton(
               onPressed: () async {
@@ -237,16 +249,18 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                 }
                 Navigator.of(dialogContext).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Download link copied')),
+                  SnackBar(
+                    content: Text(context.l10n.privacyDownloadLinkCopied),
+                  ),
                 );
               },
-              child: const Text('Copy link'),
+              child: Text(context.l10n.privacyCopyLink),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
               },
-              child: const Text('Close'),
+              child: Text(context.l10n.commonClose),
             ),
           ],
         );
@@ -303,12 +317,12 @@ class _DataActionsCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Your data',
+              context.l10n.privacyYourDataTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
             AppButton(
-              label: 'Request data export',
+              label: context.l10n.privacyRequestExport,
               isLoading: isLoading,
               onPressed: () async {
                 await onRequestExport();
@@ -316,7 +330,7 @@ class _DataActionsCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             AppButton(
-              label: 'Request account deletion',
+              label: context.l10n.privacyRequestDeletion,
               variant: AppButtonVariant.danger,
               isLoading: isLoading,
               onPressed: !canRequestDeletion
@@ -328,7 +342,7 @@ class _DataActionsCard extends StatelessWidget {
             if (hasActiveDeletionRequest) ...[
               const SizedBox(height: 12),
               AppButton(
-                label: 'Cancel deletion request',
+                label: context.l10n.privacyCancelDeletionRequest,
                 variant: AppButtonVariant.secondary,
                 onPressed: isOffline
                     ? null

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/l10n/l10n.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../ui_kit/ui_kit.dart';
@@ -46,7 +47,7 @@ class HomeOverviewScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: colors.background,
-      appBar: serverStatusAppBar(context, title: const Text('Home')),
+      appBar: serverStatusAppBar(context, title: Text(context.l10n.homeTitle)),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -95,7 +96,7 @@ class _FamilyDashboard extends StatelessWidget {
     final sections = <Widget>[
       _HeroCard(
         familyState: familyState,
-        metrics: _summaryItems(),
+        metrics: _summaryItems(context),
       ),
       const SizedBox(height: 20),
       CachedDataStatus(
@@ -103,19 +104,19 @@ class _FamilyDashboard extends StatelessWidget {
         lastSuccessfulSyncAt: overview.lastSuccessfulSyncAt,
       ),
       _SummaryGrid(
-        items: _summaryItems(),
+        items: _summaryItems(context),
         isWide: isWide,
       ),
       const SizedBox(height: 20),
       _SectionCard(
-        title: 'Coming up',
-        subtitle: 'The next moments everyone is moving toward.',
+        title: context.l10n.homeComingUp,
+        subtitle: context.l10n.homeComingUpSubtitle,
         child: _UpcomingEventsList(events: overview.upcomingEvents),
       ),
       const SizedBox(height: 20),
       _SectionCard(
-        title: 'Needs attention',
-        subtitle: 'A quick scan of the tasks most likely to matter next.',
+        title: context.l10n.homeNeedsAttention,
+        subtitle: context.l10n.homeNeedsAttentionSubtitle,
         child: _PriorityTasksList(tasks: overview.priorityTasks),
       ),
     ];
@@ -125,7 +126,7 @@ class _FamilyDashboard extends StatelessWidget {
         _NotificationAlertCard(notifications: notifications),
         const SizedBox(height: 20),
       ],
-      _QuickNavigationCard(items: _summaryItems()),
+      _QuickNavigationCard(items: _summaryItems(context)),
       const SizedBox(height: 20),
       _GoalSpotlightCard(goal: overview.featuredGoal),
       const SizedBox(height: 20),
@@ -189,36 +190,37 @@ class _FamilyDashboard extends StatelessWidget {
     );
   }
 
-  List<_SummaryItem> _summaryItems() {
+  List<_SummaryItem> _summaryItems(BuildContext context) {
+    final l10n = context.l10n;
     return [
       _SummaryItem(
-        title: 'Tasks',
+        title: l10n.homeTasks,
         value: '${overview.openTasks}',
-        description: 'Open tasks ready for focus',
+        description: l10n.homeTasksDescription,
         icon: Icons.task_alt_rounded,
         route: AppRoutes.tasks,
         key: 'tasks',
       ),
       _SummaryItem(
-        title: 'Calendar',
+        title: l10n.homeCalendar,
         value: '${overview.calendarItems}',
-        description: 'Planned moments on the family timeline',
+        description: l10n.homeCalendarDescription,
         icon: Icons.calendar_month_rounded,
         route: AppRoutes.calendar,
         key: 'calendar',
       ),
       _SummaryItem(
-        title: 'Lists',
+        title: l10n.homeLists,
         value: '${overview.listItems}',
-        description: 'Items still waiting to be checked off',
+        description: l10n.homeListsDescription,
         icon: Icons.list_alt_rounded,
         route: AppRoutes.lists,
         key: 'lists',
       ),
       _SummaryItem(
-        title: 'Goals',
+        title: l10n.homeGoals,
         value: '${overview.activeGoals}',
-        description: 'Active savings journeys in motion',
+        description: l10n.homeGoalsDescription,
         icon: Icons.savings_rounded,
         route: AppRoutes.goals,
         key: 'goals',
@@ -234,6 +236,7 @@ class _NoFamilyHomeState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final colors = context.colors;
@@ -290,7 +293,7 @@ class _NoFamilyHomeState extends StatelessWidget {
                         ),
                         const SizedBox(height: 24),
                         Text(
-                          'Build a beautiful family dashboard',
+                          l10n.homeNoFamilyTitle,
                           style: theme.textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                             color: scheme.onSurface,
@@ -298,7 +301,7 @@ class _NoFamilyHomeState extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Add or join a family to bring shared plans, tasks, shopping lists, and savings goals into one warm home base.',
+                          l10n.homeNoFamilyMessage,
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: colors.textSecondary,
                             height: 1.45,
@@ -308,28 +311,28 @@ class _NoFamilyHomeState extends StatelessWidget {
                         Wrap(
                           spacing: 12,
                           runSpacing: 12,
-                          children: const [
+                          children: [
                             _FeaturePill(
                               icon: Icons.calendar_today_rounded,
-                              label: 'Shared calendar',
+                              label: l10n.homeFeatureSharedCalendar,
                             ),
                             _FeaturePill(
                               icon: Icons.task_alt_rounded,
-                              label: 'Family tasks',
+                              label: l10n.homeFeatureFamilyTasks,
                             ),
                             _FeaturePill(
                               icon: Icons.shopping_bag_rounded,
-                              label: 'Lists that stay in sync',
+                              label: l10n.homeFeatureListsSync,
                             ),
                             _FeaturePill(
                               icon: Icons.savings_rounded,
-                              label: 'Savings goals together',
+                              label: l10n.homeFeatureSavingsGoals,
                             ),
                           ],
                         ),
                         const SizedBox(height: 28),
                         AppButton(
-                          label: 'Add family',
+                          label: l10n.homeAddFamily,
                           onPressed: () {
                             context.go(AppRoutes.family);
                           },
@@ -358,14 +361,14 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final familyName = familyState.family?.title ?? 'Your family';
+    final familyName = familyState.family?.title ?? l10n.homeHeroFamilyFallback;
     final activeMembers = familyState.members
         .where((member) => member.status == 'active')
         .toList();
     final memberCount = activeMembers.length;
-    final memberLabel = memberCount == 1 ? 'member' : 'members';
 
     return Container(
       decoration: BoxDecoration(
@@ -420,8 +423,8 @@ class _HeroCard extends StatelessWidget {
                   ),
                   child: Text(
                     memberCount > 0
-                        ? '$familyName • $memberCount $memberLabel'
-                        : '$familyName • Shared dashboard',
+                        ? '$familyName • ${l10n.settingsMemberCount(memberCount)}'
+                        : '$familyName • ${l10n.homeHeroSharedDashboard}',
                     style: theme.textTheme.labelLarge?.copyWith(
                       color: scheme.onSurface,
                       fontWeight: FontWeight.w700,
@@ -450,7 +453,7 @@ class _HeroCard extends StatelessWidget {
                 ],
                 const SizedBox(height: 20),
                 Text(
-                  'Everything your family needs, at a glance.',
+                  l10n.homeHeroTitle,
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: scheme.onSurface,
@@ -459,7 +462,7 @@ class _HeroCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Start here for the next event, the tasks that need attention, and the goals that are moving forward together.',
+                  l10n.homeHeroSubtitle,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: scheme.onSurfaceVariant,
                     height: 1.4,
@@ -647,10 +650,9 @@ class _UpcomingEventsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (events.isEmpty) {
-      return const _SectionEmptyState(
-        title: 'No upcoming events',
-        message:
-            'Your next family plans will show up here as soon as something lands on the calendar.',
+      return _SectionEmptyState(
+        title: context.l10n.homeNoUpcomingEventsTitle,
+        message: context.l10n.homeNoUpcomingEventsMessage,
       );
     }
 
@@ -680,10 +682,9 @@ class _PriorityTasksList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (tasks.isEmpty) {
-      return const _SectionEmptyState(
-        title: 'Nothing urgent right now',
-        message:
-            'When new tasks need attention, they will appear here in priority order.',
+      return _SectionEmptyState(
+        title: context.l10n.homeNoUrgentTasksTitle,
+        message: context.l10n.homeNoUrgentTasksMessage,
       );
     }
 
@@ -695,7 +696,7 @@ class _PriorityTasksList extends StatelessWidget {
               child: _InfoRowCard(
                 title: task.title,
                 subtitle:
-                    '${_taskUrgencyLabel(task)} • ${_taskDueLabel(task.dueAt)}',
+                    '${_taskUrgencyLabel(context, task)} • ${_taskDueLabel(context, task.dueAt)}',
                 icon: Icons.assignment_turned_in_rounded,
                 onTap: () => context.go(AppRoutes.tasks),
               ),
@@ -745,8 +746,8 @@ class _NotificationAlertCard extends StatelessWidget {
                   child: Text(
                     notifications.permissionStatus ==
                             NotificationPermissionStatus.notDetermined
-                        ? 'Stay on top of family reminders'
-                        : 'Notifications are blocked',
+                        ? context.l10n.homeNotificationEnableTitle
+                        : context.l10n.homeNotificationBlockedTitle,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: scheme.onTertiaryContainer,
@@ -757,7 +758,7 @@ class _NotificationAlertCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              notifications.permissionStatus.description,
+              notifications.permissionStatus.description(context.l10n),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: scheme.onTertiaryContainer.withValues(alpha: 0.86),
                 height: 1.35,
@@ -765,7 +766,7 @@ class _NotificationAlertCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             AppButton(
-              label: notifications.permissionStatus.actionLabel,
+              label: notifications.permissionStatus.actionLabel(context.l10n),
               isLoading: notifications.isLoading,
               onPressed: () async {
                 final cubit = context.read<NotificationsCubit>();
@@ -791,6 +792,7 @@ class _QuickNavigationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
@@ -802,14 +804,14 @@ class _QuickNavigationCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Quick navigation',
+              l10n.homeQuickNavigation,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              'Jump straight into the part of the household flow you want to move next.',
+              l10n.homeQuickNavigationSubtitle,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -846,6 +848,7 @@ class _GoalSpotlightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
@@ -858,16 +861,15 @@ class _GoalSpotlightCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Savings spotlight',
+                l10n.homeSavingsSpotlight,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 10),
-              const _SectionEmptyState(
-                title: 'No active goals yet',
-                message:
-                    'Start a savings goal to keep the family’s next milestone visible every day.',
+              _SectionEmptyState(
+                title: l10n.homeNoGoalsTitle,
+                message: l10n.homeNoGoalsMessage,
               ),
             ],
           ),
@@ -885,7 +887,7 @@ class _GoalSpotlightCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Savings spotlight',
+              l10n.homeSavingsSpotlight,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
@@ -899,7 +901,7 @@ class _GoalSpotlightCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              formatGoalProgressLabel(goal!),
+              formatGoalProgressLabel(context, goal!),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -919,13 +921,15 @@ class _GoalSpotlightCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 _MetaBadge(label: formatProgressPercent(progress)),
-                _MetaBadge(label: '${formatRemainingAmount(goal!)} left'),
+                _MetaBadge(
+                  label: l10n.homeGoalLeft(formatRemainingAmount(goal!)),
+                ),
               ],
             ),
             if (goal!.deadlineAt != null) ...[
               const SizedBox(height: 12),
               Text(
-                'Deadline ${formatShortDate(goal!.deadlineAt!)}',
+                l10n.homeDeadline(formatShortDate(context, goal!.deadlineAt!)),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -934,7 +938,7 @@ class _GoalSpotlightCard extends StatelessWidget {
             const SizedBox(height: 16),
             FilledButton.tonal(
               onPressed: () => context.go(AppRoutes.goals),
-              child: const Text('Open goals'),
+              child: Text(l10n.homeOpenGoals),
             ),
           ],
         ),
@@ -954,6 +958,7 @@ class _ListSpotlightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
@@ -966,16 +971,15 @@ class _ListSpotlightCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Lists spotlight',
+                l10n.homeListsSpotlight,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 10),
-              const _SectionEmptyState(
-                title: 'No active lists',
-                message:
-                    'Create a shopping or chore list and it will become part of the dashboard rhythm here.',
+              _SectionEmptyState(
+                title: l10n.homeNoListsTitle,
+                message: l10n.homeNoListsMessage,
               ),
             ],
           ),
@@ -983,8 +987,7 @@ class _ListSpotlightCard extends StatelessWidget {
       );
     }
 
-    final itemLabel = pendingItems == 1 ? 'item' : 'items';
-    final listTypeLabel = _listTypeLabel(list!.listType);
+    final listTypeLabel = _listTypeLabel(context, list!.listType);
 
     return Card(
       margin: EdgeInsets.zero,
@@ -994,7 +997,7 @@ class _ListSpotlightCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Lists spotlight',
+              l10n.homeListsSpotlight,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
@@ -1012,14 +1015,14 @@ class _ListSpotlightCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 _MetaBadge(label: listTypeLabel),
-                _MetaBadge(label: '$pendingItems $itemLabel open'),
+                _MetaBadge(label: l10n.homeListItemsOpen(pendingItems)),
               ],
             ),
             const SizedBox(height: 12),
             Text(
               pendingItems == 0
-                  ? 'Everything here is already wrapped up.'
-                  : 'A quick place to continue the list that still has the most momentum.',
+                  ? l10n.homeListEverythingDone
+                  : l10n.homeListMomentum,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -1027,7 +1030,7 @@ class _ListSpotlightCard extends StatelessWidget {
             const SizedBox(height: 16),
             FilledButton.tonal(
               onPressed: () => context.go(AppRoutes.lists),
-              child: const Text('Open lists'),
+              child: Text(l10n.homeOpenLists),
             ),
           ],
         ),
@@ -1232,22 +1235,23 @@ String _eventTimeLabel(CalendarInstanceDto event) {
   return '${_formatMonthDay(startsAt)} • ${_twoDigits(startsAt.hour)}:${_twoDigits(startsAt.minute)}-${_twoDigits(endsAt.hour)}:${_twoDigits(endsAt.minute)}';
 }
 
-String _taskUrgencyLabel(TaskDto task) {
+String _taskUrgencyLabel(BuildContext context, TaskDto task) {
+  final l10n = context.l10n;
   if (task.dueAt == null) {
-    return 'No due date';
+    return l10n.homeTaskUrgencyNoDate;
   }
   if (_isTaskOverdue(task)) {
-    return 'Overdue';
+    return l10n.homeTaskUrgencyOverdue;
   }
   if (_isTaskDueToday(task)) {
-    return 'Due today';
+    return l10n.homeTaskUrgencyToday;
   }
-  return 'Upcoming';
+  return l10n.homeTaskUrgencyUpcoming;
 }
 
-String _taskDueLabel(DateTime? dueAt) {
+String _taskDueLabel(BuildContext context, DateTime? dueAt) {
   if (dueAt == null) {
-    return 'Add a due date to prioritize it';
+    return context.l10n.homeTaskDueHint;
   }
 
   final local = dueAt.toLocal();
@@ -1285,10 +1289,10 @@ String _formatMonthDay(DateTime value) {
 
 String _twoDigits(int value) => value.toString().padLeft(2, '0');
 
-String _listTypeLabel(String value) {
+String _listTypeLabel(BuildContext context, String value) {
   return switch (value) {
-    'shopping' => 'Shopping',
-    'todo' => 'To-do',
+    'shopping' => context.l10n.listTypeShopping,
+    'todo' => context.l10n.listTypeTodo,
     _ => value,
   };
 }

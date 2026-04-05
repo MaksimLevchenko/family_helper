@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/di/service_locator.dart';
+import '../../../core/l10n/l10n.dart';
 import '../../../core/realtime/realtime_provider.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../family_invites/providers/family_provider.dart';
@@ -81,6 +82,7 @@ class _HomeShellScreenState extends State<HomeShellScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final hasFamily = context.watch<FamilySelectionCubit>().state != null;
     final location = GoRouterState.of(context).matchedLocation;
     final showBottomNavigation = !location.startsWith(
@@ -91,25 +93,31 @@ class _HomeShellScreenState extends State<HomeShellScreen>
       hasFamily: hasFamily,
     );
     final destinations = <NavigationDestination>[
-      const NavigationDestination(
-        icon: Icon(Icons.home_outlined),
-        label: 'Home',
+      NavigationDestination(
+        icon: const Icon(Icons.home_outlined),
+        label: l10n.homeTitle,
       ),
-      if (hasFamily) ...const [
+      if (hasFamily) ...[
         NavigationDestination(
-          icon: Icon(Icons.calendar_today_outlined),
-          label: 'Calendar',
+          icon: const Icon(Icons.calendar_today_outlined),
+          label: l10n.homeCalendar,
         ),
-        NavigationDestination(icon: Icon(Icons.checklist), label: 'Tasks'),
-        NavigationDestination(icon: Icon(Icons.list_alt), label: 'Lists'),
         NavigationDestination(
-          icon: Icon(Icons.savings_outlined),
-          label: 'Goals',
+          icon: const Icon(Icons.checklist),
+          label: l10n.homeTasks,
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.list_alt),
+          label: l10n.homeLists,
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.savings_outlined),
+          label: l10n.homeGoals,
         ),
       ],
-      const NavigationDestination(
-        icon: Icon(Icons.settings_outlined),
-        label: 'Settings',
+      NavigationDestination(
+        icon: const Icon(Icons.settings_outlined),
+        label: l10n.settingsTitle,
       ),
     ];
 

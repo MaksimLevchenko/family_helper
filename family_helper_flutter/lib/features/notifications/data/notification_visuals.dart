@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'dart:ui' as ui;
+
+import '../../../core/l10n/l10n.dart';
 
 class NotificationVisuals {
   const NotificationVisuals._();
@@ -85,22 +88,26 @@ class NotificationVisuals {
     required String category,
     required bool isReminder,
   }) {
+    final l10n = l10nForLocale(ui.PlatformDispatcher.instance.locale);
+
     if (isReminder || category.contains('reminder')) {
       return switch (entityType) {
-        'task' => 'Task reminder',
-        'calendar' => 'Calendar reminder',
-        'goal' => 'Goal reminder',
-        'list' => 'List reminder',
-        _ => 'Reminder',
+        'task' => l10n.notificationSubtitleTaskReminder,
+        'calendar' => l10n.notificationSubtitleCalendarReminder,
+        'goal' => l10n.notificationSubtitleGoalReminder,
+        'list' => l10n.notificationSubtitleListReminder,
+        _ => l10n.notificationSubtitleReminder,
       };
     }
 
     return switch (entityType) {
-      'task' => 'Task update',
-      'calendar' => 'Calendar update',
-      'goal' => 'Goal update',
-      'list' => 'List update',
-      _ => category.isEmpty ? 'Family update' : 'Family notification',
+      'task' => l10n.notificationSubtitleTaskUpdate,
+      'calendar' => l10n.notificationSubtitleCalendarUpdate,
+      'goal' => l10n.notificationSubtitleGoalUpdate,
+      'list' => l10n.notificationSubtitleListUpdate,
+      _ => category.isEmpty
+          ? l10n.notificationSubtitleFamilyUpdate
+          : l10n.notificationSubtitleFamilyNotification,
     };
   }
 

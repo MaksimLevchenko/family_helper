@@ -40,6 +40,7 @@ class AuthContext {
           authUserId: authUserId,
           displayName: 'User ${authUserId.substring(0, 8)}',
           timezone: 'UTC',
+          locale: 'en',
           avatarMediaId: null,
           analyticsOptIn: false,
           createdAt: now,

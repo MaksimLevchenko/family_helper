@@ -33,6 +33,7 @@ class _IntroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
@@ -51,21 +52,21 @@ class _IntroCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tune how Family Helper reaches you',
+            l10n.notificationsTuneTitle,
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            permissionStatus.summaryLabel,
+            permissionStatus.summaryLabel(l10n),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Choose which reminders stay active on this device and keep permission status in a healthy state.',
+            l10n.notificationsTuneSubtitle,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: scheme.onSurfaceVariant,
               height: 1.4,
@@ -84,6 +85,7 @@ class _PermissionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final showAction =
         state.permissionStatus != NotificationPermissionStatus.granted;
 
@@ -94,18 +96,18 @@ class _PermissionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'System notifications',
+              l10n.notificationsSystemTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
             Text(
-              state.permissionStatus.description,
+              state.permissionStatus.description(l10n),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 12),
             if (showAction)
               AppButton(
-                label: state.permissionStatus.actionLabel,
+                label: state.permissionStatus.actionLabel(l10n),
                 isLoading: state.isLoading,
                 onPressed: () async {
                   final cubit = context.read<NotificationsCubit>();
@@ -118,7 +120,7 @@ class _PermissionCard extends StatelessWidget {
                 },
               )
             else
-              const Text('Notifications enabled'),
+              Text(l10n.notificationsEnabled),
           ],
         ),
       ),
@@ -133,6 +135,7 @@ class _DebugToolsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -140,16 +143,16 @@ class _DebugToolsCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Debug tools',
+              l10n.notificationsDebugTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Sends a real Firebase push through the server to this signed-in device.',
+            Text(
+              l10n.notificationsDebugSubtitle,
             ),
             const SizedBox(height: 12),
             AppButton(
-              label: 'Send test push',
+              label: l10n.notificationsSendTestPush,
               isLoading: state.isLoading,
               onPressed: () async {
                 final messenger = ScaffoldMessenger.of(context);

@@ -11,6 +11,7 @@ import '../../core/realtime/realtime_publisher.dart';
 import '../../core/sync/change_feed_service.dart';
 import '../../generated/protocol.dart';
 import '../../notifications/services/app_notification_service.dart';
+import '../../notifications/services/notification_message_builder.dart';
 
 class CalendarService {
   CalendarService({
@@ -240,9 +241,6 @@ class CalendarService {
         eventId: dto.id,
         title: dto.title,
         category: eventId == null ? 'calendar_created' : 'calendar_updated',
-        notificationTitle: eventId == null
-            ? 'Calendar event created'
-            : 'Calendar event updated',
         occurrenceStart: dto.startsAt,
         transaction: transaction,
       );
@@ -405,9 +403,6 @@ class CalendarService {
         eventId: eventId,
         title: event.title,
         category: cancelled ? 'calendar_cancelled' : 'calendar_updated',
-        notificationTitle: cancelled
-            ? 'Calendar occurrence cancelled'
-            : 'Calendar occurrence updated',
         occurrenceStart: keyStart,
         transaction: transaction,
       );
@@ -538,7 +533,6 @@ class CalendarService {
         eventId: eventId,
         title: event.title,
         category: 'calendar_cancelled',
-        notificationTitle: 'Calendar event cancelled',
         occurrenceStart: anchor ?? event.startsAt,
         transaction: transaction,
       );
@@ -826,8 +820,6 @@ class CalendarService {
           'eventId': instance.eventId,
           'occurrenceKeyStart': instance.occurrenceKeyStart.toIso8601String(),
           'occurrenceStart': instance.occurrenceStart.toIso8601String(),
-          'title': 'Event reminder',
-          'body': instance.title,
         }),
         eventId: instance.eventId,
       );
@@ -1470,16 +1462,19 @@ class CalendarService {
     required int eventId,
     required String title,
     required String category,
-    required String notificationTitle,
     required DateTime occurrenceStart,
     Transaction? transaction,
   }) async {
-    await appNotifications.createForFamilyMembers(
+    await appNotifications.createLocalizedForFamilyMembers(
       session,
       familyId: familyId,
+      excludeProfileIds: {actorProfileId},
       category: category,
-      title: notificationTitle,
-      body: title,
+      buildMessage: (localeCode, _) => buildCalendarEventNotificationMessage(
+        localeCode: localeCode,
+        category: category,
+        eventTitle: title,
+      ),
       entityType: 'calendar',
       entityId: eventId,
       route: '/home/calendar',

@@ -1,6 +1,7 @@
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'money_goal_formatters.dart';
 
@@ -54,10 +55,10 @@ class MoneyGoalListItem extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              Text(
-                formatGoalProgressLabel(goal),
-                style: TextStyle(color: context.colors.textSecondary),
-              ),
+                  Text(
+                    formatGoalProgressLabel(context, goal),
+                    style: TextStyle(color: context.colors.textSecondary),
+                  ),
               const SizedBox(height: 10),
               ClipRRect(
                 borderRadius: BorderRadius.circular(999),
@@ -74,10 +75,12 @@ class MoneyGoalListItem extends StatelessWidget {
                 children: [
                   _GoalMetaChip(
                     label: isArchivedGoal(goal)
-                        ? 'Archived'
+                        ? context.l10n.moneyGoalsStatusArchived
                         : goal.reachedAt != null
-                        ? 'Reached'
-                        : 'Remaining ${formatRemainingAmount(goal)}',
+                        ? context.l10n.moneyGoalsStatusReached
+                        : context.l10n.moneyGoalsRemainingChip(
+                            formatRemainingAmount(goal),
+                          ),
                     color: isArchivedGoal(goal)
                         ? context.colors.border
                         : goal.reachedAt != null
@@ -87,7 +90,9 @@ class MoneyGoalListItem extends StatelessWidget {
                   ),
                   if (goal.deadlineAt != null)
                     _GoalMetaChip(
-                      label: 'Deadline ${formatShortDate(goal.deadlineAt!)}',
+                      label: context.l10n.moneyGoalsDeadlineChip(
+                        formatShortDate(context, goal.deadlineAt!),
+                      ),
                       color: context.colors.surfaceMuted,
                       textColor: context.colors.textPrimary,
                     ),

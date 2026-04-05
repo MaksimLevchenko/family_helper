@@ -11,28 +11,30 @@ String _timestampLabel(BuildContext context, DateTime createdAt) {
   return '$date, $time';
 }
 
-String _categoryLabel(String category) {
+String _categoryLabel(BuildContext context, String category) {
+  final l10n = context.l10n;
   return switch (category) {
-    'due_reminder' => 'Reminder',
-    'task_assigned' => 'Assigned task',
-    'task_completed' => 'Completed task',
-    'calendar_created' => 'Calendar update',
-    'calendar_updated' => 'Calendar update',
-    'calendar_cancelled' => 'Calendar cancelled',
-    'family_invite_created' => 'Family invite',
-    'family_invite_accepted' => 'Family update',
-    'debug_test_push' => 'Test push',
-    _ => 'Notification',
+    'due_reminder' => l10n.notificationCategoryReminder,
+    'task_assigned' => l10n.notificationCategoryTaskAssigned,
+    'task_completed' => l10n.notificationCategoryTaskCompleted,
+    'calendar_created' => l10n.notificationCategoryCalendarUpdate,
+    'calendar_updated' => l10n.notificationCategoryCalendarUpdate,
+    'calendar_cancelled' => l10n.notificationCategoryCalendarCancelled,
+    'family_invite_created' => l10n.notificationCategoryFamilyInvite,
+    'family_invite_accepted' => l10n.notificationCategoryFamilyUpdate,
+    'debug_test_push' => l10n.notificationCategoryTestPush,
+    _ => l10n.notificationCategoryGeneric,
   };
 }
 
-String _detailActionLabel(NotificationOpenTarget target) {
+String _detailActionLabel(BuildContext context, NotificationOpenTarget target) {
+  final l10n = context.l10n;
   return switch (target.entityType) {
-    'task' => 'Open task',
-    'calendar' => 'Open calendar',
-    'list' => 'Open list',
-    'goal' => 'Open goal',
-    _ => 'Open notification',
+    'task' => l10n.notificationOpenTask,
+    'calendar' => l10n.notificationOpenCalendar,
+    'list' => l10n.notificationOpenList,
+    'goal' => l10n.notificationOpenGoal,
+    _ => l10n.notificationOpenNotification,
   };
 }
 

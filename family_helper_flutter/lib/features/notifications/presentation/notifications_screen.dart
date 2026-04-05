@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/ui_error_localizer.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../../family_invites/providers/family_provider.dart';
@@ -151,18 +153,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       child: Scaffold(
         appBar: serverStatusAppBar(
           context,
-          title: const Text('Notifications'),
+          title: Text(context.l10n.notificationsCenterTitle),
           leading: canPop
               ? null
               : IconButton(
-                  tooltip: 'Back to home',
+                  tooltip: context.l10n.notificationsBackToHome,
                   onPressed: () => _handleBack(context),
                   icon: const Icon(Icons.arrow_back_rounded),
                 ),
           showNotificationAction: false,
           actions: [
             IconButton(
-              tooltip: 'Notification settings',
+              tooltip: context.l10n.notificationsSettingsTooltip,
               onPressed: () => context.push(AppRoutes.notificationSettings),
               icon: const Icon(Icons.settings_outlined),
             ),
@@ -192,11 +194,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             constraints: const BoxConstraints(maxWidth: 720),
                             child: _NotificationEmptyState(
                               icon: Icons.notifications_paused_rounded,
-                              title:
-                                  'Connect a family to start receiving updates',
+                              title: context.l10n.notificationsConnectFamilyTitle,
                               message:
-                                  'Your dedicated notification center will light up with reminders, invites, and activity once you join a family.',
-                              actionLabel: 'Open family settings',
+                                  context.l10n.notificationsConnectFamilyMessage,
+                              actionLabel: context.l10n.notificationsOpenFamilySettings,
                               onAction: () => context.go(AppRoutes.family),
                             ),
                           ),

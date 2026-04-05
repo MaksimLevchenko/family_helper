@@ -1,4 +1,8 @@
 import 'package:family_helper_client/family_helper_client.dart';
+import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
+
+import '../../../../core/l10n/l10n.dart';
 
 String formatMoneyCents(int amountCents, String currency) {
   final sign = amountCents < 0 ? '-' : '';
@@ -55,8 +59,11 @@ double goalProgressValue(MoneyGoalDto goal) {
       .toDouble();
 }
 
-String formatGoalProgressLabel(MoneyGoalDto goal) {
-  return '${formatMoneyCents(goal.currentAmountCents, goal.currency)} of ${formatMoneyCents(goal.targetAmountCents, goal.currency)}';
+String formatGoalProgressLabel(BuildContext context, MoneyGoalDto goal) {
+  return context.l10n.moneyGoalsProgressOf(
+    formatMoneyCents(goal.currentAmountCents, goal.currency),
+    formatMoneyCents(goal.targetAmountCents, goal.currency),
+  );
 }
 
 String formatProgressPercent(double value) {
@@ -69,14 +76,20 @@ String formatRemainingAmount(MoneyGoalDto goal) {
   return formatMoneyCents(clamped, goal.currency);
 }
 
-String formatStatusText(MoneyGoalDto goal) {
+String formatStatusText(BuildContext context, MoneyGoalDto goal) {
   if (goal.archivedAt != null) {
-    return 'Archived on ${formatShortDate(goal.archivedAt!)}';
+    return context.l10n.moneyGoalsStatusArchivedOn(
+      formatShortDate(context, goal.archivedAt!),
+    );
   }
   if (goal.reachedAt != null) {
-    return 'Reached on ${formatShortDate(goal.reachedAt!)}';
+    return context.l10n.moneyGoalsStatusReachedOn(
+      formatShortDate(context, goal.reachedAt!),
+    );
   }
-  return 'Updated ${formatShortDateTime(goal.updatedAt)}';
+  return context.l10n.moneyGoalsStatusUpdatedAt(
+    formatShortDateTime(context, goal.updatedAt),
+  );
 }
 
 bool isArchivedGoal(MoneyGoalDto goal) => goal.archivedAt != null;
@@ -85,23 +98,31 @@ bool isWithdrawalHistoryEntry(MoneyGoalHistoryEntryDto entry) {
   return entry.amountCents < 0;
 }
 
-String formatHistoryHeadline(MoneyGoalHistoryEntryDto entry) {
-  final verb = isWithdrawalHistoryEntry(entry) ? 'withdrew' : 'added';
+String formatHistoryHeadline(
+  BuildContext context,
+  MoneyGoalHistoryEntryDto entry,
+) {
   final amount = formatMoneyCents(entry.amountCents.abs(), entry.currency);
-  return '${entry.actorDisplayName} $verb $amount';
+  return isWithdrawalHistoryEntry(entry)
+      ? context.l10n.moneyGoalsHistoryWithdrew(
+          entry.actorDisplayName,
+          amount,
+        )
+      : context.l10n.moneyGoalsHistoryAdded(
+          entry.actorDisplayName,
+          amount,
+        );
 }
 
-String formatShortDate(DateTime dateTime) {
-  final localValue = dateTime.toLocal();
-  final month = _monthNames[localValue.month - 1];
-  return '$month ${localValue.day}, ${localValue.year}';
+String formatShortDate(BuildContext context, DateTime dateTime) {
+  final locale = Localizations.localeOf(context).toLanguageTag();
+  return DateFormat.yMMMd(locale).format(dateTime.toLocal());
 }
 
-String formatShortDateTime(DateTime dateTime) {
+String formatShortDateTime(BuildContext context, DateTime dateTime) {
+  final locale = Localizations.localeOf(context).toLanguageTag();
   final localValue = dateTime.toLocal();
-  final hour = localValue.hour.toString().padLeft(2, '0');
-  final minute = localValue.minute.toString().padLeft(2, '0');
-  return '${formatShortDate(localValue)}, $hour:$minute';
+  return DateFormat.yMMMd(locale).add_Hm().format(localValue);
 }
 
 String _groupThousands(String rawValue) {
@@ -133,18 +154,3 @@ String? _detectDecimalSeparator(String value) {
   }
   return lastDot > lastComma ? '.' : ',';
 }
-
-const _monthNames = <String>[
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];

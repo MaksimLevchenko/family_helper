@@ -10,6 +10,7 @@ import '../../core/realtime/realtime_publisher.dart';
 import '../../core/sync/change_feed_service.dart';
 import '../../generated/protocol.dart';
 import 'app_notification_service.dart';
+import 'notification_message_builder.dart';
 
 part 'notifications_service_helpers.dart';
 part 'notifications_service_preferences.dart';

@@ -24,9 +24,11 @@ class _GoalsSidebar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(
-          title: 'Goals',
-          subtitle:
-              '${activeGoals.length} active, ${archivedGoals.length} archived',
+          title: context.l10n.moneyGoalsSectionTitle,
+          subtitle: context.l10n.moneyGoalsSidebarSummary(
+            activeGoals.length,
+            archivedGoals.length,
+          ),
         ),
         const SizedBox(height: 8),
         Expanded(
@@ -34,7 +36,7 @@ class _GoalsSidebar extends StatelessWidget {
             children: [
               if (activeGoals.isNotEmpty) ...[
                 Text(
-                  'Active',
+                  context.l10n.moneyGoalsActiveSection,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 6),
@@ -47,7 +49,7 @@ class _GoalsSidebar extends StatelessWidget {
               if (archivedGoals.isNotEmpty) ...[
                 const SizedBox(height: 14),
                 Text(
-                  'Archive',
+                  context.l10n.moneyGoalsArchivedSection,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 6),
@@ -127,7 +129,11 @@ class _ExpandableGoalListState extends State<_ExpandableGoalList> {
                   _isExpanded = !_isExpanded;
                 });
               },
-              child: Text(_isExpanded ? 'Show less' : 'Show more'),
+              child: Text(
+                _isExpanded
+                    ? context.l10n.commonShowLess
+                    : context.l10n.commonShowMore,
+              ),
             ),
           ),
         ],
@@ -224,14 +230,13 @@ class _NoFamilySelectedView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const _EmptyMessage(
-              title: 'Choose a family first',
-              message:
-                  'Goals are tied to the selected family. Open family settings to create or join one.',
+            _EmptyMessage(
+              title: context.l10n.moneyGoalsNoFamilyTitle,
+              message: context.l10n.moneyGoalsNoFamilyMessage,
             ),
             const SizedBox(height: 12),
             AppButton(
-              label: 'Open family settings',
+              label: context.l10n.moneyGoalsOpenFamilySettings,
               onPressed: onOpenFamily,
             ),
           ],
@@ -292,13 +297,13 @@ class _EmptyGoalsList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const _EmptyMessage(
-              title: 'No goals yet',
-              message: 'Create your first goal from the detail pane.',
+            _EmptyMessage(
+              title: context.l10n.moneyGoalsEmptyTitle,
+              message: context.l10n.moneyGoalsEmptyMessage,
             ),
             const SizedBox(height: 12),
             AppButton(
-              label: 'Create first goal',
+              label: context.l10n.moneyGoalsCreateFirstGoal,
               onPressed: onCreateGoal,
             ),
           ],

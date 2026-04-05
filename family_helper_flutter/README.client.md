@@ -4,7 +4,7 @@
 - Feature-first modules: `lib/features/<feature>/{domain,data,providers,presentation}`
 - Core modules: `lib/core/{network,auth,routing,realtime,offline,theme,sync,utils}`
 - Reusable UI only in `lib/ui_kit`
-- State: Riverpod + BLoC (feature state in BLoC where migrated)
+- State: BLoC / Cubit for runtime feature state, `GetIt` for DI and service wiring
 
 ## Setup
 From `family_helper_flutter/`:

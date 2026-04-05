@@ -352,6 +352,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String?>(),
               nullable: true,
             ),
+            'locale': _i1.ParameterDescription(
+              name: 'locale',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
             'avatarMediaId': _i1.ParameterDescription(
               name: 'avatarMediaId',
               type: _i1.getType<int?>(),
@@ -377,6 +382,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 clientOperationId: params['clientOperationId'],
                 displayName: params['displayName'],
                 timezone: params['timezone'],
+                locale: params['locale'],
                 avatarMediaId: params['avatarMediaId'],
                 clearAvatarMedia: params['clearAvatarMedia'],
                 analyticsOptIn: params['analyticsOptIn'],

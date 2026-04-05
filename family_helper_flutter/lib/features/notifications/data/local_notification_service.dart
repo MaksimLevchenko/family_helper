@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'dart:convert';
 import 'dart:async';
 
@@ -8,6 +9,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../../core/l10n/l10n.dart';
+import '../../../l10n/app_localizations.dart';
 import 'browser_notification_service.dart';
 import '../domain/notification_models.dart';
 import 'notification_visuals.dart';
@@ -36,6 +39,8 @@ class LocalNotificationService {
   bool _initialized = false;
 
   Stream<String> get notificationResponses => _notificationResponses.stream;
+  AppLocalizations get _l10n =>
+      l10nForLocale(ui.PlatformDispatcher.instance.locale);
 
   Future<void> initialize() async {
     if (_initialized) {
@@ -177,7 +182,7 @@ class LocalNotificationService {
     }
     final details = _defaultNotificationDetails(
       channelId: 'reminders',
-      channelName: 'Reminders',
+      channelName: _l10n.notificationChannelReminders,
       title: title,
       body: body,
       presentation: NotificationVisuals.resolve(
@@ -252,7 +257,7 @@ class LocalNotificationService {
       body,
       _defaultNotificationDetails(
         channelId: 'family_helper_inbox',
-        channelName: 'Family notifications',
+        channelName: _l10n.notificationChannelFamily,
         title: title,
         body: body,
         presentation: NotificationVisuals.resolve(
@@ -407,8 +412,7 @@ class LocalNotificationService {
     final androidDetails = AndroidNotificationDetails(
       channelId,
       channelName,
-      channelDescription:
-          'Rich reminders and family updates from Family Helper',
+      channelDescription: _l10n.notificationChannelDescription,
       importance: Importance.high,
       priority: Priority.high,
       color: const Color(NotificationVisuals.brandColorValue),

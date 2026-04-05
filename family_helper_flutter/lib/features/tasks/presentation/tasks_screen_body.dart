@@ -12,15 +12,15 @@ Widget _buildSelectedFamilyBody(
   required ValueChanged<int?> onSelectTask,
 }) {
     if (tasksState.isInitialLoading && tasksState.tasks.isEmpty) {
-      return const SafeArea(
-        child: LoadingState(label: 'Loading tasks...'),
+      return SafeArea(
+        child: LoadingState(label: context.l10n.tasksLoading),
       );
     }
 
     if (tasksState.error != null && tasksState.tasks.isEmpty) {
       return SafeArea(
         child: ErrorState(
-          message: tasksState.error!,
+          message: localizeUiError(context, tasksState.error),
           onRetry: () => context.read<TasksCubit>().reload(),
         ),
       );
@@ -59,7 +59,10 @@ Widget _buildSelectedFamilyBody(
                   ),
                   if (tasksState.error != null) ...[
                     const SizedBox(height: 10),
-                    AppBanner(text: tasksState.error!, isError: true),
+                    AppBanner(
+                      text: localizeUiError(context, tasksState.error),
+                      isError: true,
+                    ),
                   ],
                   const SizedBox(height: 10),
                   TasksToolbar(
@@ -173,7 +176,10 @@ Widget _buildSelectedFamilyBody(
               ),
               if (tasksState.error != null) ...[
                 const SizedBox(height: 10),
-                AppBanner(text: tasksState.error!, isError: true),
+                AppBanner(
+                  text: localizeUiError(context, tasksState.error),
+                  isError: true,
+                ),
               ],
               const SizedBox(height: 10),
               TasksToolbar(

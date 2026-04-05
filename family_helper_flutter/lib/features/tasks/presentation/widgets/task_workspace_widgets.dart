@@ -1,6 +1,8 @@
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../ui_kit/app_button.dart';
 import '../../../../ui_kit/family_member_avatar.dart';
@@ -27,28 +29,29 @@ class TasksToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final openTasks = state.openTasks;
     final overdueCount = openTasks.where(isTaskOverdue).length;
     final dueTodayCount = openTasks.where(isTaskDueToday).length;
     final summaryCards = [
       SummaryCard(
-        title: 'Open',
+        title: l10n.tasksSummaryOpen,
         value: '${openTasks.length}',
         isCompact: isCompact,
       ),
       SummaryCard(
-        title: 'Due today',
+        title: l10n.tasksSummaryDueToday,
         value: '$dueTodayCount',
         isCompact: isCompact,
       ),
       SummaryCard(
-        title: 'Overdue',
+        title: l10n.tasksSummaryOverdue,
         value: '$overdueCount',
         accentColor: context.colors.warning,
         isCompact: isCompact,
       ),
       SummaryCard(
-        title: 'Archive',
+        title: l10n.tasksSummaryArchive,
         value: '${state.completedTasks.length}',
         accentColor: context.colors.success,
         isCompact: isCompact,
@@ -89,7 +92,7 @@ class TasksToolbar extends StatelessWidget {
                   for (final filter in TaskFilter.values)
                     ChoiceChip(
                       key: Key('tasks-filter-${filter.name}'),
-                      label: Text(taskFilterLabel(filter)),
+                      label: Text(taskFilterLabel(context, filter)),
                       selected: filter == currentFilter,
                       onSelected: (_) => onFilterChanged(filter),
                     ),
@@ -100,7 +103,7 @@ class TasksToolbar extends StatelessWidget {
             SizedBox(
               width: isCompact ? 136 : 160,
               child: AppButton(
-                label: 'Create task',
+                label: l10n.taskEditorCreateAction,
                 onPressed: onCreateTask,
               ),
             ),
@@ -145,11 +148,11 @@ class TasksSidebar extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: EmptyText(
             title: currentFilter == TaskFilter.completed
-                ? 'Archive is empty'
-                : 'No matching tasks',
+                ? context.l10n.tasksEmptyArchiveTitle
+                : context.l10n.tasksEmptyFilteredTitle,
             message: currentFilter == TaskFilter.completed
-                ? 'Completed tasks will appear here.'
-                : 'Adjust the filter or create a new task.',
+                ? context.l10n.tasksEmptyArchiveMessage
+                : context.l10n.tasksEmptyFilteredMessage,
           ),
         ),
       );
@@ -157,9 +160,12 @@ class TasksSidebar extends StatelessWidget {
 
     final sections = currentFilter == TaskFilter.completed
         ? [
-            TaskSectionData(title: 'Completed archive', tasks: visibleTasks),
+            TaskSectionData(
+              title: context.l10n.tasksFilterCompletedArchive,
+              tasks: visibleTasks,
+            ),
           ]
-        : groupOpenTasks(visibleTasks);
+        : groupOpenTasks(context, visibleTasks);
 
     return ListView(
       key: const Key('tasks-sidebar'),
@@ -176,8 +182,9 @@ class TasksSidebar extends StatelessWidget {
           if (sections[sectionIndex].tasks.isNotEmpty) ...[
             SectionHeader(
               title: sections[sectionIndex].title,
-              subtitle:
-                  '${sections[sectionIndex].tasks.length} task${sections[sectionIndex].tasks.length == 1 ? '' : 's'}',
+              subtitle: context.l10n.tasksTaskCount(
+                sections[sectionIndex].tasks.length,
+              ),
             ),
             const SizedBox(height: 8),
             for (
@@ -190,6 +197,7 @@ class TasksSidebar extends StatelessWidget {
                 isSelected:
                     sections[sectionIndex].tasks[index].id == selectedTaskId,
                 assigneeName: assigneeName(
+                  context,
                   sections[sectionIndex].tasks[index].assigneeProfileId,
                   members,
                   currentProfileId: currentProfileId,
@@ -254,12 +262,11 @@ class TaskDetailPane extends StatelessWidget {
     if (task == null) {
       return Card(
         key: const Key('tasks-empty-detail'),
-        child: const Padding(
+        child: Padding(
           padding: EdgeInsets.all(20),
           child: EmptyText(
-            title: 'Pick a task',
-            message:
-                'Select a task from the list to inspect details, history, and actions.',
+            title: context.l10n.tasksPickTaskTitle,
+            message: context.l10n.tasksPickTaskMessage,
           ),
         ),
       );
@@ -270,143 +277,209 @@ class TaskDetailPane extends StatelessWidget {
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: isEmbedded
+            ? _TaskDetailContent(
+                task: task!,
+                history: history,
+                isHistoryLoading: isHistoryLoading,
+                isBusy: isBusy,
+                members: members,
+                currentProfileId: currentProfileId,
+                isOffline: isOffline,
+                onEditTask: onEditTask,
+                onCompleteTask: onCompleteTask,
+                onDeleteTask: onDeleteTask,
+                isEmbedded: true,
+              )
+            : SizedBox(
+                height: double.infinity,
+                child: _TaskDetailContent(
+                  task: task!,
+                  history: history,
+                  isHistoryLoading: isHistoryLoading,
+                  isBusy: isBusy,
+                  members: members,
+                  currentProfileId: currentProfileId,
+                  isOffline: isOffline,
+                  onEditTask: onEditTask,
+                  onCompleteTask: onCompleteTask,
+                  onDeleteTask: onDeleteTask,
+                  isEmbedded: false,
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+class _TaskDetailContent extends StatelessWidget {
+  const _TaskDetailContent({
+    required this.task,
+    required this.history,
+    required this.isHistoryLoading,
+    required this.isBusy,
+    required this.members,
+    required this.currentProfileId,
+    required this.isOffline,
+    required this.onEditTask,
+    required this.onCompleteTask,
+    required this.onDeleteTask,
+    required this.isEmbedded,
+  });
+
+  final TaskDto task;
+  final List<TaskHistoryEntryDto> history;
+  final bool isHistoryLoading;
+  final bool isBusy;
+  final List<FamilyMemberDto> members;
+  final int? currentProfileId;
+  final bool isOffline;
+  final bool isEmbedded;
+  final VoidCallback? onEditTask;
+  final Future<void> Function()? onCompleteTask;
+  final Future<void> Function()? onDeleteTask;
+
+  @override
+  Widget build(BuildContext context) {
+    final historyContent = isHistoryLoading
+        ? const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          )
+        : history.isEmpty
+        ? EmptyText(
+            title: context.l10n.tasksNoHistoryTitle,
+            message: context.l10n.tasksNoHistoryMessage,
+          )
+        : ListView.separated(
+            shrinkWrap: isEmbedded,
+            physics: isEmbedded
+                ? const NeverScrollableScrollPhysics()
+                : const AlwaysScrollableScrollPhysics(),
+            itemCount: history.length,
+            separatorBuilder: (context, _) => const Divider(height: 16),
+            itemBuilder: (context, index) {
+              return HistoryRow(entry: history[index]);
+            },
+          );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        task!.title,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        task!.status == 'completed'
-                            ? 'Completed archive item'
-                            : 'Open family task',
-                        style: TextStyle(color: context.colors.textSecondary),
-                      ),
-                    ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.title,
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                ),
-                const SizedBox(width: 12),
-                StatusBadge(task: task!),
-              ],
-            ),
-            if (task!.description != null &&
-                task!.description!.trim().isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(
-                task!.description!,
-                style: Theme.of(context).textTheme.bodyMedium,
+                  const SizedBox(height: 6),
+                  Text(
+                    task.status == 'completed'
+                        ? context.l10n.tasksDetailCompletedItem
+                        : context.l10n.tasksDetailOpenFamilyTask,
+                    style: TextStyle(color: context.colors.textSecondary),
+                  ),
+                ],
               ),
-            ],
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                MetaChip(label: 'Priority: ${priorityLabel(task!.priority)}'),
-                MetaChip(
-                  label:
-                      'Assignee: ${assigneeName(task!.assigneeProfileId, members, currentProfileId: currentProfileId)}',
-                ),
-                MetaChip(label: task!.isPersonal ? 'Personal' : 'Shared'),
-                MetaChip(label: dueChipLabel(task!.dueAt)),
-                if (task!.recurrenceRrule != null)
-                  MetaChip(
-                    label:
-                        'Repeats ${TaskRecurrencePresetX.fromTask(task!).label.toLowerCase()}',
-                  ),
-              ],
             ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                SizedBox(
-                  width: 160,
-                  child: AppButton(
-                    label: 'Complete',
-                    onPressed: onCompleteTask == null || isBusy || isOffline
-                        ? null
-                        : () async {
-                            await onCompleteTask!();
-                          },
-                  ),
-                ),
-                SizedBox(
-                  width: 160,
-                  child: AppButton(
-                    label: 'Edit task',
-                    variant: AppButtonVariant.secondary,
-                    onPressed: onEditTask == null || isBusy ? null : onEditTask,
-                  ),
-                ),
-                SizedBox(
-                  width: 160,
-                  child: AppButton(
-                    key: const Key('task-detail-delete-button'),
-                    label: 'Delete task',
-                    variant: AppButtonVariant.danger,
-                    onPressed: onDeleteTask == null || isBusy
-                        ? null
-                        : () async {
-                            await onDeleteTask!();
-                          },
-                  ),
-                ),
-              ],
+            const SizedBox(width: 12),
+            StatusBadge(task: task),
+          ],
+        ),
+        if (task.description != null && task.description!.trim().isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Text(
+            task.description!,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            MetaChip(
+              label:
+                  '${context.l10n.taskEditorPriorityLabel}: ${priorityLabel(context, task.priority)}',
             ),
-            const SizedBox(height: 20),
-            Text('History', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 10),
-            if (isHistoryLoading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(
-                  child: SizedBox(
-                    width: 28,
-                    height: 28,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-              )
-            else if (history.isEmpty)
-              const EmptyText(
-                title: 'No history yet',
-                message: 'Task updates and completions will appear here.',
-              )
-            else if (isEmbedded)
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: history.length,
-                separatorBuilder: (context, _) => const Divider(height: 16),
-                itemBuilder: (context, index) {
-                  return HistoryRow(entry: history[index]);
-                },
-              )
-            else
-              SizedBox(
-                height: 240,
-                child: ListView.separated(
-                  itemCount: history.length,
-                  separatorBuilder: (context, _) => const Divider(height: 16),
-                  itemBuilder: (context, index) {
-                    return HistoryRow(entry: history[index]);
-                  },
-                ),
+            MetaChip(
+              label:
+                  '${context.l10n.taskEditorAssigneeLabel}: ${assigneeName(context, task.assigneeProfileId, members, currentProfileId: currentProfileId)}',
+            ),
+            MetaChip(
+              label: task.isPersonal
+                  ? context.l10n.tasksMetaPersonal
+                  : context.l10n.tasksMetaShared,
+            ),
+            MetaChip(label: dueChipLabel(context, task.dueAt)),
+            if (task.recurrenceRrule != null)
+              MetaChip(
+                label:
+                    '${context.l10n.taskEditorRepeatLabel}: ${taskRecurrenceLabel(context, TaskRecurrencePresetX.fromTask(task))}',
               ),
           ],
         ),
-      ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            SizedBox(
+              width: 160,
+              child: AppButton(
+                label: context.l10n.tasksActionComplete,
+                onPressed: onCompleteTask == null || isBusy || isOffline
+                    ? null
+                    : () async {
+                        await onCompleteTask!();
+                      },
+              ),
+            ),
+            SizedBox(
+              width: 160,
+              child: AppButton(
+                label: context.l10n.tasksActionEdit,
+                variant: AppButtonVariant.secondary,
+                onPressed: onEditTask == null || isBusy ? null : onEditTask,
+              ),
+            ),
+            SizedBox(
+              width: 160,
+              child: AppButton(
+                key: const Key('task-detail-delete-button'),
+                label: context.l10n.tasksActionDelete,
+                variant: AppButtonVariant.danger,
+                onPressed: onDeleteTask == null || isBusy
+                    ? null
+                    : () async {
+                        await onDeleteTask!();
+                      },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Text(
+          context.l10n.tasksHistoryTitle,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 10),
+        if (isEmbedded)
+          historyContent
+        else
+          Expanded(child: historyContent),
+      ],
     );
   }
 }
@@ -449,7 +522,7 @@ class TaskListItem extends StatelessWidget {
               ),
         title: Text(task.title),
         subtitle: Text(
-          '$assigneeName - ${priorityLabel(task.priority)} - ${shortDueLabel(task)}',
+          '$assigneeName • ${priorityLabel(context, task.priority)} • ${shortDueLabel(context, task)}',
         ),
         trailing: task.status == 'completed'
             ? const Icon(Icons.archive_outlined)
@@ -491,14 +564,14 @@ class HistoryRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${entry.actorDisplayName} - ${historyLabel(entry.eventType)}',
+                '${entry.actorDisplayName} • ${historyLabel(context, entry.eventType)}',
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 4),
               Text(entry.details),
               const SizedBox(height: 4),
               Text(
-                formatTaskDateTime(entry.createdAt),
+                formatTaskDateTime(context, entry.createdAt),
                 style: TextStyle(color: context.colors.textSecondary),
               ),
             ],
@@ -525,7 +598,9 @@ class StatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        isCompleted ? 'Completed' : 'Open',
+        isCompleted
+            ? context.l10n.tasksStatusCompleted
+            : context.l10n.tasksStatusOpen,
         style: TextStyle(color: color, fontWeight: FontWeight.w700),
       ),
     );
@@ -632,14 +707,13 @@ class NoFamilyTasksView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const EmptyText(
-              title: 'Choose a family first',
-              message:
-                  'Tasks are tied to the selected family. Open family settings to create or join one.',
+            EmptyText(
+              title: context.l10n.tasksNoFamilyTitle,
+              message: context.l10n.tasksNoFamilyMessage,
             ),
             const SizedBox(height: 12),
             AppButton(
-              label: 'Open family settings',
+              label: context.l10n.tasksOpenFamilySettings,
               onPressed: onOpenFamily,
             ),
           ],
@@ -732,7 +806,7 @@ TaskDto? resolvedSelectedTask(TasksState state, List<TaskDto> visibleTasks) {
   return visibleTasks.isEmpty ? null : visibleTasks.first;
 }
 
-List<TaskSectionData> groupOpenTasks(List<TaskDto> tasks) {
+List<TaskSectionData> groupOpenTasks(BuildContext context, List<TaskDto> tasks) {
   final overdue = <TaskDto>[];
   final today = <TaskDto>[];
   final upcoming = <TaskDto>[];
@@ -756,10 +830,13 @@ List<TaskSectionData> groupOpenTasks(List<TaskDto> tasks) {
   noDueDate.sort((left, right) => right.updatedAt.compareTo(left.updatedAt));
 
   return [
-    TaskSectionData(title: 'Overdue', tasks: overdue),
-    TaskSectionData(title: 'Today', tasks: today),
-    TaskSectionData(title: 'Upcoming', tasks: upcoming),
-    TaskSectionData(title: 'No due date', tasks: noDueDate),
+    TaskSectionData(title: context.l10n.tasksSectionOverdue, tasks: overdue),
+    TaskSectionData(title: context.l10n.tasksSectionToday, tasks: today),
+    TaskSectionData(title: context.l10n.tasksSectionUpcoming, tasks: upcoming),
+    TaskSectionData(
+      title: context.l10n.tasksSectionNoDueDate,
+      tasks: noDueDate,
+    ),
   ];
 }
 
@@ -788,45 +865,53 @@ bool isTaskDueToday(TaskDto task) {
   return DateUtils.isSameDay(task.dueAt!.toLocal(), DateTime.now());
 }
 
-String taskFilterLabel(TaskFilter filter) {
+String taskFilterLabel(BuildContext context, TaskFilter filter) {
   return switch (filter) {
-    TaskFilter.allOpen => 'All open',
-    TaskFilter.mine => 'Mine',
-    TaskFilter.unassigned => 'Unassigned',
-    TaskFilter.dueSoon => 'Due soon',
-    TaskFilter.completed => 'Completed archive',
+    TaskFilter.allOpen => context.l10n.tasksFilterAllOpen,
+    TaskFilter.mine => context.l10n.tasksFilterMine,
+    TaskFilter.unassigned => context.l10n.tasksFilterUnassigned,
+    TaskFilter.dueSoon => context.l10n.tasksFilterDueSoon,
+    TaskFilter.completed => context.l10n.tasksFilterCompletedArchive,
   };
 }
 
-String priorityLabel(String value) {
-  return TaskPriorityOptionX.fromWireValue(value).label;
+String priorityLabel(BuildContext context, String value) {
+  final l10n = context.l10n;
+  return switch (TaskPriorityOptionX.fromWireValue(value)) {
+    TaskPriorityOption.low => l10n.taskPriorityLow,
+    TaskPriorityOption.normal => l10n.taskPriorityNormal,
+    TaskPriorityOption.high => l10n.taskPriorityHigh,
+  };
 }
 
-String historyLabel(String value) {
+String historyLabel(BuildContext context, String value) {
   return switch (value) {
-    'created' => 'Created',
-    'updated' => 'Updated',
-    'completed' => 'Completed',
+    'created' => context.l10n.tasksHistoryCreated,
+    'updated' => context.l10n.tasksHistoryUpdated,
+    'completed' => context.l10n.tasksHistoryCompleted,
     _ => value,
   };
 }
 
 String assigneeName(
+  BuildContext context,
   int? profileId,
   List<FamilyMemberDto> members, {
   required int? currentProfileId,
 }) {
   if (profileId == null) {
-    return 'Unassigned';
+    return context.l10n.taskEditorUnassigned;
   }
   for (final member in members) {
     if (member.profileId == profileId) {
       return member.profileId == currentProfileId
-          ? '${member.displayName} (You)'
+          ? context.l10n.tasksAssigneeMemberYou(member.displayName)
           : member.displayName;
     }
   }
-  return profileId == currentProfileId ? 'You' : 'User #$profileId';
+  return profileId == currentProfileId
+      ? context.l10n.tasksAssigneeYou
+      : context.l10n.tasksAssigneeUser(profileId);
 }
 
 FamilyMemberDto? memberForProfileId(
@@ -844,19 +929,29 @@ FamilyMemberDto? memberForProfileId(
   return null;
 }
 
-String shortDueLabel(TaskDto task) {
-  return task.dueAt == null ? 'No due date' : formatTaskDateTime(task.dueAt!);
+String taskRecurrenceLabel(BuildContext context, TaskRecurrencePreset preset) {
+  final l10n = context.l10n;
+  return switch (preset) {
+    TaskRecurrencePreset.none => l10n.taskRepeatNone,
+    TaskRecurrencePreset.daily => l10n.taskRepeatDaily,
+    TaskRecurrencePreset.weekly => l10n.taskRepeatWeekly,
+    TaskRecurrencePreset.monthly => l10n.taskRepeatMonthly,
+  };
 }
 
-String dueChipLabel(DateTime? dueAt) {
-  return dueAt == null ? 'No due date' : 'Due ${formatTaskDateTime(dueAt)}';
+String shortDueLabel(BuildContext context, TaskDto task) {
+  return task.dueAt == null
+      ? context.l10n.tasksNoDueDate
+      : formatTaskDateTime(context, task.dueAt!);
 }
 
-String formatTaskDateTime(DateTime value) {
-  final local = value.toLocal();
-  final month = local.month.toString().padLeft(2, '0');
-  final day = local.day.toString().padLeft(2, '0');
-  final hour = local.hour.toString().padLeft(2, '0');
-  final minute = local.minute.toString().padLeft(2, '0');
-  return '$month/$day ${local.year} $hour:$minute';
+String dueChipLabel(BuildContext context, DateTime? dueAt) {
+  return dueAt == null
+      ? context.l10n.tasksNoDueDate
+      : context.l10n.tasksDueChip(formatTaskDateTime(context, dueAt));
+}
+
+String formatTaskDateTime(BuildContext context, DateTime value) {
+  final locale = Localizations.localeOf(context).toLanguageTag();
+  return DateFormat.yMd(locale).add_Hm().format(value.toLocal());
 }

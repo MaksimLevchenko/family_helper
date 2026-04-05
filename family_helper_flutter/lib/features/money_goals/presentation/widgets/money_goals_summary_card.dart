@@ -1,6 +1,7 @@
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'money_goal_formatters.dart';
 
@@ -32,7 +33,7 @@ class MoneyGoalsSummaryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Goals snapshot',
+              context.l10n.moneyGoalsSummaryTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 10),
@@ -41,19 +42,19 @@ class MoneyGoalsSummaryCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 _SummaryMetric(
-                  label: 'Active goals',
+                  label: context.l10n.moneyGoalsSummaryActiveGoals,
                   value: '$activeGoals',
                 ),
                 _SummaryMetric(
-                  label: 'Archived',
+                  label: context.l10n.moneyGoalsSummaryArchived,
                   value: '$archivedGoals',
                 ),
                 _SummaryMetric(
-                  label: 'Completed',
+                  label: context.l10n.moneyGoalsSummaryCompleted,
                   value: '$completedGoals',
                 ),
                 _SummaryMetric(
-                  label: 'Saved total',
+                  label: context.l10n.moneyGoalsSummarySavedTotal,
                   value: formatMoneyCents(totalSaved, primaryCurrency),
                 ),
               ],

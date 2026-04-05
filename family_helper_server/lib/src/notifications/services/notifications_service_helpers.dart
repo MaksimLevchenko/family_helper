@@ -134,18 +134,30 @@ Future<void> _createReminderNotification(
   required DateTime firedAt,
 }) async {
   final payload = _decodePayload(reminder.payloadJson);
+  final localeCode = await service.appNotifications.profileLocaleCode(
+    session,
+    profileId: reminder.profileId,
+  );
   final title = (payload['title'] as String?)?.trim().isNotEmpty == true
       ? payload['title'] as String
-      : _defaultReminderTitle(reminder.entityType);
+      : _defaultReminderTitle(
+          localeCode: localeCode,
+          entityType: reminder.entityType,
+        );
   final body = (payload['body'] as String?)?.trim().isNotEmpty == true
       ? payload['body'] as String
-      : await _defaultReminderBody(service, session, reminder: reminder);
+      : await _defaultReminderBody(
+          service,
+          session,
+          reminder: reminder,
+          localeCode: localeCode,
+        );
 
   await service.appNotifications.createForProfiles(
     session,
     profileIds: [reminder.profileId],
     familyId: reminder.familyId,
-    category: 'reminder_due',
+    category: 'due_reminder',
     title: title,
     body: body,
     entityType: reminder.entityType,
@@ -171,18 +183,21 @@ Map<String, dynamic> _decodePayload(String raw) {
   }
 }
 
-String _defaultReminderTitle(String entityType) {
-  return switch (entityType) {
-    'task' => 'Task reminder',
-    'calendar' => 'Event reminder',
-    _ => 'Reminder',
-  };
+String _defaultReminderTitle({
+  required String localeCode,
+  required String entityType,
+}) {
+  return buildReminderDefaultTitle(
+    localeCode: localeCode,
+    entityType: entityType,
+  );
 }
 
 Future<String> _defaultReminderBody(
   NotificationsService service,
   Session session, {
   required ReminderDto reminder,
+  required String localeCode,
 }) async {
   if (reminder.entityType == 'task') {
     final task = await TaskRow.db.findById(session, reminder.entityId);
@@ -199,7 +214,7 @@ Future<String> _defaultReminderBody(
       return event.title;
     }
   }
-  return 'Open Family Helper to view the reminder.';
+  return buildReminderDefaultFallbackBody(localeCode);
 }
 
 String? _routeForEntityType(String entityType) {

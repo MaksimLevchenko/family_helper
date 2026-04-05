@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:family_helper_client/family_helper_client.dart';
 
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/ui_error_localizer.dart';
 import '../../../core/network/server_availability_cubit.dart';
 import '../../../ui_kit/ui_kit.dart';
 import '../../auth_profile/providers/profile_provider.dart';
@@ -62,7 +64,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
         context.watch<ServerAvailabilityCubit?>()?.state.isUnavailable ?? false;
 
     return Scaffold(
-      appBar: serverStatusAppBar(context, title: const Text('Family')),
+      appBar: serverStatusAppBar(context, title: Text(context.l10n.settingsFamilyTitle)),
       body: BlocBuilder<FamilyMembersCubit, FamilyMembersState>(
         builder: (context, state) {
           if (state.isLoading &&
@@ -75,7 +77,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
               state.familyId != null &&
               state.family == null) {
             return ErrorState(
-              message: state.error!,
+              message: localizeUiError(context, state.error),
               onRetry: () => context.read<FamilyMembersCubit>().loadMembers(),
             );
           }
@@ -97,7 +99,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
           }
 
           final summaryCard = _FamilySummaryCard(
-            title: state.family?.title ?? 'Family',
+            title: state.family?.title ?? context.l10n.settingsFamilyTitle,
             memberCount: state.members.length,
             canRename: isOwner,
             renameController: _renameFamilyTitleController,
@@ -113,7 +115,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                 return;
               }
               messenger.showSnackBar(
-                const SnackBar(content: Text('Family name updated')),
+                SnackBar(content: Text(context.l10n.familyNameUpdated)),
               );
             },
           );
@@ -144,7 +146,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                       return;
                     }
                     messenger.showSnackBar(
-                      const SnackBar(content: Text('Invite code copied')),
+                      SnackBar(content: Text(context.l10n.familyInviteCodeCopied)),
                     );
                   },
           );
@@ -182,7 +184,10 @@ class _FamilyScreenState extends State<FamilyScreen> {
                     lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
                   ),
                   if (state.error != null) ...[
-                    AppBanner(text: state.error!, isError: true),
+                    AppBanner(
+                      text: localizeUiError(context, state.error),
+                      isError: true,
+                    ),
                     const SizedBox(height: 12),
                   ],
                   if (!hasFamily)
@@ -249,7 +254,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                     ],
                     const SizedBox(height: 16),
                     AppButton(
-                      label: 'Leave family',
+                      label: context.l10n.familyLeaveAction,
                       variant: AppButtonVariant.danger,
                       onPressed: isOwner
                           ? null
@@ -262,7 +267,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                     if (isOwner) ...[
                       const SizedBox(height: 8),
                       Text(
-                        'Transfer ownership before leaving the family.',
+                        context.l10n.familyTransferBeforeLeave,
                         style: Theme.of(context).textTheme.bodyMedium,
                         textAlign: TextAlign.center,
                       ),

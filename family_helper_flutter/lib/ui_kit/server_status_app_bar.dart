@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/l10n/l10n.dart';
 import '../core/network/server_availability_cubit.dart';
 import '../core/routing/app_routes.dart';
 import '../core/theme/app_colors.dart';
 import '../features/notifications/providers/notifications_provider.dart';
-
-const _serverUnavailableBannerText =
-    'Server unavailable. Some actions may not work until connection is restored.';
 
 AppBar serverStatusAppBar(
   BuildContext context, {
@@ -72,7 +70,7 @@ class _NotificationCenterAction extends StatelessWidget {
         : const Icon(Icons.notifications_none_rounded);
 
     return IconButton(
-      tooltip: 'Notifications',
+      tooltip: context.l10n.notificationActionTooltip,
       onPressed: () {
         context.push(AppRoutes.notificationCenter);
       },
@@ -119,7 +117,7 @@ class _ServerStatusBanner extends StatelessWidget
       color: colors.danger,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Text(
-        _serverUnavailableBannerText,
+        context.l10n.serverUnavailableBanner,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(

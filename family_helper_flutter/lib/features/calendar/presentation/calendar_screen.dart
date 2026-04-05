@@ -1,8 +1,11 @@
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/ui_error_localizer.dart';
 import '../../../core/network/server_availability_cubit.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../ui_kit/ui_kit.dart';
@@ -24,11 +27,11 @@ class CalendarScreen extends StatelessWidget {
         context.watch<ServerAvailabilityCubit?>()?.state.isUnavailable ?? false;
 
     return Scaffold(
-      appBar: serverStatusAppBar(context, title: const Text('Calendar')),
+      appBar: serverStatusAppBar(context, title: Text(context.l10n.homeCalendar)),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: isOffline ? null : () => _openCreateEvent(context),
         icon: const Icon(Icons.add_circle_outline_rounded),
-        label: const Text('Add event'),
+        label: Text(context.l10n.calendarAddEvent),
       ),
       body: BlocConsumer<CalendarCubit, CalendarState>(
         listenWhen: (previous, current) =>
@@ -39,18 +42,20 @@ class CalendarScreen extends StatelessWidget {
           final messenger = ScaffoldMessenger.of(context);
           messenger
             ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(state.error!)));
+            ..showSnackBar(
+              SnackBar(content: Text(localizeUiError(context, state.error))),
+            );
         },
         builder: (context, state) {
           if (state.isInitialLoading && state.instances.isEmpty) {
-            return const LoadingState(label: 'Loading your calendar...');
+            return LoadingState(label: context.l10n.calendarLoading);
           }
 
           if (state.error != null &&
               !state.errorFromMutation &&
               state.instances.isEmpty) {
             return ErrorState(
-              message: state.error!,
+              message: localizeUiError(context, state.error),
               onRetry: () => context.read<CalendarCubit>().reload(),
             );
           }
@@ -89,7 +94,10 @@ class CalendarScreen extends StatelessWidget {
                         lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
                       ),
                     if (state.error != null && !state.errorFromMutation)
-                      AppBanner(text: state.error!, isError: true),
+                      AppBanner(
+                        text: localizeUiError(context, state.error),
+                        isError: true,
+                      ),
                   ];
 
                   final monthCard = _CalendarMonthCard(
@@ -245,8 +253,8 @@ class CalendarScreen extends StatelessWidget {
       context,
       maxWidth: 720,
       builder: (overlayContext, useModalShell) => _CalendarEventEditorSheet(
-        title: 'Create event',
-        submitLabel: 'Save event',
+        title: context.l10n.calendarCreateEventTitle,
+        submitLabel: context.l10n.calendarSaveEvent,
         initialForm: initialForm,
         allowRecurrence: true,
         useModalShell: useModalShell,
@@ -333,8 +341,8 @@ class CalendarScreen extends StatelessWidget {
       context,
       maxWidth: 720,
       builder: (overlayContext, useModalShell) => _CalendarEventEditorSheet(
-        title: 'Edit occurrence',
-        submitLabel: 'Save changes',
+        title: context.l10n.calendarEditOccurrenceTitle,
+        submitLabel: context.l10n.commonSaveChanges,
         initialForm: CalendarEventForm.fromInstance(instance),
         allowRecurrence: false,
         useModalShell: useModalShell,
@@ -377,14 +385,14 @@ class CalendarScreen extends StatelessWidget {
           )
         : CalendarEventForm.fromEvent(event);
     final title = scope == CalendarMutationScope.future
-        ? 'Edit this and following'
-        : 'Edit whole series';
+        ? context.l10n.calendarEditFollowingTitle
+        : context.l10n.calendarEditWholeSeriesTitle;
     final form = await _showAdaptiveOverlay<CalendarEventForm>(
       context,
       maxWidth: 720,
       builder: (overlayContext, useModalShell) => _CalendarEventEditorSheet(
         title: title,
-        submitLabel: 'Save changes',
+        submitLabel: context.l10n.commonSaveChanges,
         initialForm: initialForm,
         allowRecurrence: true,
         useModalShell: useModalShell,
@@ -417,9 +425,9 @@ class CalendarScreen extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return AppDialog(
-          title: 'Delete occurrence',
-          message: 'Only this occurrence will be removed.',
-          confirmLabel: 'Delete',
+          title: context.l10n.calendarDeleteOccurrenceTitle,
+          message: context.l10n.calendarDeleteOccurrenceMessage,
+          confirmLabel: context.l10n.commonDelete,
           onConfirm: () => Navigator.of(dialogContext).pop(true),
         );
       },
@@ -442,15 +450,15 @@ class CalendarScreen extends StatelessWidget {
       return;
     }
     final message = scope == CalendarMutationScope.future
-        ? 'This occurrence and all following ones will be removed.'
-        : 'The whole series will be removed.';
+        ? context.l10n.calendarDeleteSeriesFutureMessage
+        : context.l10n.calendarDeleteSeriesAllMessage;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AppDialog(
-          title: 'Delete event',
+          title: context.l10n.calendarDeleteEventTitle,
           message: message,
-          confirmLabel: 'Delete',
+          confirmLabel: context.l10n.commonDelete,
           onConfirm: () => Navigator.of(dialogContext).pop(true),
         );
       },
@@ -510,10 +518,8 @@ class CalendarScreen extends StatelessWidget {
 
   void _showOfflineMessage(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Server unavailable. This action will work again when connection is restored.',
-        ),
+      SnackBar(
+        content: Text(context.l10n.calendarOfflineMessage),
       ),
     );
   }
@@ -542,6 +548,7 @@ class _CalendarMonthCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final firstUpcoming = selectedAgendaItems.isEmpty
         ? null
         : (selectedAgendaItems.toList()..sort(
@@ -583,7 +590,7 @@ class _CalendarMonthCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Your schedule',
+                        l10n.calendarYourScheduleTitle,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.3,
@@ -591,7 +598,7 @@ class _CalendarMonthCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _CalendarFormatters.fullDate(selectedDay),
+                        _CalendarFormatters.fullDate(context, selectedDay),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colors.textSecondary,
                         ),
@@ -599,7 +606,8 @@ class _CalendarMonthCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (isRefreshing) const _BusyPill(label: 'Updating'),
+                if (isRefreshing)
+                  _BusyPill(label: l10n.calendarUpdatingStatus),
               ],
             ),
             const SizedBox(height: 16),
@@ -613,7 +621,7 @@ class _CalendarMonthCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    _CalendarFormatters.monthLabel(visibleMonth),
+                    _CalendarFormatters.monthLabel(context, visibleMonth),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -647,8 +655,8 @@ class _CalendarMonthCard extends StatelessWidget {
                 eventLoader: (day) =>
                     groupedEvents[DateTime(day.year, day.month, day.day)] ??
                     const [],
-                availableCalendarFormats: const {
-                  CalendarFormat.month: 'Month',
+                availableCalendarFormats: {
+                  CalendarFormat.month: l10n.calendarFormatMonth,
                 },
                 availableGestures: AvailableGestures.horizontalSwipe,
                 calendarStyle: const CalendarStyle(
@@ -667,7 +675,10 @@ class _CalendarMonthCard extends StatelessWidget {
                   dowBuilder: (context, day) {
                     return Center(
                       child: Text(
-                        _CalendarFormatters.weekdayCompact(day.weekday),
+                        _CalendarFormatters.weekdayCompact(
+                          context,
+                          day.weekday,
+                        ),
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: colors.textSecondary,
                           fontWeight: FontWeight.w700,
@@ -755,7 +766,9 @@ class _SelectedDaySummaryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  hasItems ? '$itemCount plans for this day' : 'Open day',
+                  hasItems
+                      ? context.l10n.calendarPlansForDay(itemCount)
+                      : context.l10n.calendarOpenDayTitle,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -763,8 +776,15 @@ class _SelectedDaySummaryCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   hasItems
-                      ? 'Next: ${_CalendarFormatters.timeRange(firstUpcoming!.occurrenceStart, firstUpcoming!.occurrenceEnd)} • ${firstUpcoming!.title}'
-                      : 'Nothing is scheduled yet. Add an event to keep the day organized.',
+                      ? context.l10n.calendarNextEventSummary(
+                          _CalendarFormatters.timeRange(
+                            context,
+                            firstUpcoming!.occurrenceStart,
+                            firstUpcoming!.occurrenceEnd,
+                          ),
+                          firstUpcoming!.title,
+                        )
+                      : context.l10n.calendarOpenDayEmptyMessage,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colors.textSecondary,
                     height: 1.35,
@@ -965,7 +985,7 @@ class _AgendaSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final theme = Theme.of(context);
-    final countLabel = items.length == 1 ? '1 event' : '${items.length} events';
+    final countLabel = context.l10n.calendarEventsCount(items.length);
 
     return Container(
       decoration: BoxDecoration(
@@ -985,7 +1005,7 @@ class _AgendaSection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Day agenda',
+                        context.l10n.calendarAgendaTitle,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.2,
@@ -993,7 +1013,7 @@ class _AgendaSection extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _CalendarFormatters.fullDate(selectedDay),
+                        _CalendarFormatters.fullDate(context, selectedDay),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colors.textSecondary,
                         ),
@@ -1003,11 +1023,11 @@ class _AgendaSection extends StatelessWidget {
                 ),
                 if (isRefreshing) ...[
                   const SizedBox(width: 12),
-                  const _BusyPill(label: 'Refreshing'),
+                  _BusyPill(label: context.l10n.calendarRefreshingStatus),
                 ],
                 if (isMutating && !isRefreshing) ...[
                   const SizedBox(width: 12),
-                  const _BusyPill(label: 'Saving'),
+                  _BusyPill(label: context.l10n.calendarSavingStatus),
                 ],
                 const SizedBox(width: 12),
                 _CountBadge(label: countLabel),
@@ -1083,7 +1103,7 @@ class _AgendaEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Nothing planned yet',
+              context.l10n.calendarEmptyDayTitle,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
@@ -1091,7 +1111,7 @@ class _AgendaEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Create an event for this day and it will appear here with the right repeat and reminder settings.',
+              context.l10n.calendarEmptyDayMessage,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colors.textSecondary,
                 height: 1.4,
@@ -1101,7 +1121,10 @@ class _AgendaEmptyState extends StatelessWidget {
             const SizedBox(height: 18),
             SizedBox(
               width: 180,
-              child: AppButton(label: 'Add event', onPressed: onCreateEvent),
+              child: AppButton(
+                label: context.l10n.calendarAddEvent,
+                onPressed: onCreateEvent,
+              ),
             ),
           ],
         ),
@@ -1194,6 +1217,7 @@ class _AgendaCard extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           _CalendarFormatters.timeRange(
+                            context,
                             instance.occurrenceStart,
                             instance.occurrenceEnd,
                           ),
@@ -1206,18 +1230,19 @@ class _AgendaCard extends StatelessWidget {
                           runSpacing: 8,
                           children: [
                             if (instance.isRecurring)
-                              const _InfoChip(
-                                label: 'Repeats',
+                              _InfoChip(
+                                label: context.l10n.calendarRepeatsChip,
                                 icon: Icons.repeat_rounded,
                               ),
                             if (instance.isException)
-                              const _InfoChip(
-                                label: 'Edited',
+                              _InfoChip(
+                                label: context.l10n.calendarEditedChip,
                                 icon: Icons.edit_calendar_rounded,
                               ),
                             if (instance.reminderOffsetMinutes != null)
                               _InfoChip(
                                 label: _reminderLabel(
+                                  context,
                                   instance.reminderOffsetMinutes!,
                                 ),
                                 icon: Icons.notifications_active_outlined,
@@ -1253,13 +1278,13 @@ class _AgendaCard extends StatelessWidget {
     );
   }
 
-  String _reminderLabel(int offsetMinutes) {
+  String _reminderLabel(BuildContext context, int offsetMinutes) {
     return switch (offsetMinutes) {
-      0 => 'At time',
-      10 => '10m before',
-      60 => '1h before',
-      1440 => '1d before',
-      _ => 'Reminder',
+      0 => context.l10n.calendarReminderAtTime,
+      10 => context.l10n.calendarReminderTenMinutesBefore,
+      60 => context.l10n.calendarReminderOneHourBefore,
+      1440 => context.l10n.calendarReminderOneDayBefore,
+      _ => context.l10n.calendarReminderGeneric,
     };
   }
 }
@@ -1289,7 +1314,7 @@ class _TimeBlock extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _CalendarFormatters.timeOfDay(start),
+            _CalendarFormatters.timeOfDay(context, start),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
               letterSpacing: -0.2,
@@ -1297,14 +1322,14 @@ class _TimeBlock extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            _CalendarFormatters.timeOfDay(end),
+            _CalendarFormatters.timeOfDay(context, end),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colors.textSecondary,
             ),
           ),
           const SizedBox(height: 10),
           Text(
-            _CalendarFormatters.durationLabel(start, end),
+            _CalendarFormatters.durationLabel(context, start, end),
             style: theme.textTheme.labelMedium?.copyWith(
               color: colors.textSecondary,
               fontWeight: FontWeight.w700,
@@ -1445,6 +1470,7 @@ class _CalendarActionSheet extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             _CalendarFormatters.timeRange(
+              context,
               instance.occurrenceStart,
               instance.occurrenceEnd,
             ),
@@ -1454,26 +1480,26 @@ class _CalendarActionSheet extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           _SheetSection(
-            title: 'Edit',
+            title: context.l10n.calendarActionEditSection,
             children: instance.isRecurring
                 ? [
                     _ActionTile(
                       icon: Icons.edit_outlined,
-                      title: 'Edit this occurrence',
+                      title: context.l10n.calendarActionEditOccurrence,
                       onTap: () => Navigator.of(
                         context,
                       ).pop(_CalendarAction.editOne),
                     ),
                     _ActionTile(
                       icon: Icons.update_outlined,
-                      title: 'Edit this and following',
+                      title: context.l10n.calendarActionEditFollowing,
                       onTap: () => Navigator.of(
                         context,
                       ).pop(_CalendarAction.editFuture),
                     ),
                     _ActionTile(
                       icon: Icons.auto_mode_outlined,
-                      title: 'Edit whole series',
+                      title: context.l10n.calendarActionEditWholeSeries,
                       onTap: () => Navigator.of(
                         context,
                       ).pop(_CalendarAction.editAll),
@@ -1482,7 +1508,7 @@ class _CalendarActionSheet extends StatelessWidget {
                 : [
                     _ActionTile(
                       icon: Icons.edit_outlined,
-                      title: 'Edit event',
+                      title: context.l10n.calendarActionEditEvent,
                       onTap: () =>
                           Navigator.of(context).pop(_CalendarAction.editAll),
                     ),
@@ -1490,12 +1516,12 @@ class _CalendarActionSheet extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           _SheetSection(
-            title: 'Delete',
+            title: context.l10n.calendarActionDeleteSection,
             children: instance.isRecurring
                 ? [
                     _ActionTile(
                       icon: Icons.delete_outline,
-                      title: 'Delete this occurrence',
+                      title: context.l10n.calendarActionDeleteOccurrence,
                       destructive: true,
                       onTap: () => Navigator.of(
                         context,
@@ -1503,7 +1529,7 @@ class _CalendarActionSheet extends StatelessWidget {
                     ),
                     _ActionTile(
                       icon: Icons.event_busy_outlined,
-                      title: 'Delete this and following',
+                      title: context.l10n.calendarActionDeleteFollowing,
                       destructive: true,
                       onTap: () => Navigator.of(
                         context,
@@ -1511,7 +1537,7 @@ class _CalendarActionSheet extends StatelessWidget {
                     ),
                     _ActionTile(
                       icon: Icons.delete_forever_outlined,
-                      title: 'Delete whole series',
+                      title: context.l10n.calendarActionDeleteWholeSeries,
                       destructive: true,
                       onTap: () => Navigator.of(
                         context,
@@ -1521,7 +1547,7 @@ class _CalendarActionSheet extends StatelessWidget {
                 : [
                     _ActionTile(
                       icon: Icons.delete_outline,
-                      title: 'Delete event',
+                      title: context.l10n.calendarActionDeleteEvent,
                       destructive: true,
                       onTap: () =>
                           Navigator.of(context).pop(_CalendarAction.deleteAll),
@@ -1699,8 +1725,8 @@ class _CalendarEventEditorSheetState extends State<_CalendarEventEditorSheet> {
                     const SizedBox(height: 4),
                     Text(
                       widget.allowRecurrence
-                          ? 'Set time, reminders, and repeat rules in one place.'
-                          : 'Update this single occurrence without changing the full series.',
+                          ? context.l10n.calendarEditorRecurringSubtitle
+                          : context.l10n.calendarEditorSingleSubtitle,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: colors.textSecondary,
                         height: 1.35,
@@ -1723,21 +1749,20 @@ class _CalendarEventEditorSheetState extends State<_CalendarEventEditorSheet> {
             child: Column(
               children: [
                 _EditorSection(
-                  title: 'Basics',
-                  subtitle:
-                      'A clear title helps the whole family scan the day faster.',
+                  title: context.l10n.calendarEditorBasicsTitle,
+                  subtitle: context.l10n.calendarEditorBasicsSubtitle,
                   child: Column(
                     children: [
                       AppTextField(
                         controller: _titleController,
-                        label: 'Event title',
+                        label: context.l10n.calendarEditorTitleLabel,
                       ),
                       if (widget.allowRecurrence) ...[
                         const SizedBox(height: 12),
                         AppTextField(
                           controller: _descriptionController,
-                          label: 'Notes',
-                          hint: 'Optional',
+                          label: context.l10n.calendarEditorNotesLabel,
+                          hint: context.l10n.calendarEditorOptionalHint,
                           maxLines: 3,
                         ),
                       ],
@@ -1746,13 +1771,12 @@ class _CalendarEventEditorSheetState extends State<_CalendarEventEditorSheet> {
                 ),
                 const SizedBox(height: 16),
                 _EditorSection(
-                  title: 'Schedule',
-                  subtitle:
-                      'Choose a polished start and end time for the event.',
+                  title: context.l10n.calendarEditorScheduleTitle,
+                  subtitle: context.l10n.calendarEditorScheduleSubtitle,
                   child: Column(
                     children: [
                       _DateTimeTile(
-                        label: 'Starts',
+                        label: context.l10n.calendarEditorStartsLabel,
                         value: _startsAt,
                         icon: Icons.login_rounded,
                         onTap: () => _pickDateTime(
@@ -1776,7 +1800,7 @@ class _CalendarEventEditorSheetState extends State<_CalendarEventEditorSheet> {
                       ),
                       const SizedBox(height: 12),
                       _DateTimeTile(
-                        label: 'Ends',
+                        label: context.l10n.calendarEditorEndsLabel,
                         value: _endsAt,
                         icon: Icons.logout_rounded,
                         onTap: () => _pickDateTime(
@@ -1794,16 +1818,15 @@ class _CalendarEventEditorSheetState extends State<_CalendarEventEditorSheet> {
                 ),
                 const SizedBox(height: 16),
                 _EditorSection(
-                  title: 'Reminder',
-                  subtitle:
-                      'Notifications should appear only when they are helpful.',
+                  title: context.l10n.calendarEditorReminderTitle,
+                  subtitle: context.l10n.calendarEditorReminderSubtitle,
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: ReminderPreset.values
                         .map(
                           (preset) => _ChoicePill(
-                            label: preset.label,
+                            label: preset.label(context.l10n),
                             selected: _reminderPreset == preset,
                             onTap: () {
                               setState(() {
@@ -1818,9 +1841,8 @@ class _CalendarEventEditorSheetState extends State<_CalendarEventEditorSheet> {
                 if (widget.allowRecurrence) ...[
                   const SizedBox(height: 16),
                   _EditorSection(
-                    title: 'Repeat',
-                    subtitle:
-                        'Keep repeat rules visible and only reveal the controls that matter.',
+                    title: context.l10n.calendarEditorRepeatTitle,
+                    subtitle: context.l10n.calendarEditorRepeatSubtitle,
                     child: Column(
                       children: [
                         ...CalendarRecurrenceMode.values.map((mode) {
@@ -1839,7 +1861,7 @@ class _CalendarEventEditorSheetState extends State<_CalendarEventEditorSheet> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'Days of week',
+                              context.l10n.calendarEditorDaysOfWeekLabel,
                               style: Theme.of(context).textTheme.labelLarge
                                   ?.copyWith(
                                     color: colors.textSecondary,
@@ -1858,6 +1880,7 @@ class _CalendarEventEditorSheetState extends State<_CalendarEventEditorSheet> {
                               );
                               return _ChoicePill(
                                 label: _CalendarFormatters.weekdayShort(
+                                  context,
                                   weekday,
                                 ),
                                 selected: selected,
@@ -1883,7 +1906,7 @@ class _CalendarEventEditorSheetState extends State<_CalendarEventEditorSheet> {
                           const SizedBox(height: 6),
                           AppTextField(
                             controller: _intervalController,
-                            label: 'Repeat every N days',
+                            label: context.l10n.calendarEditorRepeatEveryDaysLabel,
                             keyboardType: TextInputType.number,
                           ),
                         ],
@@ -1926,7 +1949,7 @@ class _CalendarEventEditorSheetState extends State<_CalendarEventEditorSheet> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
+                        child: Text(context.l10n.commonCancel),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -2009,13 +2032,13 @@ class _CalendarEventEditorSheetState extends State<_CalendarEventEditorSheet> {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
       setState(() {
-        _validationMessage = 'Please add an event title.';
+        _validationMessage = context.l10n.calendarEditorTitleValidation;
       });
       return;
     }
     if (!_endsAt.isAfter(_startsAt)) {
       setState(() {
-        _validationMessage = 'End time must be after the start time.';
+        _validationMessage = context.l10n.calendarEditorEndAfterStartValidation;
       });
       return;
     }
@@ -2025,7 +2048,7 @@ class _CalendarEventEditorSheetState extends State<_CalendarEventEditorSheet> {
       final interval = int.tryParse(_intervalController.text);
       if (interval == null || interval < 1) {
         setState(() {
-          _validationMessage = 'Repeat interval should be at least 1 day.';
+          _validationMessage = context.l10n.calendarEditorIntervalValidation;
         });
         return;
       }
@@ -2147,7 +2170,7 @@ class _DateTimeTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _CalendarFormatters.dateTimeLabel(value),
+                      _CalendarFormatters.dateTimeLabel(context, value),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -2255,14 +2278,14 @@ class _RecurrenceModeTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _modeTitle(mode),
+                      _modeTitle(context, mode),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _modeSubtitle(mode),
+                      _modeSubtitle(context, mode),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: colors.textSecondary,
                         height: 1.35,
@@ -2307,26 +2330,32 @@ class _RecurrenceModeTile extends StatelessWidget {
     };
   }
 
-  String _modeTitle(CalendarRecurrenceMode mode) {
+  String _modeTitle(BuildContext context, CalendarRecurrenceMode mode) {
     return switch (mode) {
-      CalendarRecurrenceMode.none => 'Does not repeat',
-      CalendarRecurrenceMode.yearly => 'Every year on this day',
-      CalendarRecurrenceMode.monthly => 'Every month on this day',
-      CalendarRecurrenceMode.weekly => 'Selected weekdays',
-      CalendarRecurrenceMode.everyNDays => 'Every N days',
+      CalendarRecurrenceMode.none => context.l10n.calendarRecurrenceNoneTitle,
+      CalendarRecurrenceMode.yearly =>
+        context.l10n.calendarRecurrenceYearlyTitle,
+      CalendarRecurrenceMode.monthly =>
+        context.l10n.calendarRecurrenceMonthlyTitle,
+      CalendarRecurrenceMode.weekly =>
+        context.l10n.calendarRecurrenceWeeklyTitle,
+      CalendarRecurrenceMode.everyNDays =>
+        context.l10n.calendarRecurrenceEveryNDaysTitle,
     };
   }
 
-  String _modeSubtitle(CalendarRecurrenceMode mode) {
+  String _modeSubtitle(BuildContext context, CalendarRecurrenceMode mode) {
     return switch (mode) {
-      CalendarRecurrenceMode.none => 'One-time event.',
+      CalendarRecurrenceMode.none =>
+        context.l10n.calendarRecurrenceNoneSubtitle,
       CalendarRecurrenceMode.yearly =>
-        'Useful for birthdays and anniversaries.',
+        context.l10n.calendarRecurrenceYearlySubtitle,
       CalendarRecurrenceMode.monthly =>
-        'Runs on the same day number every month.',
-      CalendarRecurrenceMode.weekly => 'Choose one or several weekdays.',
+        context.l10n.calendarRecurrenceMonthlySubtitle,
+      CalendarRecurrenceMode.weekly =>
+        context.l10n.calendarRecurrenceWeeklySubtitle,
       CalendarRecurrenceMode.everyNDays =>
-        'Great for routines with a fixed interval.',
+        context.l10n.calendarRecurrenceEveryNDaysSubtitle,
     };
   }
 }
@@ -2366,79 +2395,59 @@ enum _CalendarAction {
 }
 
 class _CalendarFormatters {
-  static const List<String> _monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  static const List<String> _weekdayShortNames = [
-    'Mon',
-    'Tue',
-    'Wed',
-    'Thu',
-    'Fri',
-    'Sat',
-    'Sun',
-  ];
-
-  static const List<String> _weekdayCompactNames = [
-    'M',
-    'T',
-    'W',
-    'T',
-    'F',
-    'S',
-    'S',
-  ];
-
-  static String fullDate(DateTime date) {
+  static String fullDate(BuildContext context, DateTime date) {
     final local = date.toLocal();
-    return '${_monthNames[local.month - 1]} ${local.day}, ${local.year}';
+    return DateFormat.yMMMMd(_locale(context)).format(local);
   }
 
-  static String monthLabel(DateTime date) {
+  static String monthLabel(BuildContext context, DateTime date) {
     final local = date.toLocal();
-    return '${_monthNames[local.month - 1]} ${local.year}';
+    return DateFormat.yMMMM(_locale(context)).format(local);
   }
 
-  static String timeOfDay(DateTime dateTime) {
+  static String timeOfDay(BuildContext context, DateTime dateTime) {
     final local = dateTime.toLocal();
-    return '${_twoDigits(local.hour)}:${_twoDigits(local.minute)}';
+    return DateFormat.Hm(_locale(context)).format(local);
   }
 
-  static String timeRange(DateTime start, DateTime end) {
-    return '${timeOfDay(start)} - ${timeOfDay(end)}';
+  static String timeRange(BuildContext context, DateTime start, DateTime end) {
+    return '${timeOfDay(context, start)} - ${timeOfDay(context, end)}';
   }
 
-  static String dateTimeLabel(DateTime dateTime) {
+  static String dateTimeLabel(BuildContext context, DateTime dateTime) {
     final local = dateTime.toLocal();
-    return '${_monthNames[local.month - 1]} ${local.day}, ${local.year} • ${timeOfDay(local)}';
+    return DateFormat.yMMMMd(
+      _locale(context),
+    ).add_Hm().format(local);
   }
 
-  static String durationLabel(DateTime start, DateTime end) {
+  static String durationLabel(
+    BuildContext context,
+    DateTime start,
+    DateTime end,
+  ) {
     final difference = end.difference(start);
     if (difference.inHours >= 1) {
       final hours = difference.inHours;
       final minutes = difference.inMinutes.remainder(60);
-      return minutes == 0 ? '${hours}h' : '${hours}h ${minutes}m';
+      return minutes == 0
+          ? context.l10n.calendarDurationHours(hours)
+          : context.l10n.calendarDurationHoursMinutes(hours, minutes);
     }
-    return '${difference.inMinutes}m';
+    return context.l10n.calendarDurationMinutes(difference.inMinutes);
   }
 
-  static String weekdayShort(int weekday) => _weekdayShortNames[weekday - 1];
+  static String weekdayShort(BuildContext context, int weekday) {
+    return DateFormat.E(_locale(context)).format(_weekdayDate(weekday));
+  }
 
-  static String weekdayCompact(int weekday) =>
-      _weekdayCompactNames[weekday - 1];
+  static String weekdayCompact(BuildContext context, int weekday) {
+    return DateFormat.EEEEE(_locale(context)).format(_weekdayDate(weekday));
+  }
 
-  static String _twoDigits(int value) => value.toString().padLeft(2, '0');
+  static String _locale(BuildContext context) =>
+      Localizations.localeOf(context).toLanguageTag();
+
+  static DateTime _weekdayDate(int weekday) =>
+      DateTime.utc(2024, 1, weekday.clamp(1, 7));
 }

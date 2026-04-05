@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/auth_session.dart';
 import '../../../core/config/app_defaults.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/locale_controller.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../ui_kit/ui_kit.dart';
@@ -78,9 +80,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final privacyState =
         context.watch<PrivacyCubit?>()?.state ?? const PrivacyState();
     final themeMode = context.watch<ThemeCubit>().state;
+    final localeState = context.watch<LocaleCubit>().state;
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: serverStatusAppBar(context, title: const Text('Settings')),
+      appBar: serverStatusAppBar(context, title: Text(l10n.settingsTitle)),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -92,6 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     notificationsState: notificationsState,
                     privacyState: privacyState,
                     themeMode: themeMode,
+                    localeState: localeState,
                   )
                 : _buildNarrowContent(
                     profileState: profileState,
@@ -99,6 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     notificationsState: notificationsState,
                     privacyState: privacyState,
                     themeMode: themeMode,
+                    localeState: localeState,
                   );
 
             return Align(
@@ -125,6 +131,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required NotificationsState notificationsState,
     required PrivacyState privacyState,
     required ThemeMode themeMode,
+    required AppLocaleState localeState,
   }) {
     return Column(
       key: const ValueKey('settings-layout-narrow'),
@@ -141,6 +148,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: 16),
         _AppearanceCard(themeMode: themeMode),
+        const SizedBox(height: 16),
+        _LanguageCard(localeState: localeState),
         const SizedBox(height: 24),
         _SignOutButton(onPressed: _handleSignOut),
       ],
@@ -153,6 +162,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required NotificationsState notificationsState,
     required PrivacyState privacyState,
     required ThemeMode themeMode,
+    required AppLocaleState localeState,
   }) {
     return Row(
       key: const ValueKey('settings-layout-wide'),
@@ -179,6 +189,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _AppearanceCard(themeMode: themeMode),
+              const SizedBox(height: 24),
+              _LanguageCard(localeState: localeState),
               const SizedBox(height: 24),
               _SignOutCard(onPressed: _handleSignOut),
             ],
@@ -208,44 +220,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   String _profileSummary(ProfileState state) {
+    final l10n = context.l10n;
     final profile = state.profile;
     if (state.isLoading && profile == null) {
-      return 'Loading profile…';
+      return l10n.settingsProfileSummaryLoading;
     }
     if (profile == null) {
-      return 'Update your name, timezone, and photo';
+      return l10n.settingsProfileSummaryEmpty;
     }
     final photoStatus = profile.avatarMediaId == null
-        ? 'No photo'
-        : 'Photo added';
+        ? l10n.settingsPhotoMissing
+        : l10n.settingsPhotoAdded;
     return '${profile.displayName} • ${profile.timezone} • $photoStatus';
   }
 
   String _familySummary(FamilyMembersState state) {
+    final l10n = context.l10n;
     if (state.familyId == null) {
-      return 'Not connected';
+      return l10n.settingsFamilySummaryNotConnected;
     }
     if (state.isLoading && state.family == null) {
-      return 'Loading family…';
+      return l10n.settingsFamilySummaryLoading;
     }
     final family = state.family;
     if (family == null) {
-      return 'Family connected';
+      return l10n.settingsFamilySummaryConnected;
     }
     final count = state.members.length;
-    final memberLabel = count == 1 ? 'member' : 'members';
-    return '${family.title} • $count $memberLabel';
+    return '${family.title} • ${l10n.settingsMemberCount(count)}';
   }
 
   String _notificationsSummary(NotificationsState state) {
+    final l10n = context.l10n;
     final taskReminders =
         state.preferences.any(
           (preference) =>
               preference.notificationType == AppDefaults.taskNotificationType &&
               preference.enabled,
         )
-        ? 'On'
-        : 'Off';
+        ? l10n.settingsSwitchOn
+        : l10n.settingsSwitchOff;
     final calendarReminders =
         state.preferences.any(
           (preference) =>
@@ -253,41 +267,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   AppDefaults.calendarNotificationType &&
               preference.enabled,
         )
-        ? 'On'
-        : 'Off';
-    return '${state.permissionStatus.summaryLabel} • Task $taskReminders • Calendar $calendarReminders';
+        ? l10n.settingsSwitchOn
+        : l10n.settingsSwitchOff;
+    return l10n.settingsNotificationsSummary(
+      state.permissionStatus.summaryLabel(l10n),
+      taskReminders,
+      calendarReminders,
+    );
   }
 
   String _privacySummary({
     required PrivacyState privacyState,
     required ProfileState profileState,
   }) {
+    final l10n = context.l10n;
     final analytics = profileState.profile?.analyticsOptIn == true
-        ? 'Analytics on'
-        : 'Analytics off';
+        ? l10n.settingsAnalyticsOn
+        : l10n.settingsAnalyticsOff;
     if (privacyState.hasActiveDeletionRequest) {
-      return '$analytics • Deletion scheduled';
+      return '$analytics • ${l10n.settingsDeletionScheduled}';
     }
     if (privacyState.canDownloadExport) {
-      return '$analytics • Export ready';
+      return '$analytics • ${l10n.settingsExportReady}';
     }
     if (privacyState.isExportExpired) {
-      return '$analytics • Export expired';
+      return '$analytics • ${l10n.settingsExportExpired}';
     }
     if (privacyState.lastExportJob?.status == 'failed') {
-      return '$analytics • Export failed';
+      return '$analytics • ${l10n.settingsExportFailed}';
     }
     if (privacyState.lastExportJob != null) {
-      return '$analytics • Preparing export';
+      return '$analytics • ${l10n.settingsPreparingExport}';
     }
-    return '$analytics • No active requests';
+    return '$analytics • ${l10n.settingsNoActiveRequests}';
   }
 
-  static String _themeModeLabel(ThemeMode mode) {
+  static String _themeModeLabel(BuildContext context, ThemeMode mode) {
+    final l10n = context.l10n;
     return switch (mode) {
-      ThemeMode.system => 'System',
-      ThemeMode.light => 'Light',
-      ThemeMode.dark => 'Dark',
+      ThemeMode.system => l10n.themeModeSystem,
+      ThemeMode.light => l10n.themeModeLight,
+      ThemeMode.dark => l10n.themeModeDark,
     };
   }
 }
@@ -328,24 +348,24 @@ class _AccountSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _SectionTitle('Account'),
+        _SectionTitle(context.l10n.settingsAccountSection),
         AppTile(
-          title: 'Profile',
+          title: context.l10n.settingsProfileTitle,
           subtitle: profileSummary,
           onTap: () => context.go(AppRoutes.profile),
         ),
         AppTile(
-          title: 'Family',
+          title: context.l10n.settingsFamilyTitle,
           subtitle: familySummary,
           onTap: () => context.go(AppRoutes.family),
         ),
         AppTile(
-          title: 'Notifications',
+          title: context.l10n.settingsNotificationsTitle,
           subtitle: notificationsSummary,
           onTap: () => context.push(AppRoutes.notificationSettings),
         ),
         AppTile(
-          title: 'Privacy',
+          title: context.l10n.settingsPrivacyTitle,
           subtitle: privacySummary,
           onTap: () => context.go(AppRoutes.privacy),
         ),
@@ -361,10 +381,11 @@ class _AppearanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _SectionTitle('Appearance'),
+        _SectionTitle(l10n.settingsAppearanceSection),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -372,28 +393,30 @@ class _AppearanceCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Theme',
+                  l10n.settingsThemeTitle,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Current mode: ${_SettingsScreenState._themeModeLabel(themeMode)}',
+                  l10n.settingsCurrentMode(
+                    _SettingsScreenState._themeModeLabel(context, themeMode),
+                  ),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 16),
                 SegmentedButton<ThemeMode>(
-                  segments: const [
+                  segments: [
                     ButtonSegment<ThemeMode>(
                       value: ThemeMode.system,
-                      label: Text('System'),
+                      label: Text(l10n.themeModeSystem),
                     ),
                     ButtonSegment<ThemeMode>(
                       value: ThemeMode.light,
-                      label: Text('Light'),
+                      label: Text(l10n.themeModeLight),
                     ),
                     ButtonSegment<ThemeMode>(
                       value: ThemeMode.dark,
-                      label: Text('Dark'),
+                      label: Text(l10n.themeModeDark),
                     ),
                   ],
                   selected: {themeMode},
@@ -401,6 +424,74 @@ class _AppearanceCard extends StatelessWidget {
                     await context.read<ThemeCubit>().setThemeMode(
                       selection.first,
                     );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LanguageCard extends StatelessWidget {
+  const _LanguageCard({required this.localeState});
+
+  final AppLocaleState localeState;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final localeCubit = context.read<LocaleCubit>();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionTitle(l10n.settingsLanguageSection),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.settingsLanguageTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.settingsLanguageSubtitle,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment<String>(
+                      value: 'system',
+                      label: Text(l10n.settingsLanguageSystem),
+                    ),
+                    ButtonSegment<String>(
+                      value: 'en',
+                      label: Text(l10n.settingsLanguageEnglish),
+                    ),
+                    ButtonSegment<String>(
+                      value: 'ru',
+                      label: Text(l10n.settingsLanguageRussian),
+                    ),
+                  ],
+                  selected: {
+                    localeState.mode == AppLocaleMode.system
+                        ? 'system'
+                        : localeState.manualLocale.languageCode,
+                  },
+                  onSelectionChanged: (selection) async {
+                    final value = selection.first;
+                    if (value == 'system') {
+                      await localeCubit.setSystemMode();
+                      return;
+                    }
+                    await localeCubit.setManualLocale(Locale(value));
                   },
                 ),
               ],
@@ -436,7 +527,7 @@ class _SignOutButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppButton(
-      label: 'Sign out',
+      label: context.l10n.settingsSignOut,
       variant: AppButtonVariant.danger,
       onPressed: onPressed == null
           ? null

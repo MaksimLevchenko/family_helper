@@ -1,5 +1,6 @@
 import 'package:family_helper_client/family_helper_client.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../notifications/domain/notification_models.dart';
 
 enum CalendarMutationScope { one, future, all }
@@ -13,11 +14,11 @@ extension CalendarMutationScopeX on CalendarMutationScope {
     };
   }
 
-  String get label {
+  String label(AppLocalizations l10n) {
     return switch (this) {
-      CalendarMutationScope.one => 'This occurrence',
-      CalendarMutationScope.future => 'This and following',
-      CalendarMutationScope.all => 'Whole series',
+      CalendarMutationScope.one => l10n.calendarMutationScopeOne,
+      CalendarMutationScope.future => l10n.calendarMutationScopeFuture,
+      CalendarMutationScope.all => l10n.calendarMutationScopeAll,
     };
   }
 }

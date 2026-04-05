@@ -7,6 +7,7 @@ import '../../core/auth/auth_context.dart';
 import '../../core/clock/clock_service.dart';
 import '../../core/rbac/ensure_family_role_service.dart';
 import '../../generated/protocol.dart';
+import 'notification_message_builder.dart';
 import 'push_dispatch_service.dart';
 
 class AppNotificationService {
@@ -187,6 +188,10 @@ class AppNotificationService {
     Map<String, dynamic>? payload,
     Transaction? transaction,
   }) async {
+    if (profileIds.isEmpty) {
+      return const <AppNotificationDto>[];
+    }
+
     final now = clock.nowUtc();
     final insertedRows = <AppNotificationRow>[];
     for (final profileId in profileIds.toSet()) {
@@ -226,6 +231,71 @@ class AppNotificationService {
     return resolvedRows.map(_mapNotification).toList();
   }
 
+  Future<String> profileLocaleCode(
+    Session session, {
+    required int profileId,
+    Transaction? transaction,
+  }) async {
+    final profile = await AppProfileRow.db.findById(
+      session,
+      profileId,
+      transaction: transaction,
+    );
+    return normalizeNotificationLocaleCode(profile?.locale);
+  }
+
+  Future<List<AppNotificationDto>> createLocalizedForProfiles(
+    Session session, {
+    required Iterable<int> profileIds,
+    required int familyId,
+    required String category,
+    required NotificationMessage Function(String localeCode, int profileId)
+    buildMessage,
+    required String entityType,
+    required int entityId,
+    String? route,
+    Map<String, dynamic>? payload,
+    Transaction? transaction,
+  }) async {
+    final normalizedProfileIds = profileIds.toSet().toList()..sort();
+    if (normalizedProfileIds.isEmpty) {
+      return const <AppNotificationDto>[];
+    }
+
+    final profiles = await AppProfileRow.db.find(
+      session,
+      where: (t) => t.id.inSet(normalizedProfileIds.toSet()),
+      transaction: transaction,
+    );
+    final localeByProfileId = {
+      for (final profile in profiles)
+        profile.id!: normalizeNotificationLocaleCode(profile.locale),
+    };
+
+    final notifications = <AppNotificationDto>[];
+    for (final profileId in normalizedProfileIds) {
+      final message = buildMessage(
+        localeByProfileId[profileId] ?? 'en',
+        profileId,
+      );
+      final created = await createForProfiles(
+        session,
+        profileIds: [profileId],
+        familyId: familyId,
+        category: category,
+        title: message.title,
+        body: message.body,
+        entityType: entityType,
+        entityId: entityId,
+        route: route,
+        payload: payload,
+        transaction: transaction,
+      );
+      notifications.addAll(created);
+    }
+    return notifications;
+  }
+
   Future<List<AppNotificationDto>> createForFamilyMembers(
     Session session, {
     required int familyId,
@@ -252,6 +322,39 @@ class AppNotificationService {
       category: category,
       title: title,
       body: body,
+      entityType: entityType,
+      entityId: entityId,
+      route: route,
+      payload: payload,
+      transaction: transaction,
+    );
+  }
+
+  Future<List<AppNotificationDto>> createLocalizedForFamilyMembers(
+    Session session, {
+    required int familyId,
+    Set<int> excludeProfileIds = const <int>{},
+    required String category,
+    required NotificationMessage Function(String localeCode, int profileId)
+    buildMessage,
+    required String entityType,
+    required int entityId,
+    String? route,
+    Map<String, dynamic>? payload,
+    Transaction? transaction,
+  }) async {
+    final profileIds = await listActiveFamilyProfileIds(
+      session,
+      familyId: familyId,
+      excludeProfileIds: excludeProfileIds,
+      transaction: transaction,
+    );
+    return createLocalizedForProfiles(
+      session,
+      profileIds: profileIds,
+      familyId: familyId,
+      category: category,
+      buildMessage: buildMessage,
       entityType: entityType,
       entityId: entityId,
       route: route,
