@@ -22,6 +22,11 @@ class HomeOverviewSummaryGrid extends StatelessWidget {
           >= 660 => 3,
           _ => 2,
         };
+        final mainAxisExtent = switch (crossAxisCount) {
+          4 => 196.0,
+          3 => 204.0,
+          _ => 220.0,
+        };
 
         return GridView.builder(
           shrinkWrap: true,
@@ -30,7 +35,7 @@ class HomeOverviewSummaryGrid extends StatelessWidget {
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: 14,
             mainAxisSpacing: 14,
-            mainAxisExtent: isWide ? 208 : 188,
+            mainAxisExtent: mainAxisExtent,
           ),
           itemCount: items.length,
           itemBuilder: (context, index) {
@@ -77,25 +82,39 @@ class HomeOverviewSummaryCard extends StatelessWidget {
                 ),
                 child: Icon(item.icon, color: scheme.onPrimaryContainer),
               ),
-              const Spacer(),
-              Text(
-                item.value,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                item.title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                item.description,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
+              const SizedBox(height: 18),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      item.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      item.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
