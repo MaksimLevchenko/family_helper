@@ -3084,6 +3084,42 @@ abstract class AppLocalizations {
   /// **'Completed'**
   String get tasksHistoryCompleted;
 
+  /// No description provided for @tasksHistoryDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get tasksHistoryDeleted;
+
+  /// No description provided for @tasksHistoryDetailsCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Task created'**
+  String get tasksHistoryDetailsCreated;
+
+  /// No description provided for @tasksHistoryDetailsUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Task updated'**
+  String get tasksHistoryDetailsUpdated;
+
+  /// No description provided for @tasksHistoryDetailsCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Task completed'**
+  String get tasksHistoryDetailsCompleted;
+
+  /// No description provided for @tasksHistoryDetailsDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Task deleted'**
+  String get tasksHistoryDetailsDeleted;
+
+  /// No description provided for @tasksHistoryDetailsCreatedFromRecurrence.
+  ///
+  /// In en, this message translates to:
+  /// **'Task created from recurrence'**
+  String get tasksHistoryDetailsCreatedFromRecurrence;
+
   /// No description provided for @tasksAssigneeMemberYou.
   ///
   /// In en, this message translates to:

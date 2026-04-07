@@ -156,21 +156,27 @@ class ListsScreen extends StatelessWidget {
     required Widget Function(BuildContext context, bool useModalShell) builder,
     required double maxWidth,
   }) {
+    final cubit = context.read<ListsCubit>();
     final isWide =
         MediaQuery.sizeOf(context).width >= _listsWideLayoutBreakpoint;
     if (isWide) {
       return showDialog<T>(
         context: context,
         builder: (dialogContext) {
-          return Dialog(
-            insetPadding: const EdgeInsets.all(24),
-            clipBehavior: Clip.antiAlias,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: maxWidth,
-                maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.9,
+          return BlocProvider<ListsCubit>.value(
+            value: cubit,
+            child: Builder(
+              builder: (overlayContext) => Dialog(
+                insetPadding: const EdgeInsets.all(24),
+                clipBehavior: Clip.antiAlias,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: maxWidth,
+                    maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.9,
+                  ),
+                  child: builder(overlayContext, false),
+                ),
               ),
-              child: builder(dialogContext, false),
             ),
           );
         },
@@ -181,7 +187,12 @@ class ListsScreen extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetContext) => builder(sheetContext, true),
+      builder: (sheetContext) => BlocProvider<ListsCubit>.value(
+        value: cubit,
+        child: Builder(
+          builder: (overlayContext) => builder(overlayContext, true),
+        ),
+      ),
     );
   }
 

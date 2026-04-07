@@ -1700,6 +1700,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tasksHistoryCompleted => 'Completed';
 
   @override
+  String get tasksHistoryDeleted => 'Deleted';
+
+  @override
+  String get tasksHistoryDetailsCreated => 'Task created';
+
+  @override
+  String get tasksHistoryDetailsUpdated => 'Task updated';
+
+  @override
+  String get tasksHistoryDetailsCompleted => 'Task completed';
+
+  @override
+  String get tasksHistoryDetailsDeleted => 'Task deleted';
+
+  @override
+  String get tasksHistoryDetailsCreatedFromRecurrence =>
+      'Task created from recurrence';
+
+  @override
   String tasksAssigneeMemberYou(String name) {
     return '$name (you)';
   }

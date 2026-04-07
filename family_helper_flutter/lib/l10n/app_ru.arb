@@ -722,6 +722,12 @@
   "tasksHistoryCreated": "Создана",
   "tasksHistoryUpdated": "Обновлена",
   "tasksHistoryCompleted": "Завершена",
+  "tasksHistoryDeleted": "Удалена",
+  "tasksHistoryDetailsCreated": "Задача создана",
+  "tasksHistoryDetailsUpdated": "Задача обновлена",
+  "tasksHistoryDetailsCompleted": "Задача завершена",
+  "tasksHistoryDetailsDeleted": "Задача удалена",
+  "tasksHistoryDetailsCreatedFromRecurrence": "Задача создана повтором",
   "tasksAssigneeMemberYou": "{name} (вы)",
   "@tasksAssigneeMemberYou": {
     "placeholders": {

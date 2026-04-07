@@ -145,6 +145,19 @@ String historyLabel(BuildContext context, String value) {
     'created' => context.l10n.tasksHistoryCreated,
     'updated' => context.l10n.tasksHistoryUpdated,
     'completed' => context.l10n.tasksHistoryCompleted,
+    'deleted' => context.l10n.tasksHistoryDeleted,
+    _ => value,
+  };
+}
+
+String historyDetailsLabel(BuildContext context, String value) {
+  return switch (value) {
+    'Task created' => context.l10n.tasksHistoryDetailsCreated,
+    'Task updated' => context.l10n.tasksHistoryDetailsUpdated,
+    'Task completed' => context.l10n.tasksHistoryDetailsCompleted,
+    'Task deleted' => context.l10n.tasksHistoryDetailsDeleted,
+    'Task created from recurrence' =>
+      context.l10n.tasksHistoryDetailsCreatedFromRecurrence,
     _ => value,
   };
 }

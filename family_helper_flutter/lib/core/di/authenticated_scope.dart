@@ -101,6 +101,7 @@ class _AuthenticatedScopeState extends State<AuthenticatedScope> {
     );
     _profileBloc = ProfileBloc(
       repository: getIt(),
+      authCubit: getIt<AuthCubit>(),
       snapshotStore: snapshotStore,
     );
     _realtimeCubit = RealtimeCubit(

@@ -33,7 +33,7 @@ class HistoryRow extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 4),
-              Text(entry.details),
+              Text(historyDetailsLabel(context, entry.details)),
               const SizedBox(height: 4),
               Text(
                 formatTaskDateTime(context, entry.createdAt),

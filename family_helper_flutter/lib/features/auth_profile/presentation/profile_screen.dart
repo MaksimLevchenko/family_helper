@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:family_helper_client/family_helper_client.dart';
@@ -5,7 +7,12 @@ import 'package:family_helper_client/family_helper_client.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/network/server_availability_cubit.dart';
 import '../../../ui_kit/ui_kit.dart';
+import '../../calendar/providers/calendar_provider.dart';
+import '../../family_invites/providers/family_provider.dart';
+import '../../lists/providers/lists_provider.dart';
 import '../../media/providers/media_provider.dart';
+import '../../money_goals/providers/money_goals_provider.dart';
+import '../../tasks/providers/tasks_provider.dart';
 import '../providers/profile_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -36,6 +43,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _nameController = TextEditingController();
   String? _selectedTimezone;
   Future<String>? _avatarUrlFuture;
+  ProfileDto? _lastAppliedProfile;
+  _PendingProfileRefresh? _pendingProfileRefresh;
 
   @override
   void initState() {
@@ -62,13 +71,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
         context.watch<ServerAvailabilityCubit?>()?.state.isUnavailable ?? false;
 
     return Scaffold(
-      appBar: serverStatusAppBar(context, title: Text(context.l10n.profileTitle)),
+      appBar: serverStatusAppBar(
+        context,
+        title: Text(context.l10n.profileTitle),
+      ),
       body: BlocConsumer<ProfileBloc, ProfileState>(
-        listenWhen: (previous, current) => previous.profile != current.profile,
+        listenWhen: (previous, current) {
+          final hasProfileChanged = previous.profile != current.profile;
+          final hasPendingUpdateErrorChanged =
+              _pendingProfileRefresh != null && previous.error != current.error;
+          return hasProfileChanged || hasPendingUpdateErrorChanged;
+        },
         listener: (context, state) {
+          if (state.error != null && !state.isLoading) {
+            _pendingProfileRefresh = null;
+          }
+
           final profile = state.profile;
           if (profile != null) {
+            final previousAppliedProfile = _lastAppliedProfile;
             _applyProfile(profile);
+            final pendingRefresh = _pendingProfileRefresh;
+            if (pendingRefresh != null && previousAppliedProfile != null) {
+              final identityChanged = _hasIdentityChanged(
+                previousAppliedProfile,
+                profile,
+              );
+              final timezoneChanged = _hasTimezoneChanged(
+                previousAppliedProfile,
+                profile,
+              );
+              final shouldRefreshDependents =
+                  (pendingRefresh.affectsIdentity && identityChanged) ||
+                  (pendingRefresh.affectsTimezone && timezoneChanged);
+
+              if (shouldRefreshDependents) {
+                unawaited(
+                  _refreshDependentData(reloadCalendar: timezoneChanged),
+                );
+              }
+            }
+            _pendingProfileRefresh = null;
           }
         },
         builder: (context, state) {
@@ -106,6 +149,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (!mounted || mediaId == null) {
                       return;
                     }
+                    _pendingProfileRefresh = const _PendingProfileRefresh(
+                      affectsIdentity: true,
+                    );
                     profileBloc.add(
                       ProfileUpdateRequested(avatarMediaId: mediaId),
                     );
@@ -113,6 +159,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onRemovePhoto: isOffline || profile.avatarMediaId == null
                 ? null
                 : () {
+                    _pendingProfileRefresh = const _PendingProfileRefresh(
+                      affectsIdentity: true,
+                    );
                     context.read<ProfileBloc>().add(
                       const ProfileUpdateRequested(clearAvatarMedia: true),
                     );
@@ -134,6 +183,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               });
             },
             onSave: () {
+              _pendingProfileRefresh = const _PendingProfileRefresh(
+                affectsIdentity: true,
+                affectsTimezone: true,
+              );
               context.read<ProfileBloc>().add(
                 ProfileUpdateRequested(
                   displayName: _nameController.text.trim(),
@@ -194,7 +247,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _avatarUrlFuture = profile.avatarMediaId == null
         ? null
         : context.read<MediaCubit>().loadSignedUrl(profile.avatarMediaId!);
+    _lastAppliedProfile = profile;
   }
+
+  bool _hasIdentityChanged(ProfileDto previous, ProfileDto next) {
+    return previous.displayName != next.displayName ||
+        previous.avatarMediaId != next.avatarMediaId;
+  }
+
+  bool _hasTimezoneChanged(ProfileDto previous, ProfileDto next) {
+    return previous.timezone != next.timezone;
+  }
+
+  Future<void> _refreshDependentData({required bool reloadCalendar}) async {
+    final reloads = <Future<void>>[
+      context.read<FamilyMembersCubit>().loadMembers(),
+      context.read<TasksCubit>().reload(),
+      context.read<ListsCubit>().reload(),
+      context.read<MoneyGoalsCubit>().reload(),
+    ];
+    if (reloadCalendar) {
+      reloads.add(context.read<CalendarCubit>().reload());
+    }
+    await Future.wait(reloads);
+  }
+}
+
+class _PendingProfileRefresh {
+  const _PendingProfileRefresh({
+    this.affectsIdentity = false,
+    this.affectsTimezone = false,
+  });
+
+  final bool affectsIdentity;
+  final bool affectsTimezone;
 }
 
 class _ProfileFormCard extends StatelessWidget {
@@ -238,7 +324,10 @@ class _ProfileDetailsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppTextField(controller: nameController, label: l10n.profileDisplayNameLabel),
+        AppTextField(
+          controller: nameController,
+          label: l10n.profileDisplayNameLabel,
+        ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
           key: ValueKey(selectedTimezone),
@@ -305,7 +394,9 @@ class _AvatarCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              avatarMediaId == null ? l10n.profileNoPhotoYet : l10n.profilePhoto,
+              avatarMediaId == null
+                  ? l10n.profileNoPhotoYet
+                  : l10n.profilePhoto,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),

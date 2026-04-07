@@ -1,6 +1,7 @@
 import 'package:family_helper_client/family_helper_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/auth/auth_session.dart';
 import '../../../core/logging/app_error_logger.dart';
 import '../../../core/offline/offline_snapshot_store.dart';
 import '../../../core/utils/operation_id.dart';
@@ -81,11 +82,12 @@ class ProfileState {
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ProfileBloc({
     required ProfileRepositoryContract repository,
+    AuthCubit? authCubit,
     OfflineSnapshotStore? snapshotStore,
-  })
-    : _repository = repository,
-      _snapshotStore = snapshotStore,
-      super(ProfileState.initial()) {
+  }) : _repository = repository,
+       _authCubit = authCubit,
+       _snapshotStore = snapshotStore,
+       super(ProfileState.initial()) {
     on<ProfileLoadRequested>(_onLoadRequested);
     on<ProfileResetRequested>(_onResetRequested);
     on<ProfileUpdateRequested>(_onUpdateRequested);
@@ -94,6 +96,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   }
 
   final ProfileRepositoryContract _repository;
+  final AuthCubit? _authCubit;
   final OfflineSnapshotStore? _snapshotStore;
 
   Future<void> _onLoadRequested(
@@ -105,6 +108,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       final profile = await _repository.me();
       final syncedAt = DateTime.now().toUtc();
       await _writeSnapshot(profile, syncedAt);
+      _syncAuthProfile(profile);
       emit(
         state.copyWith(
           isLoading: false,
@@ -146,6 +150,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       );
       final syncedAt = DateTime.now().toUtc();
       await _writeSnapshot(updated, syncedAt);
+      _syncAuthProfile(updated);
       emit(
         state.copyWith(
           isLoading: false,
@@ -207,6 +212,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           clearError: true,
         ),
       );
+      _syncAuthProfile(ProfileDto.fromJson(profilePayload));
     } catch (error, stackTrace) {
       AppErrorLogger.logHandled(
         scope: 'profile.restoreSnapshot',
@@ -234,6 +240,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         context: {'profileId': profile.id},
       );
     }
+  }
+
+  void _syncAuthProfile(ProfileDto profile) {
+    _authCubit?.setProfile(profile);
   }
 
   static const _cacheKey = 'profile/current';

@@ -1719,6 +1719,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tasksHistoryCompleted => 'Завершена';
 
   @override
+  String get tasksHistoryDeleted => 'Удалена';
+
+  @override
+  String get tasksHistoryDetailsCreated => 'Задача создана';
+
+  @override
+  String get tasksHistoryDetailsUpdated => 'Задача обновлена';
+
+  @override
+  String get tasksHistoryDetailsCompleted => 'Задача завершена';
+
+  @override
+  String get tasksHistoryDetailsDeleted => 'Задача удалена';
+
+  @override
+  String get tasksHistoryDetailsCreatedFromRecurrence =>
+      'Задача создана повтором';
+
+  @override
   String tasksAssigneeMemberYou(String name) {
     return '$name (вы)';
   }

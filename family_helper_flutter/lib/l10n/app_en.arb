@@ -722,6 +722,12 @@
   "tasksHistoryCreated": "Created",
   "tasksHistoryUpdated": "Updated",
   "tasksHistoryCompleted": "Completed",
+  "tasksHistoryDeleted": "Deleted",
+  "tasksHistoryDetailsCreated": "Task created",
+  "tasksHistoryDetailsUpdated": "Task updated",
+  "tasksHistoryDetailsCompleted": "Task completed",
+  "tasksHistoryDetailsDeleted": "Task deleted",
+  "tasksHistoryDetailsCreatedFromRecurrence": "Task created from recurrence",
   "tasksAssigneeMemberYou": "{name} (you)",
   "@tasksAssigneeMemberYou": {
     "placeholders": {

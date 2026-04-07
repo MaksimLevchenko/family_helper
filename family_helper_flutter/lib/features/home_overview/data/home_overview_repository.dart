@@ -1,3 +1,0 @@
-class HomeOverviewRepository {
-  const HomeOverviewRepository();
-}
