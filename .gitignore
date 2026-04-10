@@ -1,2 +1,3 @@
-/.vscode
+/.vscode/*
+!/.vscode/launch.json
 /family_helper_server/config/family-helper-6421a-firebase-adminsdk-fbsvc-c9bcccbeac.json

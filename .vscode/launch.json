@@ -1,0 +1,60 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Flutter: App (Debug)",
+			"cwd": "family_helper_flutter",
+			"request": "launch",
+			"type": "dart"
+		},
+		{
+			"name": "Flutter: App (Profile)",
+			"cwd": "family_helper_flutter",
+			"request": "launch",
+			"type": "dart",
+			"flutterMode": "profile"
+		},
+		{
+			"name": "Flutter: App (Release)",
+			"cwd": "family_helper_flutter",
+			"request": "launch",
+			"type": "dart",
+			"flutterMode": "release"
+		},
+		{
+			"name": "Serverpod: Server (Debug)",
+			"cwd": "family_helper_server",
+			"request": "launch",
+			"type": "dart",
+			"program": "bin/main.dart"
+		},
+		{
+			"name": "Serverpod: Server + Apply Migrations",
+			"cwd": "family_helper_server",
+			"request": "launch",
+			"type": "dart",
+			"program": "bin/main.dart",
+			"args": [
+				"--apply-migrations"
+			]
+		}
+	],
+	"compounds": [
+		{
+			"name": "Full Stack: Flutter + Serverpod",
+			"configurations": [
+				"Flutter: App (Debug)",
+				"Serverpod: Server (Debug)"
+			],
+			"stopAll": true
+		},
+		{
+			"name": "Full Stack: Flutter + Serverpod (Apply Migrations)",
+			"configurations": [
+				"Flutter: App (Debug)",
+				"Serverpod: Server + Apply Migrations"
+			],
+			"stopAll": true
+		}
+	]
+}
